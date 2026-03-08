@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db";
 
+const PORT = process.env.PORT || 5001;
+
 dotenv.config();
 connectDB();
 
@@ -16,7 +18,6 @@ app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

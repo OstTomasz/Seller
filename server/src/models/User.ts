@@ -1,4 +1,4 @@
-import { Schema, model, CallbackWithoutResultAndOptionalError } from "mongoose";
+import { Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 import { IUser, UserRole } from "../types";
 
