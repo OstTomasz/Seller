@@ -26,4 +26,22 @@ describe("Region Model", () => {
     const region = new Region({});
     await expect(region.save()).rejects.toThrow();
   });
+  it("should create a subregion with parentRegion", async () => {
+    const parent = await Region.findOne({ name: "Północ" });
+
+    const subregion = new Region({
+      name: "Pomorze",
+      parentRegion: parent!._id,
+    });
+    await subregion.save();
+
+    expect(subregion.parentRegion?.toString()).toBe(parent!._id.toString());
+  });
+
+  it("should create a superregion without parentRegion", async () => {
+    const superregion = new Region({ name: "Polska Północna" });
+    await superregion.save();
+
+    expect(superregion.parentRegion).toBeNull();
+  });
 });

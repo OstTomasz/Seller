@@ -5,6 +5,7 @@ export type UserGrade = 1 | 2 | 3 | 4;
 
 export interface IRegion extends Document {
   name: string;
+  parentRegion: Types.ObjectId | null;
   deputy: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;

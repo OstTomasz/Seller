@@ -6,16 +6,8 @@ const ROLES: UserRole[] = ["director", "deputy", "advisor", "salesperson"];
 
 const userSchema = new Schema<IUser>(
   {
-    firstName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    lastName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
     email: {
       type: String,
       required: true,
@@ -23,16 +15,8 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
-    password: {
-      type: String,
-      required: true,
-      minlength: 8,
-    },
-    role: {
-      type: String,
-      enum: ROLES,
-      required: true,
-    },
+    password: { type: String, required: true, minlength: 8 },
+    role: { type: String, enum: ROLES, required: true },
     grade: {
       type: Number,
       enum: [1, 2, 3, 4],
@@ -43,28 +27,36 @@ const userSchema = new Schema<IUser>(
       ref: "Region",
       default: null,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
 
-// Hashowanie hasła przed zapisem
+// validating before saving - grade and region are required for advisor and salesperson
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
-  this.password = await bcrypt.hash(this.password, 12);
+  const rolesRequiringRegion: UserRole[] = ["advisor", "salesperson"];
+
+  if (rolesRequiringRegion.includes(this.role)) {
+    if (!this.region) {
+      throw new Error("Region is required for advisor and salesperson");
+    }
+    if (!this.grade) {
+      throw new Error("Grade is required for advisor and salesperson");
+    }
+  }
+
+  // pwd hash
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 12);
+  }
 });
 
-// Metoda do weryfikacji hasła przy logowaniu
 userSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ): Promise<boolean> {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Nigdy nie zwracaj hasła w odpowiedzi API
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;

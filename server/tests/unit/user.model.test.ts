@@ -53,4 +53,35 @@ describe("User Model", () => {
 
     await expect(user.save()).rejects.toThrow();
   });
+  it("should require region for salesperson", async () => {
+    const user = new User({
+      firstName: "Piotr",
+      lastName: "Wiśniewski",
+      email: "piotr@test.com",
+      password: "password123",
+      role: "salesperson",
+      grade: 1,
+      region: null, // no region
+    });
+
+    await expect(user.save()).rejects.toThrow(
+      "Region is required for advisor and salesperson",
+    );
+  });
+
+  it("should require grade for salesperson", async () => {
+    const user = new User({
+      firstName: "Piotr",
+      lastName: "Wiśniewski",
+      email: "piotr2@test.com",
+      password: "password123",
+      role: "salesperson",
+      grade: null, // no grade
+      region: new mongoose.Types.ObjectId(),
+    });
+
+    await expect(user.save()).rejects.toThrow(
+      "Grade is required for advisor and salesperson",
+    );
+  });
 });

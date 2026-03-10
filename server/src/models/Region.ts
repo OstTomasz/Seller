@@ -9,6 +9,11 @@ const regionSchema = new Schema<IRegion>(
       unique: true,
       trim: true,
     },
+    parentRegion: {
+      type: Schema.Types.ObjectId,
+      ref: "Region",
+      default: null,
+    },
     deputy: {
       type: Schema.Types.ObjectId,
       ref: "User",
