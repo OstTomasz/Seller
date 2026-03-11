@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User";
 import { IUser, TokenPayload } from "../types";
+import { UnauthorizedError, NotFoundError } from "../utils/errors";
 
 // login resp
 interface LoginResult {
@@ -19,36 +20,19 @@ const generateToken = (user: IUser): string => {
   });
 };
 
-export const login = async (
-  email: string,
-  password: string,
-): Promise<LoginResult> => {
+export const login = async (email: string, password: string) => {
   const user = await User.findOne({ email, isActive: true });
-
-  if (!user) {
-    throw new Error("Invalid credentials");
-  }
+  if (!user) throw new UnauthorizedError("Invalid credentials");
 
   const isPasswordValid = await user.comparePassword(password);
-
-  if (!isPasswordValid) {
-    throw new Error("Invalid credentials");
-  }
+  if (!isPasswordValid) throw new UnauthorizedError("Invalid credentials");
 
   const token = generateToken(user);
-
   return { user, token };
 };
 
 export const getMe = async (userId: string): Promise<IUser> => {
-  try {
-    const user = await User.findById(userId).populate("region");
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-    return user;
-  } catch (error) {
-    throw error;
-  }
+  const user = await User.findById(userId).populate("region");
+  if (!user) throw new NotFoundError("User not found");
+  return user;
 };
