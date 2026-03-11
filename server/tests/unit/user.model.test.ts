@@ -3,8 +3,15 @@ import mongoose from "mongoose";
 import User from "../../src/models/User";
 
 describe("User Model", () => {
+  beforeEach(async () => {
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+      await collections[key].deleteMany({});
+    }
+  });
+
   it("should hash password before saving", async () => {
-    const user = new User({
+    const user = await User.create({
       firstName: "Jan",
       lastName: "Kowalski",
       email: "jan@test.com",
@@ -14,29 +21,52 @@ describe("User Model", () => {
       region: new mongoose.Types.ObjectId(),
     });
 
-    await user.save();
-
-    // pwd in db not the same as plain
     expect(user.password).not.toBe("plainpassword123");
-    // Hash bcrypt always starts with $2
     expect(user.password).toMatch(/^\$2/);
   });
 
   it("should return true for valid password", async () => {
-    const user = await User.findOne({ email: "jan@test.com" });
-    const isValid = await user!.comparePassword("plainpassword123");
+    const user = await User.create({
+      firstName: "Jan",
+      lastName: "Kowalski",
+      email: "jan@test.com",
+      password: "plainpassword123",
+      role: "salesperson",
+      grade: 1,
+      region: new mongoose.Types.ObjectId(),
+    });
+
+    const isValid = await user.comparePassword("plainpassword123");
     expect(isValid).toBe(true);
   });
 
   it("should return false for invalid password", async () => {
-    const user = await User.findOne({ email: "jan@test.com" });
-    const isValid = await user!.comparePassword("wrongpassword");
+    const user = await User.create({
+      firstName: "Jan",
+      lastName: "Kowalski",
+      email: "jan@test.com",
+      password: "plainpassword123",
+      role: "salesperson",
+      grade: 1,
+      region: new mongoose.Types.ObjectId(),
+    });
+
+    const isValid = await user.comparePassword("wrongpassword");
     expect(isValid).toBe(false);
   });
 
   it("should not expose password in toJSON", async () => {
-    const user = await User.findOne({ email: "jan@test.com" });
-    const userJSON = user!.toJSON();
+    const user = await User.create({
+      firstName: "Jan",
+      lastName: "Kowalski",
+      email: "jan@test.com",
+      password: "plainpassword123",
+      role: "salesperson",
+      grade: 1,
+      region: new mongoose.Types.ObjectId(),
+    });
+
+    const userJSON = user.toJSON();
     expect(userJSON.password).toBeUndefined();
   });
 
@@ -47,12 +77,13 @@ describe("User Model", () => {
       email: "anna@test.com",
       password: "password123",
       role: "advisor",
-      grade: 5, // incorrect val
+      grade: 5,
       region: new mongoose.Types.ObjectId(),
     });
 
     await expect(user.save()).rejects.toThrow();
   });
+
   it("should require region for salesperson", async () => {
     const user = new User({
       firstName: "Piotr",
@@ -61,7 +92,7 @@ describe("User Model", () => {
       password: "password123",
       role: "salesperson",
       grade: 1,
-      region: null, // no region
+      region: null,
     });
 
     await expect(user.save()).rejects.toThrow(
@@ -76,7 +107,7 @@ describe("User Model", () => {
       email: "piotr2@test.com",
       password: "password123",
       role: "salesperson",
-      grade: null, // no grade
+      grade: null,
       region: new mongoose.Types.ObjectId(),
     });
 

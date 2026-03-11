@@ -24,3 +24,8 @@ export interface IUser extends Document {
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
+
+export interface TokenPayload {
+  userId: string;
+  role: string;
+}
