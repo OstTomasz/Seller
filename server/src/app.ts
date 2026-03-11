@@ -8,7 +8,9 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { validateEnv } from "./config/env";
 import { errorHandler } from "./middleware/error.middleware";
+
 import authRoutes from "./routes/auth.routes";
+import regionRoutes from "./routes/region.routes";
 
 import "./models/Region";
 import "./models/User";
@@ -45,6 +47,7 @@ app.use(morgan("dev")); //pretty log requests
 app.use("/api", limiter); //limit requests
 app.use(express.json()); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
+app.use("/api/regions", regionRoutes);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });

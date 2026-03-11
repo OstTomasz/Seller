@@ -11,12 +11,16 @@ const verifyDeputyAccess = async (
   regionId: string,
 ): Promise<void> => {
   const region = await Region.findById(regionId);
-
   if (!region) throw new NotFoundError("Region not found");
-  if (!region.parentRegion) throw new ForbiddenError();
 
+  // check if its this deputy region
+  if (!region.parentRegion) {
+    if (region.deputy?.toString() !== deputyId) throw new ForbiddenError();
+    return;
+  }
+
+  // if its a subregion, check if its a deputy of the superregion
   const superregion = await Region.findById(region.parentRegion);
-
   if (!superregion || superregion.deputy?.toString() !== deputyId) {
     throw new ForbiddenError();
   }
@@ -48,6 +52,12 @@ export const updateRegionName = async (
   requesterRole: UserRole,
 ): Promise<IRegion> => {
   if (requesterRole === "deputy") {
+    const region = await Region.findById(regionId);
+    if (!region) throw new NotFoundError("Region not found");
+
+    // deputy can only rename subregions, not superregions
+    if (!region.parentRegion) throw new ForbiddenError();
+
     await verifyDeputyAccess(requesterId, regionId);
   }
 

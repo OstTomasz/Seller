@@ -2,16 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
 import User from "../../src/models/User";
-import Region from "../../src/models/Region";
-import mongoose from "mongoose";
-
-const clearDB = async () => {
-  const collections = mongoose.connection.collections;
-  console.log("clearing collections:", Object.keys(collections));
-  for (const key in collections) {
-    await collections[key].deleteMany({});
-  }
-};
+import { clearDB } from "../helpers";
 
 describe("POST /api/auth/login", () => {
   beforeEach(async () => {
