@@ -45,6 +45,7 @@ app.use(morgan("dev")); //pretty log requests
 app.use("/api", limiter); //limit requests
 app.use(express.json()); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
+
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });
 }); //health check

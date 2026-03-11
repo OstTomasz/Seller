@@ -1,5 +1,7 @@
-const requiredEnvVars = ["MONGODB_URI", "JWT_SECRET", "PORT"];
+import dotenv from "dotenv";
+dotenv.config();
 
+const requiredEnvVars = ["MONGODB_URI", "JWT_SECRET", "PORT"];
 export const validateEnv = (): void => {
   const missing = requiredEnvVars.filter((key) => !process.env[key]);
 
