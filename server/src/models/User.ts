@@ -28,6 +28,16 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     isActive: { type: Boolean, default: true },
+    mustChangePassword: {
+      type: Boolean,
+      default: true, // always must change on first login
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false, // null only for the first director (seed)
+      default: null,
+    },
   },
   { timestamps: true },
 );

@@ -20,6 +20,8 @@ export interface IUser extends Document {
   grade: UserGrade | null;
   region: Types.ObjectId | null;
   isActive: boolean;
+  mustChangePassword: boolean;
+  createdBy: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
