@@ -22,40 +22,39 @@ const userSchema = new Schema<IUser>(
       enum: [1, 2, 3, 4],
       default: null,
     },
-    region: {
+    position: {
       type: Schema.Types.ObjectId,
-      ref: "Region",
+      ref: "Position",
       default: null,
     },
     isActive: { type: Boolean, default: true },
     mustChangePassword: {
       type: Boolean,
-      default: true, // always must change on first login
+      default: true,
     },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false, // null only for the first director (seed)
+      required: false,
       default: null,
     },
   },
   { timestamps: true },
 );
 
-// validating before saving - grade and region are required for advisor and salesperson
+// validating before saving - grade and position are required for advisor and salesperson
 userSchema.pre("save", async function () {
-  const rolesRequiringRegion: UserRole[] = ["advisor", "salesperson"];
+  const rolesRequiringPosition: UserRole[] = ["advisor", "salesperson"];
 
-  if (rolesRequiringRegion.includes(this.role)) {
-    if (!this.region) {
-      throw new Error("Region is required for advisor and salesperson");
+  if (rolesRequiringPosition.includes(this.role)) {
+    if (!this.position) {
+      throw new Error("Position is required for advisor and salesperson");
     }
     if (!this.grade) {
       throw new Error("Grade is required for advisor and salesperson");
     }
   }
 
-  // pwd hash
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 12);
   }

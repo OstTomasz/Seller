@@ -1,4 +1,5 @@
 import User from "../models/User";
+import Position from "../models/Position";
 import Region from "../models/Region";
 import { IUser, UserGrade, UserRole } from "../types";
 import {
@@ -10,43 +11,62 @@ import {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
+// Gets region ID from a position
+const getRegionFromPosition = async (
+  positionId: string,
+): Promise<string | null> => {
+  const position = await Position.findById(positionId);
+  return position?.region?.toString() ?? null;
+};
+
+// Gets deputy's user ID from a superregion
+const getDeputyUserId = async (regionId: string): Promise<string | null> => {
+  const region = await Region.findById(regionId);
+  if (!region?.deputy) return null;
+  const position = await Position.findById(region.deputy);
+  return position?.currentHolder?.toString() ?? null;
+};
+
 // Checks if a region belongs to deputy's superregion
 const verifyDeputyRegionAccess = async (
-  deputyId: string,
+  deputyUserId: string,
   regionId: string,
 ): Promise<void> => {
   const region = await Region.findById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
+  // must be a subregion
   if (!region.parentRegion) throw new ForbiddenError();
 
-  const superregion = await Region.findById(region.parentRegion);
-  if (!superregion || superregion.deputy?.toString() !== deputyId) {
-    throw new ForbiddenError();
-  }
+  const holderId = await getDeputyUserId(region.parentRegion.toString());
+  if (holderId !== deputyUserId) throw new ForbiddenError();
 };
 
 // Checks if deputy has access to a specific user
 const verifyDeputyUserAccess = async (
-  deputyId: string,
+  deputyUserId: string,
   targetUser: IUser,
 ): Promise<void> => {
-  if (!targetUser.region) throw new ForbiddenError();
-  await verifyDeputyRegionAccess(deputyId, targetUser.region.toString());
+  if (!targetUser.position) throw new ForbiddenError();
+
+  const regionId = await getRegionFromPosition(targetUser.position.toString());
+  if (!regionId) throw new ForbiddenError();
+
+  await verifyDeputyRegionAccess(deputyUserId, regionId);
 };
 
 // ─── service functions ────────────────────────────────────────────────────────
 
 export const getUsers = async (): Promise<IUser[]> => {
   return await User.find()
-    .populate("region")
+    .populate("position")
     .select("-password")
     .sort({ lastName: 1, firstName: 1 });
 };
 
 export const getUserById = async (userId: string): Promise<IUser> => {
   const user = await User.findById(userId)
-    .populate("region")
+    .populate("position")
     .select("-password");
   if (!user) throw new NotFoundError("User not found");
   return user;
@@ -60,24 +80,36 @@ export const createUser = async (
     temporaryPassword: string;
     role: UserRole;
     grade?: UserGrade | null;
-    region?: string | null;
+    positionId?: string | null;
   },
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IUser> => {
-  // deputy can only create users in their own regions
   if (requesterRole === "deputy") {
     if (data.role === "director" || data.role === "deputy") {
       throw new ForbiddenError();
-    } // deputy cannot create director or deputy
+    }
 
-    if (!data.region) throw new ForbiddenError();
-    await verifyDeputyRegionAccess(requesterId, data.region);
+    if (!data.positionId) throw new ForbiddenError();
+
+    // verify position belongs to deputy's superregion
+    const regionId = await getRegionFromPosition(data.positionId);
+    if (!regionId) throw new ForbiddenError();
+    await verifyDeputyRegionAccess(requesterId, regionId);
   }
 
   const existingUser = await User.findOne({ email: data.email });
   if (existingUser)
     throw new ConflictError("User with this email already exists");
+
+  // verify position is vacant
+  if (data.positionId) {
+    const position = await Position.findById(data.positionId);
+    if (!position) throw new NotFoundError("Position not found");
+    if (position.currentHolder) {
+      throw new BadRequestError("Position is already occupied");
+    }
+  }
 
   const user = await User.create({
     firstName: data.firstName,
@@ -86,10 +118,17 @@ export const createUser = async (
     password: data.temporaryPassword,
     role: data.role,
     grade: data.grade ?? null,
-    region: data.region ?? null,
-    mustChangePassword: true, // always true for new users
+    position: data.positionId ?? null,
+    mustChangePassword: true,
     createdBy: requesterId,
   });
+
+  // assign user to position
+  if (data.positionId) {
+    await Position.findByIdAndUpdate(data.positionId, {
+      currentHolder: user._id,
+    });
+  }
 
   return user;
 };
@@ -100,7 +139,7 @@ export const updateUser = async (
     firstName?: string;
     lastName?: string;
     email?: string;
-    region?: string | null;
+    positionId?: string | null;
   },
   requesterId: string,
   requesterRole: UserRole,
@@ -111,18 +150,44 @@ export const updateUser = async (
   if (requesterRole === "deputy") {
     await verifyDeputyUserAccess(requesterId, user);
 
-    // deputy cannot change region to outside their superregion
-    if (data.region !== undefined && data.region !== null) {
-      await verifyDeputyRegionAccess(requesterId, data.region);
+    // deputy cannot move user to position outside their superregion
+    if (data.positionId) {
+      const regionId = await getRegionFromPosition(data.positionId);
+      if (!regionId) throw new ForbiddenError();
+      await verifyDeputyRegionAccess(requesterId, regionId);
+    }
+  }
+
+  // if changing position — update old and new position
+  if (data.positionId !== undefined) {
+    if (user.position) {
+      await Position.findByIdAndUpdate(user.position, {
+        currentHolder: null,
+      });
+    }
+    if (data.positionId) {
+      const newPosition = await Position.findById(data.positionId);
+      if (!newPosition) throw new NotFoundError("Position not found");
+      if (newPosition.currentHolder) {
+        throw new BadRequestError("Position is already occupied");
+      }
+      await Position.findByIdAndUpdate(data.positionId, {
+        currentHolder: userId,
+      });
     }
   }
 
   const updated = await User.findByIdAndUpdate(
     userId,
-    { ...data },
+    {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      position: data.positionId,
+    },
     { returnDocument: "after", runValidators: true },
   )
-    .populate("region")
+    .populate("position")
     .select("-password");
 
   return updated!;
@@ -136,12 +201,10 @@ export const updateUserRoleAndGrade = async (
   const user = await User.findById(userId);
   if (!user) throw new NotFoundError("User not found");
 
-  // grade required for advisor and salesperson
   if ((role === "advisor" || role === "salesperson") && !grade) {
     throw new BadRequestError("Grade is required for advisor and salesperson");
   }
 
-  // grade must be null for director and deputy
   if (role === "director" || role === "deputy") {
     grade = null;
   }
@@ -151,7 +214,7 @@ export const updateUserRoleAndGrade = async (
     { role, grade },
     { returnDocument: "after", runValidators: true },
   )
-    .populate("region")
+    .populate("position")
     .select("-password");
 
   return updated!;
@@ -165,7 +228,6 @@ export const toggleUserActive = async (
   const user = await User.findById(userId);
   if (!user) throw new NotFoundError("User not found");
 
-  // cannot deactivate yourself
   if (userId === requesterId)
     throw new BadRequestError("Cannot deactivate yourself");
 
@@ -178,7 +240,7 @@ export const toggleUserActive = async (
     { isActive: !user.isActive },
     { returnDocument: "after" },
   )
-    .populate("region")
+    .populate("position")
     .select("-password");
 
   return updated!;
@@ -216,4 +278,10 @@ export const resetPassword = async (
   user.password = temporaryPassword;
   user.mustChangePassword = true;
   await user.save();
+};
+
+export const getMe = async (userId: string): Promise<IUser> => {
+  const user = await User.findById(userId).populate("position");
+  if (!user) throw new NotFoundError("User not found");
+  return user;
 };

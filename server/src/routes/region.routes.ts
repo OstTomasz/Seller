@@ -1,11 +1,9 @@
 import { Router } from "express";
 import * as regionController from "../controllers/region.controller";
-import { authenticate } from "../middleware/auth.middleware";
+
 import { requireRole } from "../middleware/role.middleware";
 
 const router = Router();
-
-router.use(authenticate);
 
 // Odczyt — każdy zalogowany
 router.get("/", regionController.getRegions);

@@ -1,14 +1,11 @@
 import { Router } from "express";
 import * as userController from "../controllers/user.controller";
-import { authenticate } from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/role.middleware";
-import { requirePasswordChange } from "../middleware/mustChangePassword.middleware";
 
 const router = Router();
 
-router.use(authenticate);
-router.use(requirePasswordChange);
-
+// Any logged in user can read their own data
+router.get("/me", userController.getMe);
 // Any logged in user can change their own password
 router.patch("/me/password", userController.changePassword);
 

@@ -32,7 +32,7 @@ export const login = async (email: string, password: string) => {
 };
 
 export const getMe = async (userId: string): Promise<IUser> => {
-  const user = await User.findById(userId).populate("region");
+  const user = await User.findById(userId).populate("position");
   if (!user) throw new NotFoundError("User not found");
   return user;
 };

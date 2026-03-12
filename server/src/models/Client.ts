@@ -1,4 +1,5 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model } from "mongoose";
+import { IAddress, IClient } from "../types";
 
 // ─── sub-schemas ──────────────────────────────────────────────────────────────
 
@@ -18,51 +19,21 @@ const addressSchema = new Schema({
 });
 
 // ─── main schema ──────────────────────────────────────────────────────────────
-export type ClientStatus = "active" | "reminder" | "inactive" | "archived";
-
-export interface IArchiveRequest {
-  requestedAt: Date | null;
-  requestedBy: Types.ObjectId | null;
-  reason: string | null;
-}
-
-export interface IContact {
-  _id: Types.ObjectId;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  email: string | null;
-}
-
-export interface IAddress {
-  _id: Types.ObjectId;
-  label: string;
-  street: string;
-  city: string;
-  postalCode: string;
-  contacts: IContact[];
-}
-
-export interface IClient extends Document {
-  companyName: string;
-  nip: string | null;
-  assignedTo: Types.ObjectId;
-  status: ClientStatus;
-  lastActivityAt: Date | null;
-  inactivityReason: string | null;
-  archiveRequest: IArchiveRequest;
-  notes: string | null;
-  addresses: IAddress[];
-  contacts: IContact[];
-  createdAt: Date;
-  updatedAt: Date;
-}
 
 const clientSchema = new Schema<IClient>(
   {
     companyName: { type: String, required: true, trim: true },
     nip: { type: String, trim: true, default: null },
-    assignedTo: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    assignedTo: {
+      type: Schema.Types.ObjectId,
+      ref: "Position",
+      required: true,
+    }, // salesperson position
+    assignedAdvisor: {
+      type: Schema.Types.ObjectId,
+      ref: "Position",
+      default: null,
+    }, // advisor position of salesperson's region
     status: {
       type: String,
       enum: ["active", "reminder", "inactive", "archived"],
@@ -98,8 +69,10 @@ const clientSchema = new Schema<IClient>(
 
 // ─── indexes ──────────────────────────────────────────────────────────────────
 
-// fast lookup by assigned salesperson
+// fast lookup by salesperson
 clientSchema.index({ assignedTo: 1 });
+// fast lookup by advisor
+clientSchema.index({ assignedAdvisor: 1 });
 // search by company name
 clientSchema.index({ companyName: "text" });
 // fast lookup by status

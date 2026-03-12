@@ -43,7 +43,7 @@ export const createUser = async (
       temporaryPassword,
       role,
       grade,
-      region,
+      positionId,
     } = req.body;
 
     if (!firstName || !lastName || !email || !temporaryPassword || !role) {
@@ -56,7 +56,15 @@ export const createUser = async (
     }
 
     const user = await userService.createUser(
-      { firstName, lastName, email, temporaryPassword, role, grade, region },
+      {
+        firstName,
+        lastName,
+        email,
+        temporaryPassword,
+        role,
+        grade,
+        positionId,
+      },
       req.userId!,
       req.userRole as UserRole,
     );
@@ -74,11 +82,11 @@ export const updateUser = async (
 ): Promise<void> => {
   try {
     const { id } = req.params as { id: string };
-    const { firstName, lastName, email, region } = req.body;
+    const { firstName, lastName, email, positionId } = req.body;
 
     const user = await userService.updateUser(
       id,
-      { firstName, lastName, email, region },
+      { firstName, lastName, email, positionId },
       req.userId!,
       req.userRole as UserRole,
     );
@@ -181,6 +189,19 @@ export const resetPassword = async (
     );
 
     res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMe = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const user = await userService.getMe(req.userId!);
+    res.status(200).json({ user });
   } catch (error) {
     next(error);
   }

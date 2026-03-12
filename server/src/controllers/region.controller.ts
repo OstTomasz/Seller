@@ -9,14 +9,16 @@ export const createRegion = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { name, parentRegionId } = req.body;
-    if (!name) {
-      next(new BadRequestError("Name is required"));
+    const { name, prefix, parentRegionId } = req.body;
+
+    if (!name || !prefix) {
+      next(new BadRequestError("Name and prefix are required"));
       return;
     }
 
     const region = await regionService.createRegion(
       name,
+      prefix,
       req.userId!,
       req.userRole as UserRole,
       parentRegionId,
