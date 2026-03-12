@@ -15,6 +15,7 @@ import userRoutes from "./routes/user.routes";
 
 import "./models/Region";
 import "./models/User";
+import "./models/Client";
 
 validateEnv();
 
