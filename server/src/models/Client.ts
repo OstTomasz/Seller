@@ -18,6 +18,13 @@ const addressSchema = new Schema({
 });
 
 // ─── main schema ──────────────────────────────────────────────────────────────
+export type ClientStatus = "active" | "reminder" | "inactive" | "archived";
+
+export interface IArchiveRequest {
+  requestedAt: Date | null;
+  requestedBy: Types.ObjectId | null;
+  reason: string | null;
+}
 
 export interface IContact {
   _id: Types.ObjectId;
@@ -40,10 +47,13 @@ export interface IClient extends Document {
   companyName: string;
   nip: string | null;
   assignedTo: Types.ObjectId;
-  isActive: boolean;
+  status: ClientStatus;
+  lastActivityAt: Date | null;
+  inactivityReason: string | null;
+  archiveRequest: IArchiveRequest;
   notes: string | null;
   addresses: IAddress[];
-  contacts: IContact[]; // general contacts not tied to address
+  contacts: IContact[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,7 +63,25 @@ const clientSchema = new Schema<IClient>(
     companyName: { type: String, required: true, trim: true },
     nip: { type: String, trim: true, default: null },
     assignedTo: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    isActive: { type: Boolean, default: true },
+    status: {
+      type: String,
+      enum: ["active", "reminder", "inactive", "archived"],
+      default: "active",
+    },
+    lastActivityAt: {
+      type: Date,
+      default: null,
+    },
+    inactivityReason: {
+      type: String, // required when status changes to inactive
+      trim: true,
+      default: null,
+    },
+    archiveRequest: {
+      requestedAt: { type: Date, default: null },
+      requestedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+      reason: { type: String, trim: true, default: null },
+    },
     notes: { type: String, trim: true, default: null },
     addresses: {
       type: [addressSchema],
@@ -74,5 +102,7 @@ const clientSchema = new Schema<IClient>(
 clientSchema.index({ assignedTo: 1 });
 // search by company name
 clientSchema.index({ companyName: "text" });
+// fast lookup by status
+clientSchema.index({ status: 1, lastActivityAt: 1 });
 
 export default model<IClient>("Client", clientSchema);
