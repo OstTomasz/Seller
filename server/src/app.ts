@@ -12,10 +12,14 @@ import { errorHandler } from "./middleware/error.middleware";
 import authRoutes from "./routes/auth.routes";
 import regionRoutes from "./routes/region.routes";
 import userRoutes from "./routes/user.routes";
+import clientRoutes from "./routes/client.routes";
 
 import "./models/Region";
 import "./models/User";
+import "./models/Position";
 import "./models/Client";
+import { authenticate } from "./middleware/auth.middleware";
+import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";
 
 validateEnv();
 
@@ -52,8 +56,13 @@ if (process.env.NODE_ENV !== "test") {
 } //limit requests
 app.use(express.json()); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
+
+app.use(authenticate); //authenticate every request
+app.use(requirePasswordChange); //only users with resetted password can dive into service
+
 app.use("/api/regions", regionRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/clients", clientRoutes);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });

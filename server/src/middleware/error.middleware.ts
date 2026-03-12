@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "../utils/errors";
+import mongoose from "mongoose";
 
 export const errorHandler = (
   err: Error,
@@ -14,7 +15,7 @@ export const errorHandler = (
   }
 
   // MongoDB dup
-  if (err.message.includes("E11000")) {
+  if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {
     res.status(409).json({ message: "Resource already exists" });
     return;
   }

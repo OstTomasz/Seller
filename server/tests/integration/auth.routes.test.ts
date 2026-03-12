@@ -1,19 +1,14 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import User from "../../src/models/User";
-import { clearDB } from "../helpers";
+import { clearDB, createTestContext, TestContext } from "../helpers";
+
+let ctx: TestContext;
 
 describe("POST /api/auth/login", () => {
   beforeEach(async () => {
     await clearDB();
-    await User.create({
-      firstName: "Jan",
-      lastName: "Kowalski",
-      email: "director@test.com",
-      password: "password123",
-      role: "director",
-    });
+    await createTestContext();
   });
 
   it("should return token for valid credentials", async () => {
@@ -54,29 +49,15 @@ describe("POST /api/auth/login", () => {
 });
 
 describe("GET /api/auth/me", () => {
-  let token: string;
-
   beforeEach(async () => {
     await clearDB();
-    await User.create({
-      firstName: "Jan",
-      lastName: "Kowalski",
-      email: "director@test.com",
-      password: "password123",
-      role: "director",
-    });
-
-    const loginRes = await request(app)
-      .post("/api/auth/login")
-      .send({ email: "director@test.com", password: "password123" });
-
-    token = loginRes.body.token;
+    ctx = await createTestContext();
   });
 
   it("should return user data for valid token", async () => {
     const res = await request(app)
       .get("/api/auth/me")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Authorization", `Bearer ${ctx.directorToken}`);
 
     expect(res.status).toBe(200);
     expect(res.body.user.email).toBe("director@test.com");

@@ -1,13 +1,11 @@
 import { describe, it, expect } from "vitest";
 import mongoose from "mongoose";
 import User from "../../src/models/User";
+import { clearDB } from "../helpers";
 
 describe("User Model", () => {
   beforeEach(async () => {
-    const collections = mongoose.connection.collections;
-    for (const key in collections) {
-      await collections[key].deleteMany({});
-    }
+    await clearDB();
   });
 
   it("should hash password before saving", async () => {
@@ -18,7 +16,7 @@ describe("User Model", () => {
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
-      region: new mongoose.Types.ObjectId(),
+      position: new mongoose.Types.ObjectId(),
     });
 
     expect(user.password).not.toBe("plainpassword123");
@@ -33,7 +31,7 @@ describe("User Model", () => {
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
-      region: new mongoose.Types.ObjectId(),
+      position: new mongoose.Types.ObjectId(),
     });
 
     const isValid = await user.comparePassword("plainpassword123");
@@ -48,7 +46,7 @@ describe("User Model", () => {
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
-      region: new mongoose.Types.ObjectId(),
+      position: new mongoose.Types.ObjectId(),
     });
 
     const isValid = await user.comparePassword("wrongpassword");
@@ -63,7 +61,7 @@ describe("User Model", () => {
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
-      region: new mongoose.Types.ObjectId(),
+      position: new mongoose.Types.ObjectId(),
     });
 
     const userJSON = user.toJSON();
@@ -78,13 +76,13 @@ describe("User Model", () => {
       password: "password123",
       role: "advisor",
       grade: 5,
-      region: new mongoose.Types.ObjectId(),
+      position: new mongoose.Types.ObjectId(),
     });
 
     await expect(user.save()).rejects.toThrow();
   });
 
-  it("should require region for salesperson", async () => {
+  it("should require position for salesperson", async () => {
     const user = new User({
       firstName: "Piotr",
       lastName: "Wiśniewski",
@@ -92,11 +90,11 @@ describe("User Model", () => {
       password: "password123",
       role: "salesperson",
       grade: 1,
-      region: null,
+      position: null,
     });
 
     await expect(user.save()).rejects.toThrow(
-      "Region is required for advisor and salesperson",
+      "Position is required for advisor and salesperson", // ← zaktualizowany komunikat
     );
   });
 
@@ -108,7 +106,7 @@ describe("User Model", () => {
       password: "password123",
       role: "salesperson",
       grade: null,
-      region: new mongoose.Types.ObjectId(),
+      position: new mongoose.Types.ObjectId(),
     });
 
     await expect(user.save()).rejects.toThrow(

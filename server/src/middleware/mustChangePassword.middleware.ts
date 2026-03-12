@@ -7,7 +7,7 @@ export const requirePasswordChange = async (
   next: NextFunction,
 ): Promise<void> => {
   // skip for password change endpoint itself — infinite loop otherwise
-  if (req.path === "/me/password" && req.method === "PATCH") {
+  if (req.path.endsWith("/me/password") && req.method === "PATCH") {
     next();
     return;
   }

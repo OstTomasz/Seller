@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import mongoose from "mongoose";
 import Region from "../../src/models/Region";
+import Position from "../../src/models/Position";
 import User from "../../src/models/User";
 import * as regionService from "../../src/services/region.service";
 import { ForbiddenError, NotFoundError } from "../../src/utils/errors";
@@ -17,6 +18,7 @@ describe("Region Service", () => {
     it("director should create a superregion", async () => {
       const region = await regionService.createRegion(
         "North Poland",
+        "NP",
         new mongoose.Types.ObjectId().toString(),
         "director",
       );
@@ -25,11 +27,54 @@ describe("Region Service", () => {
       expect(region.parentRegion).toBeNull();
     });
 
-    it("director should create a subregion", async () => {
-      const superregion = await Region.create({ name: "North Poland" });
+    it("should auto-create deputy position for superregion", async () => {
+      const region = await regionService.createRegion(
+        "North Poland",
+        "NP",
+        new mongoose.Types.ObjectId().toString(),
+        "director",
+      );
+
+      const position = await Position.findOne({
+        region: region._id,
+        type: "deputy",
+      });
+      expect(position).not.toBeNull();
+      expect(position?.code).toBe("NP-1");
+      expect(position?.currentHolder).toBeNull();
+    });
+
+    it("should auto-create advisor position for subregion", async () => {
+      const superregion = await Region.create({
+        name: "North Poland",
+        prefix: "NP",
+      });
 
       const region = await regionService.createRegion(
         "Pomerania",
+        "PO",
+        new mongoose.Types.ObjectId().toString(),
+        "director",
+        superregion._id.toString(),
+      );
+
+      const position = await Position.findOne({
+        region: region._id,
+        type: "advisor",
+      });
+      expect(position).not.toBeNull();
+      expect(position?.code).toBe("PO-1");
+    });
+
+    it("director should create a subregion", async () => {
+      const superregion = await Region.create({
+        name: "North Poland",
+        prefix: "NP",
+      });
+
+      const region = await regionService.createRegion(
+        "Pomerania",
+        "PO",
         new mongoose.Types.ObjectId().toString(),
         "director",
         superregion._id.toString(),
@@ -42,6 +87,7 @@ describe("Region Service", () => {
       await expect(
         regionService.createRegion(
           "North Poland",
+          "NP",
           new mongoose.Types.ObjectId().toString(),
           "deputy",
         ),
@@ -49,17 +95,33 @@ describe("Region Service", () => {
     });
 
     it("deputy should NOT create a subregion in another deputy superregion", async () => {
+      // create other deputy with position
+      const otherDeputyPosition = await Position.create({
+        code: "NP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const otherDeputy = await User.create({
         firstName: "Other",
         lastName: "Deputy",
         email: "other@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: otherDeputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(otherDeputyPosition._id, {
+        currentHolder: otherDeputy._id,
       });
 
       const superregion = await Region.create({
         name: "North Poland",
-        deputy: otherDeputy._id,
+        prefix: "NP",
+        deputy: otherDeputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(otherDeputyPosition._id, {
+        region: superregion._id,
       });
 
       const myDeputyId = new mongoose.Types.ObjectId().toString();
@@ -67,6 +129,7 @@ describe("Region Service", () => {
       await expect(
         regionService.createRegion(
           "Pomerania",
+          "PO",
           myDeputyId,
           "deputy",
           superregion._id.toString(),
@@ -79,7 +142,7 @@ describe("Region Service", () => {
 
   describe("updateRegionName", () => {
     it("should update region name", async () => {
-      const region = await Region.create({ name: "Old Name" });
+      const region = await Region.create({ name: "Old Name", prefix: "ON" });
 
       const updated = await regionService.updateRegionName(
         region._id.toString(),
@@ -105,17 +168,29 @@ describe("Region Service", () => {
     });
 
     it("deputy should NOT update superregion name", async () => {
+      const deputyPosition = await Position.create({
+        code: "NP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const deputy = await User.create({
         firstName: "Anna",
         lastName: "Deputy",
         email: "deputy@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: deputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(deputyPosition._id, {
+        currentHolder: deputy._id,
       });
 
       const superregion = await Region.create({
         name: "North Poland",
-        deputy: deputy._id,
+        prefix: "NP",
+        deputy: deputyPosition._id,
       });
 
       await expect(
@@ -129,30 +204,53 @@ describe("Region Service", () => {
     });
 
     it("deputy should NOT update subregion name from another superregion", async () => {
+      const myDeputyPosition = await Position.create({
+        code: "SP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const myDeputy = await User.create({
         firstName: "My",
         lastName: "Deputy",
         email: "mydeputy@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: myDeputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(myDeputyPosition._id, {
+        currentHolder: myDeputy._id,
       });
 
+      const otherDeputyPosition = await Position.create({
+        code: "NP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const otherDeputy = await User.create({
         firstName: "Other",
         lastName: "Deputy",
         email: "otherdeputy@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: otherDeputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(otherDeputyPosition._id, {
+        currentHolder: otherDeputy._id,
       });
 
-      // superregion belongs to otherDeputy
       const superregion = await Region.create({
         name: "South Poland",
-        deputy: otherDeputy._id,
+        prefix: "SP",
+        deputy: otherDeputyPosition._id,
       });
 
       const subregion = await Region.create({
         name: "Silesia",
+        prefix: "SL",
         parentRegion: superregion._id,
       });
 
@@ -171,7 +269,7 @@ describe("Region Service", () => {
 
   describe("deleteRegion", () => {
     it("should delete a region", async () => {
-      const region = await Region.create({ name: "Pomerania" });
+      const region = await Region.create({ name: "Pomerania", prefix: "PO" });
 
       await regionService.deleteRegion(
         region._id.toString(),
@@ -181,6 +279,25 @@ describe("Region Service", () => {
 
       const found = await Region.findById(region._id);
       expect(found).toBeNull();
+    });
+
+    it("should delete positions when region is deleted", async () => {
+      const region = await Region.create({ name: "Pomerania", prefix: "PO" });
+      await Position.create({
+        code: "PO-1",
+        region: region._id,
+        type: "advisor",
+        currentHolder: null,
+      });
+
+      await regionService.deleteRegion(
+        region._id.toString(),
+        new mongoose.Types.ObjectId().toString(),
+        "director",
+      );
+
+      const positions = await Position.find({ region: region._id });
+      expect(positions).toHaveLength(0);
     });
 
     it("should throw NotFoundError for non-existent region", async () => {
@@ -196,8 +313,15 @@ describe("Region Service", () => {
     });
 
     it("should NOT delete region with subregions", async () => {
-      const superregion = await Region.create({ name: "North Poland" });
-      await Region.create({ name: "Pomerania", parentRegion: superregion._id });
+      const superregion = await Region.create({
+        name: "North Poland",
+        prefix: "NP",
+      });
+      await Region.create({
+        name: "Pomerania",
+        prefix: "PO",
+        parentRegion: superregion._id,
+      });
 
       await expect(
         regionService.deleteRegion(
@@ -209,17 +333,29 @@ describe("Region Service", () => {
     });
 
     it("deputy should NOT delete superregion", async () => {
+      const deputyPosition = await Position.create({
+        code: "NP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const deputy = await User.create({
         firstName: "Anna",
         lastName: "Deputy",
         email: "deputy@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: deputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(deputyPosition._id, {
+        currentHolder: deputy._id,
       });
 
       const superregion = await Region.create({
         name: "North Poland",
-        deputy: deputy._id,
+        prefix: "NP",
+        deputy: deputyPosition._id,
       });
 
       await expect(
@@ -232,30 +368,53 @@ describe("Region Service", () => {
     });
 
     it("deputy should NOT delete subregion from another superregion", async () => {
+      const myDeputyPosition = await Position.create({
+        code: "SP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const myDeputy = await User.create({
         firstName: "My",
         lastName: "Deputy",
         email: "mydeputy@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: myDeputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(myDeputyPosition._id, {
+        currentHolder: myDeputy._id,
       });
 
+      const otherDeputyPosition = await Position.create({
+        code: "NP-1",
+        region: null,
+        type: "deputy",
+        currentHolder: null,
+      });
       const otherDeputy = await User.create({
         firstName: "Other",
         lastName: "Deputy",
         email: "otherdeputy@test.com",
         password: "password123",
         role: "deputy",
+        mustChangePassword: false,
+        position: otherDeputyPosition._id,
+      });
+      await Position.findByIdAndUpdate(otherDeputyPosition._id, {
+        currentHolder: otherDeputy._id,
       });
 
-      // superregion belongs to otherDeputy
       const superregion = await Region.create({
         name: "South Poland",
-        deputy: otherDeputy._id,
+        prefix: "SP",
+        deputy: otherDeputyPosition._id,
       });
 
       const subregion = await Region.create({
         name: "Silesia",
+        prefix: "SL",
         parentRegion: superregion._id,
       });
 
@@ -273,7 +432,7 @@ describe("Region Service", () => {
 
   describe("getRegionById", () => {
     it("should return region by id", async () => {
-      const region = await Region.create({ name: "Pomerania" });
+      const region = await Region.create({ name: "Pomerania", prefix: "PO" });
 
       const found = await regionService.getRegionById(region._id.toString());
 

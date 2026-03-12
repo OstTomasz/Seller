@@ -1,8 +1,9 @@
 import request from "supertest";
 import app from "../src/app";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import User from "../src/models/User";
 import Region from "../src/models/Region";
+import Position from "../src/models/Position";
 
 export const clearDB = async () => {
   const collections = mongoose.connection.collections;
@@ -29,33 +30,71 @@ export interface TestDB {
   superregionId: string;
   regionId: string;
   otherRegionId: string;
+  directorPositionId: string;
+  deputyPositionId: string;
+  advisorPositionId: string;
+  salespersonPositionId: string;
 }
 
-export interface TestContext {
+export interface TestContext extends TestDB {
   directorToken: string;
   deputyToken: string;
   advisorToken: string;
   salespersonToken: string;
-  directorId: string;
-  deputyId: string;
-  advisorId: string;
-  salespersonId: string;
-  superregionId: string;
-  regionId: string;
-  otherRegionId: string;
 }
 
 export const createTestDB = async (): Promise<TestDB> => {
-  const superregion = await Region.create({ name: "North Poland" });
+  // regions
+  const superregion = await Region.create({
+    name: "North Poland",
+    prefix: "NP",
+  });
   const region = await Region.create({
     name: "Pomerania",
+    prefix: "PO",
     parentRegion: superregion._id,
   });
   const otherRegion = await Region.create({
     name: "Silesia",
+    prefix: "SL",
     parentRegion: superregion._id,
   });
 
+  // positions (vacant first, assign holders after)
+  const directorPosition = await Position.create({
+    code: "DIR-1",
+    region: null,
+    type: "director",
+    currentHolder: null,
+  });
+
+  const deputyPosition = await Position.create({
+    code: "NP-1",
+    region: superregion._id,
+    type: "deputy",
+    currentHolder: null,
+  });
+
+  const advisorPosition = await Position.create({
+    code: "PO-1",
+    region: region._id,
+    type: "advisor",
+    currentHolder: null,
+  });
+
+  const salespersonPosition = await Position.create({
+    code: "PO-2",
+    region: region._id,
+    type: "salesperson",
+    currentHolder: null,
+  });
+
+  // assign deputy position to superregion
+  await Region.findByIdAndUpdate(superregion._id, {
+    deputy: deputyPosition._id,
+  });
+
+  // users
   const director = await User.create({
     firstName: "Jan",
     lastName: "Director",
@@ -63,6 +102,7 @@ export const createTestDB = async (): Promise<TestDB> => {
     password: "password123",
     role: "director",
     mustChangePassword: false,
+    position: directorPosition._id,
   });
 
   const deputy = await User.create({
@@ -72,9 +112,8 @@ export const createTestDB = async (): Promise<TestDB> => {
     password: "password123",
     role: "deputy",
     mustChangePassword: false,
+    position: deputyPosition._id,
   });
-
-  await Region.findByIdAndUpdate(superregion._id, { deputy: deputy._id });
 
   const advisor = await User.create({
     firstName: "Piotr",
@@ -83,8 +122,8 @@ export const createTestDB = async (): Promise<TestDB> => {
     password: "password123",
     role: "advisor",
     grade: 1,
-    region: region._id,
     mustChangePassword: false,
+    position: advisorPosition._id,
   });
 
   const salesperson = await User.create({
@@ -94,9 +133,25 @@ export const createTestDB = async (): Promise<TestDB> => {
     password: "password123",
     role: "salesperson",
     grade: 1,
-    region: region._id,
     mustChangePassword: false,
+    position: salespersonPosition._id,
   });
+
+  // update position holders
+  await Promise.all([
+    Position.findByIdAndUpdate(directorPosition._id, {
+      currentHolder: director._id,
+    }),
+    Position.findByIdAndUpdate(deputyPosition._id, {
+      currentHolder: deputy._id,
+    }),
+    Position.findByIdAndUpdate(advisorPosition._id, {
+      currentHolder: advisor._id,
+    }),
+    Position.findByIdAndUpdate(salespersonPosition._id, {
+      currentHolder: salesperson._id,
+    }),
+  ]);
 
   return {
     directorId: director._id.toString(),
@@ -106,6 +161,10 @@ export const createTestDB = async (): Promise<TestDB> => {
     superregionId: superregion._id.toString(),
     regionId: region._id.toString(),
     otherRegionId: otherRegion._id.toString(),
+    directorPositionId: directorPosition._id.toString(),
+    deputyPositionId: deputyPosition._id.toString(),
+    advisorPositionId: advisorPosition._id.toString(),
+    salespersonPositionId: salespersonPosition._id.toString(),
   };
 };
 
@@ -121,4 +180,13 @@ export const createTestContext = async (): Promise<TestContext> => {
     ]);
 
   return { ...db, directorToken, deputyToken, advisorToken, salespersonToken };
+};
+
+export const sampleAddress = {
+  _id: new Types.ObjectId(),
+  label: "Headquarters",
+  street: "Main St 1",
+  city: "Gdansk",
+  postalCode: "80-001",
+  contacts: [],
 };

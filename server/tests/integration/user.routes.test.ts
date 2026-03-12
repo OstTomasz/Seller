@@ -5,6 +5,7 @@ import app from "../../src/app";
 import User from "../../src/models/User";
 import Region from "../../src/models/Region";
 import { clearDB, createTestContext, loginAs, TestContext } from "../helpers";
+import Position from "../../src/models/Position";
 
 let ctx: TestContext;
 // ─── setup ────────────────────────────────────────────────────────────────────
@@ -68,6 +69,13 @@ describe("GET /api/users/:id", () => {
 
 describe("POST /api/users", () => {
   it("director should create a salesperson", async () => {
+    const vacantPosition = await Position.create({
+      code: "PO-99",
+      region: ctx.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
     const res = await request(app)
       .post("/api/users")
       .set("Authorization", `Bearer ${ctx.directorToken}`)
@@ -78,7 +86,7 @@ describe("POST /api/users", () => {
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: ctx.regionId,
+        positionId: vacantPosition._id.toString(),
       });
 
     expect(res.status).toBe(201);
@@ -87,6 +95,13 @@ describe("POST /api/users", () => {
   });
 
   it("deputy should create a salesperson in own region", async () => {
+    const vacantPosition = await Position.create({
+      code: "PO-99",
+      region: ctx.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
     const res = await request(app)
       .post("/api/users")
       .set("Authorization", `Bearer ${ctx.deputyToken}`)
@@ -97,7 +112,7 @@ describe("POST /api/users", () => {
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: ctx.regionId,
+        positionId: vacantPosition._id.toString(),
       });
 
     expect(res.status).toBe(201);
@@ -119,11 +134,21 @@ describe("POST /api/users", () => {
   });
 
   it("deputy should NOT create a user in another superregion region", async () => {
-    // create another superregion with different deputy
-    const otherSuperregion = await Region.create({ name: "South Poland" });
+    const otherSuperregion = await Region.create({
+      name: "South Poland",
+      prefix: "SP", // ← dodaj prefix
+    });
     const otherRegion = await Region.create({
       name: "Lesser Poland",
+      prefix: "LP",
       parentRegion: otherSuperregion._id,
+    });
+    const Position = (await import("../../src/models/Position")).default;
+    const otherPosition = await Position.create({
+      code: "LP-2",
+      region: otherRegion._id,
+      type: "salesperson",
+      currentHolder: null,
     });
 
     const res = await request(app)
@@ -136,7 +161,7 @@ describe("POST /api/users", () => {
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: otherRegion._id.toString(),
+        positionId: otherPosition._id.toString(),
       });
 
     expect(res.status).toBe(403);
@@ -153,7 +178,7 @@ describe("POST /api/users", () => {
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: ctx.regionId,
+        positionId: ctx.salespersonPositionId,
       });
 
     expect(res.status).toBe(403);
@@ -166,11 +191,11 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "User",
-        email: "advisor@test.com", // already exists
+        email: "advisor@test.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: ctx.regionId,
+        positionId: ctx.salespersonPositionId,
       });
 
     expect(res.status).toBe(409);
@@ -209,10 +234,21 @@ describe("PATCH /api/users/:id", () => {
   });
 
   it("deputy should NOT update user in another superregion region", async () => {
-    const otherSuperregion = await Region.create({ name: "South Poland" });
+    const otherSuperregion = await Region.create({
+      name: "South Poland",
+      prefix: "SP", // ← dodaj prefix
+    });
     const otherRegion = await Region.create({
       name: "Lesser Poland",
+      prefix: "LP",
       parentRegion: otherSuperregion._id,
+    });
+    const Position = (await import("../../src/models/Position")).default;
+    const otherPosition = await Position.create({
+      code: "LP-2",
+      region: otherRegion._id,
+      type: "salesperson",
+      currentHolder: null,
     });
     const otherUser = await User.create({
       firstName: "Other",
@@ -221,7 +257,7 @@ describe("PATCH /api/users/:id", () => {
       password: "password123",
       role: "salesperson",
       grade: 1,
-      region: otherRegion._id,
+      position: otherPosition._id,
       mustChangePassword: false,
     });
 
@@ -406,7 +442,14 @@ describe("PATCH /api/users/:id/reset-password", () => {
 
 describe("mustChangePassword middleware", () => {
   it("should block access when mustChangePassword is true", async () => {
-    // create user with mustChangePassword: true
+    const Position = (await import("../../src/models/Position")).default;
+    const newPosition = await Position.create({
+      code: "PO-99",
+      region: ctx.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
     await User.create({
       firstName: "New",
       lastName: "User",
@@ -414,7 +457,7 @@ describe("mustChangePassword middleware", () => {
       password: "temp1234",
       role: "salesperson",
       grade: 1,
-      region: ctx.regionId,
+      position: newPosition._id,
       mustChangePassword: true,
     });
 
@@ -429,6 +472,14 @@ describe("mustChangePassword middleware", () => {
   });
 
   it("should allow password change when mustChangePassword is true", async () => {
+    const Position = (await import("../../src/models/Position")).default;
+    const newPosition = await Position.create({
+      code: "PO-99",
+      region: ctx.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
     await User.create({
       firstName: "New",
       lastName: "User",
@@ -436,7 +487,7 @@ describe("mustChangePassword middleware", () => {
       password: "temp1234",
       role: "salesperson",
       grade: 1,
-      region: ctx.regionId,
+      position: newPosition._id,
       mustChangePassword: true,
     });
 

@@ -60,7 +60,7 @@ describe("POST /api/regions", () => {
     const res = await request(app)
       .post("/api/regions")
       .set("Authorization", `Bearer ${ctx.directorToken}`)
-      .send({ name: "Polska Południowa" });
+      .send({ name: "Polska Południowa", prefix: "PS" });
 
     expect(res.status).toBe(201);
     expect(res.body.region.name).toBe("Polska Południowa");
@@ -71,7 +71,11 @@ describe("POST /api/regions", () => {
     const res = await request(app)
       .post("/api/regions")
       .set("Authorization", `Bearer ${ctx.directorToken}`)
-      .send({ name: "Warmia", parentRegionId: ctx.superregionId });
+      .send({
+        name: "Warmia",
+        prefix: "WA",
+        parentRegionId: ctx.superregionId,
+      });
 
     expect(res.status).toBe(201);
     expect(res.body.region.parentRegion).toBe(ctx.superregionId);
@@ -81,7 +85,11 @@ describe("POST /api/regions", () => {
     const res = await request(app)
       .post("/api/regions")
       .set("Authorization", `Bearer ${ctx.deputyToken}`)
-      .send({ name: "Warmia", parentRegionId: ctx.superregionId });
+      .send({
+        name: "Warmia",
+        prefix: "WA",
+        parentRegionId: ctx.superregionId,
+      });
 
     expect(res.status).toBe(201);
   });
@@ -90,7 +98,7 @@ describe("POST /api/regions", () => {
     const res = await request(app)
       .post("/api/regions")
       .set("Authorization", `Bearer ${ctx.deputyToken}`)
-      .send({ name: "Polska Południowa" }); // no parentRegionId
+      .send({ name: "Polska Południowa", prefix: "PP" }); // no parentRegionId
 
     expect(res.status).toBe(403);
   });
@@ -117,7 +125,7 @@ describe("POST /api/regions", () => {
     const res = await request(app)
       .post("/api/regions")
       .set("Authorization", `Bearer ${ctx.directorToken}`)
-      .send({ name: "Pomerania" }); // already exists
+      .send({ name: "Pomerania", prefix: "PM" }); // already exists
 
     expect(res.status).toBe(409);
   });
@@ -168,12 +176,27 @@ describe("PATCH /api/regions/:id/name", () => {
 
 describe("PATCH /api/regions/:id/deputy", () => {
   it("director should assign deputy to superregion", async () => {
+    // create vacant position for new deputy
+    const Position = (await import("../../src/models/Position")).default;
+    const newPosition = await Position.create({
+      code: "NP-2",
+      region: ctx.superregionId,
+      type: "deputy",
+      currentHolder: null,
+    });
+
     const newDeputy = await User.create({
       firstName: "Nowy",
       lastName: "Deputy",
       email: "newdeputy@test.com",
       password: "password123",
       role: "deputy",
+      mustChangePassword: false,
+      position: newPosition._id,
+    });
+
+    await Position.findByIdAndUpdate(newPosition._id, {
+      currentHolder: newDeputy._id,
     });
 
     const res = await request(app)
@@ -191,7 +214,8 @@ describe("PATCH /api/regions/:id/deputy", () => {
       .send({ deputyId: null });
 
     expect(res.status).toBe(200);
-    expect(res.body.region.deputy).toBeNull();
+    // deputy position still exists but currentHolder is null
+    expect(res.body.region.deputy).not.toBeNull(); // position still assigned to region
   });
 
   it("deputy should NOT assign deputy", async () => {

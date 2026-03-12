@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import mongoose from "mongoose";
 import User from "../../src/models/User";
 import Region from "../../src/models/Region";
+import Position from "../../src/models/Position";
 import * as userService from "../../src/services/user.service";
 import { clearDB, createTestDB, TestDB } from "../helpers";
 
@@ -48,6 +49,13 @@ describe("getUserById", () => {
 
 describe("createUser", () => {
   it("director should create a salesperson", async () => {
+    const vacantPosition = await Position.create({
+      code: "PO-99",
+      region: db.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
     const user = await userService.createUser(
       {
         firstName: "New",
@@ -56,7 +64,7 @@ describe("createUser", () => {
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: db.regionId,
+        positionId: vacantPosition._id.toString(),
       },
       db.directorId,
       "director",
@@ -68,6 +76,14 @@ describe("createUser", () => {
   });
 
   it("deputy should create a salesperson in own region", async () => {
+    // create a vacant salesperson position in deputy's region
+    const vacantPosition = await Position.create({
+      code: "PO-99",
+      region: db.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
     const user = await userService.createUser(
       {
         firstName: "New",
@@ -76,7 +92,7 @@ describe("createUser", () => {
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
-        region: db.regionId,
+        positionId: vacantPosition._id.toString(),
       },
       db.deputyId,
       "deputy",
@@ -102,10 +118,20 @@ describe("createUser", () => {
   });
 
   it("deputy should NOT create a user in another superregion region", async () => {
-    const otherSuperregion = await Region.create({ name: "South Poland" });
+    const otherSuperregion = await Region.create({
+      name: "South Poland",
+      prefix: "SP", // ← dodaj prefix
+    });
     const outsideRegion = await Region.create({
       name: "Lesser Poland",
+      prefix: "LP", // ← dodaj prefix
       parentRegion: otherSuperregion._id,
+    });
+    const outsidePosition = await Position.create({
+      code: "LP-2",
+      region: outsideRegion._id,
+      type: "salesperson",
+      currentHolder: null,
     });
 
     await expect(
@@ -117,7 +143,7 @@ describe("createUser", () => {
           temporaryPassword: "temp1234",
           role: "salesperson",
           grade: 1,
-          region: outsideRegion._id.toString(),
+          positionId: outsidePosition._id.toString(),
         },
         db.deputyId,
         "deputy",
@@ -131,11 +157,11 @@ describe("createUser", () => {
         {
           firstName: "New",
           lastName: "User",
-          email: "advisor@test.com", // already exists
+          email: "advisor@test.com",
           temporaryPassword: "temp1234",
           role: "salesperson",
           grade: 1,
-          region: db.regionId,
+          positionId: db.salespersonPositionId,
         },
         db.directorId,
         "director",
@@ -170,10 +196,20 @@ describe("updateUser", () => {
   });
 
   it("deputy should NOT update user outside own superregion", async () => {
-    const otherSuperregion = await Region.create({ name: "South Poland" });
+    const otherSuperregion = await Region.create({
+      name: "South Poland",
+      prefix: "SP",
+    });
     const outsideRegion = await Region.create({
       name: "Lesser Poland",
+      prefix: "LP",
       parentRegion: otherSuperregion._id,
+    });
+    const outsidePosition = await Position.create({
+      code: "LP-2",
+      region: outsideRegion._id,
+      type: "salesperson",
+      currentHolder: null,
     });
     const outsideUser = await User.create({
       firstName: "Outside",
@@ -182,7 +218,7 @@ describe("updateUser", () => {
       password: "password123",
       role: "salesperson",
       grade: 1,
-      region: outsideRegion._id,
+      position: outsidePosition._id,
       mustChangePassword: false,
     });
 
@@ -275,10 +311,20 @@ describe("toggleUserActive", () => {
   });
 
   it("deputy should NOT toggle user outside own superregion", async () => {
-    const otherSuperregion = await Region.create({ name: "South Poland" });
+    const otherSuperregion = await Region.create({
+      name: "South Poland",
+      prefix: "SP",
+    });
     const outsideRegion = await Region.create({
       name: "Lesser Poland",
+      prefix: "LP",
       parentRegion: otherSuperregion._id,
+    });
+    const outsidePosition = await Position.create({
+      code: "LP-2",
+      region: outsideRegion._id,
+      type: "salesperson",
+      currentHolder: null,
     });
     const outsideUser = await User.create({
       firstName: "Outside",
@@ -287,7 +333,7 @@ describe("toggleUserActive", () => {
       password: "password123",
       role: "salesperson",
       grade: 1,
-      region: outsideRegion._id,
+      position: outsidePosition._id,
       mustChangePassword: false,
     });
 
@@ -314,7 +360,6 @@ describe("changePassword", () => {
     const user = await User.findById(db.advisorId);
     expect(user?.mustChangePassword).toBe(false);
 
-    // verify new password works
     const isValid = await user?.comparePassword("newpassword123");
     expect(isValid).toBe(true);
   });
@@ -367,10 +412,20 @@ describe("resetPassword", () => {
   });
 
   it("deputy should NOT reset password of user outside own superregion", async () => {
-    const otherSuperregion = await Region.create({ name: "South Poland" });
+    const otherSuperregion = await Region.create({
+      name: "South Poland",
+      prefix: "SP",
+    });
     const outsideRegion = await Region.create({
       name: "Lesser Poland",
+      prefix: "LP",
       parentRegion: otherSuperregion._id,
+    });
+    const outsidePosition = await Position.create({
+      code: "LP-2",
+      region: outsideRegion._id,
+      type: "salesperson",
+      currentHolder: null,
     });
     const outsideUser = await User.create({
       firstName: "Outside",
@@ -379,7 +434,7 @@ describe("resetPassword", () => {
       password: "password123",
       role: "salesperson",
       grade: 1,
-      region: outsideRegion._id,
+      position: outsidePosition._id,
       mustChangePassword: false,
     });
 
