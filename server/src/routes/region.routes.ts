@@ -5,11 +5,11 @@ import { requireRole } from "../middleware/role.middleware";
 
 const router = Router();
 
-// Odczyt — każdy zalogowany
+// getter - everyone
 router.get("/", regionController.getRegions);
 router.get("/:id", regionController.getRegionById);
 
-// Zapis — director i deputy (szczegółowa kontrola w serwisie)
+// setter - director and deputy only (only director can create superregions)
 router.post(
   "/",
   requireRole("director", "deputy"),

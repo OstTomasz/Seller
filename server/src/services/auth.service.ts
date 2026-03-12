@@ -13,11 +13,15 @@ const generateToken = (user: IUser): string => {
   const payload: TokenPayload = {
     userId: user._id.toString(),
     role: user.role,
+    mustChangePassword: user.mustChangePassword,
   };
 
   return jwt.sign(payload, process.env.JWT_SECRET as string, {
     expiresIn: "7d",
   });
+};
+export const generateTokenForUser = (user: IUser): string => {
+  return generateToken(user);
 };
 
 export const login = async (email: string, password: string) => {

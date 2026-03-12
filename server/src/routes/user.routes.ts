@@ -4,8 +4,6 @@ import { requireRole } from "../middleware/role.middleware";
 
 const router = Router();
 
-// Any logged in user can read their own data
-router.get("/me", userController.getMe);
 // Any logged in user can change their own password
 router.patch("/me/password", userController.changePassword);
 

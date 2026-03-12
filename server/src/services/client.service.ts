@@ -99,9 +99,6 @@ const verifyClientAccess = async (
 
   if (requesterRole === "salesperson") {
     const user = await User.findById(requesterId);
-    console.log("USER position:", user?.position?.toString());
-    console.log("CLIENT assignedTo:", assignedToId);
-    console.log("MATCH:", user?.position?.toString() === assignedToId);
     if (user?.position?.toString() !== assignedToId) throw new ForbiddenError();
     return;
   }
@@ -340,8 +337,6 @@ export const requestArchive = async (
   if (client.status === "archived") {
     throw new BadRequestError("Client is already archived");
   }
-
-  if (!reason) throw new BadRequestError("Reason is required");
 
   const updated = await Client.findByIdAndUpdate(
     clientId,

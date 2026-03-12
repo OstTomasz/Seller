@@ -176,17 +176,16 @@ export const updateUser = async (
       });
     }
   }
+  const updateFields: Record<string, unknown> = {};
+  if (data.firstName !== undefined) updateFields.firstName = data.firstName;
+  if (data.lastName !== undefined) updateFields.lastName = data.lastName;
+  if (data.email !== undefined) updateFields.email = data.email;
+  if (data.positionId !== undefined) updateFields.position = data.positionId;
 
-  const updated = await User.findByIdAndUpdate(
-    userId,
-    {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      position: data.positionId,
-    },
-    { returnDocument: "after", runValidators: true },
-  )
+  const updated = await User.findByIdAndUpdate(userId, updateFields, {
+    returnDocument: "after",
+    runValidators: true,
+  })
     .populate("position")
     .select("-password");
 
@@ -250,7 +249,7 @@ export const changePassword = async (
   userId: string,
   currentPassword: string,
   newPassword: string,
-): Promise<void> => {
+): Promise<IUser> => {
   const user = await User.findById(userId);
   if (!user) throw new NotFoundError("User not found");
 
@@ -260,6 +259,8 @@ export const changePassword = async (
   user.password = newPassword;
   user.mustChangePassword = false;
   await user.save();
+
+  return user;
 };
 
 export const resetPassword = async (
@@ -278,10 +279,4 @@ export const resetPassword = async (
   user.password = temporaryPassword;
   user.mustChangePassword = true;
   await user.save();
-};
-
-export const getMe = async (userId: string): Promise<IUser> => {
-  const user = await User.findById(userId).populate("position");
-  if (!user) throw new NotFoundError("User not found");
-  return user;
 };

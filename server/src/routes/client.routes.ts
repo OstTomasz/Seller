@@ -9,7 +9,7 @@ const router = Router();
 router.get("/", clientController.getClients);
 router.get("/:id", clientController.getClientById);
 
-// Salesperson (own), advisor (region), deputy (superregion), director can create
+// salesperson creating own, advisor creating for own region (must point a salesperson), deputy in superregion(must point a salesperson), director can create in any region, but point a salesperson (in this case - advisor is autocompleted)
 router.post("/", clientController.createClient);
 
 // Salesperson (own), advisor (region), deputy (superregion), director can update

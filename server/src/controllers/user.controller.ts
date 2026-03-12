@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import * as userService from "../services/user.service";
 import { UserRole } from "../types";
 import { BadRequestError } from "../utils/errors";
+import { generateTokenForUser } from "../services/auth.service";
 
 export const getUsers = async (
   req: Request,
@@ -160,8 +161,17 @@ export const changePassword = async (
       return;
     }
 
-    await userService.changePassword(req.userId!, currentPassword, newPassword);
-    res.status(200).json({ message: "Password changed successfully" });
+    const user = await userService.changePassword(
+      req.userId!,
+      currentPassword,
+      newPassword,
+    );
+
+    // generate new token with mustChangePassword: false
+
+    const token = generateTokenForUser(user);
+
+    res.status(200).json({ message: "Password changed successfully", token });
   } catch (error) {
     next(error);
   }
@@ -189,19 +199,6 @@ export const resetPassword = async (
     );
 
     res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getMe = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const user = await userService.getMe(req.userId!);
-    res.status(200).json({ user });
   } catch (error) {
     next(error);
   }

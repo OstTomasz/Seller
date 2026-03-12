@@ -49,11 +49,11 @@ if (process.env.NODE_ENV !== "test") {
     "/api",
     rateLimit({
       windowMs: 15 * 60 * 1000,
-      max: 100,
+      max: 100, //limit requests
       message: { message: "Too many requests, please try again later" },
     }),
   );
-} //limit requests
+}
 app.use(express.json()); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
 

@@ -379,6 +379,7 @@ describe("PATCH /api/users/me/password", () => {
       .send({ currentPassword: "password123", newPassword: "newpassword123" });
 
     expect(res.status).toBe(200);
+    expect(res.body.token).toBeDefined();
   });
 
   it("should return 400 for incorrect current password", async () => {

@@ -89,4 +89,5 @@ export interface IClient extends Document {
 export interface TokenPayload {
   userId: string;
   role: string;
+  mustChangePassword: boolean;
 }

@@ -27,12 +27,7 @@ export const getMe = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    if (!req.userId) {
-      next(new UnauthorizedError());
-      return;
-    }
-
-    const user = await authService.getMe(req.userId);
+    const user = await authService.getMe(req.userId!);
     res.status(200).json({ user });
   } catch (error) {
     next(error);

@@ -7,6 +7,7 @@ declare global {
     interface Request {
       userId?: string;
       userRole?: string;
+      mustChangePassword?: boolean;
     }
   }
 }
@@ -32,6 +33,7 @@ export const authenticate = (
 
     req.userId = decoded.userId;
     req.userRole = decoded.role;
+    req.mustChangePassword = decoded.mustChangePassword;
 
     next();
   } catch (error) {

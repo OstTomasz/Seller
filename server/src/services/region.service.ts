@@ -1,5 +1,6 @@
 import Region from "../models/Region";
 import Position from "../models/Position";
+import User from "../models/User";
 import { IRegion, UserRole } from "../types";
 import {
   BadRequestError,
@@ -135,7 +136,6 @@ export const updateRegionDeputy = async (
 
   // update user's position reference
   if (deputyUserId) {
-    const User = (await import("../models/User")).default;
     await User.findByIdAndUpdate(deputyUserId, { position: region.deputy });
   }
 
