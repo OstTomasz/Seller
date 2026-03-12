@@ -120,7 +120,7 @@ export const updateUser = async (
   const updated = await User.findByIdAndUpdate(
     userId,
     { ...data },
-    { new: true, runValidators: true },
+    { returnDocument: "after", runValidators: true },
   )
     .populate("region")
     .select("-password");
@@ -149,7 +149,7 @@ export const updateUserRoleAndGrade = async (
   const updated = await User.findByIdAndUpdate(
     userId,
     { role, grade },
-    { new: true, runValidators: true },
+    { returnDocument: "after", runValidators: true },
   )
     .populate("region")
     .select("-password");
@@ -176,7 +176,7 @@ export const toggleUserActive = async (
   const updated = await User.findByIdAndUpdate(
     userId,
     { isActive: !user.isActive },
-    { new: true },
+    { returnDocument: "after" },
   )
     .populate("region")
     .select("-password");

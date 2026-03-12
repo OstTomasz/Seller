@@ -64,7 +64,7 @@ export const updateRegionName = async (
   const region = await Region.findByIdAndUpdate(
     regionId,
     { name },
-    { new: true, runValidators: true },
+    { returnDocument: "after", runValidators: true },
   );
 
   if (!region) throw new NotFoundError("Region not found");
@@ -88,7 +88,7 @@ export const updateRegionDeputy = async (
   const updated = await Region.findByIdAndUpdate(
     regionId,
     { deputy: deputyId },
-    { new: true },
+    { returnDocument: "after" },
   ).populate("deputy");
 
   return updated!;

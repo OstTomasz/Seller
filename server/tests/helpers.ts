@@ -21,7 +21,15 @@ export const loginAs = async (
   return res.body.token;
 };
 
-// ─── test data factory ────────────────────────────────────────────────────────
+export interface TestDB {
+  directorId: string;
+  deputyId: string;
+  advisorId: string;
+  salespersonId: string;
+  superregionId: string;
+  regionId: string;
+  otherRegionId: string;
+}
 
 export interface TestContext {
   directorToken: string;
@@ -37,8 +45,7 @@ export interface TestContext {
   otherRegionId: string;
 }
 
-export const createTestContext = async (): Promise<TestContext> => {
-  // regions
+export const createTestDB = async (): Promise<TestDB> => {
   const superregion = await Region.create({ name: "North Poland" });
   const region = await Region.create({
     name: "Pomerania",
@@ -49,7 +56,6 @@ export const createTestContext = async (): Promise<TestContext> => {
     parentRegion: superregion._id,
   });
 
-  // users
   const director = await User.create({
     firstName: "Jan",
     lastName: "Director",
@@ -92,20 +98,7 @@ export const createTestContext = async (): Promise<TestContext> => {
     mustChangePassword: false,
   });
 
-  // tokens
-  const [directorToken, deputyToken, advisorToken, salespersonToken] =
-    await Promise.all([
-      loginAs("director@test.com"),
-      loginAs("deputy@test.com"),
-      loginAs("advisor@test.com"),
-      loginAs("salesperson@test.com"),
-    ]);
-
   return {
-    directorToken,
-    deputyToken,
-    advisorToken,
-    salespersonToken,
     directorId: director._id.toString(),
     deputyId: deputy._id.toString(),
     advisorId: advisor._id.toString(),
@@ -114,4 +107,18 @@ export const createTestContext = async (): Promise<TestContext> => {
     regionId: region._id.toString(),
     otherRegionId: otherRegion._id.toString(),
   };
+};
+
+export const createTestContext = async (): Promise<TestContext> => {
+  const db = await createTestDB();
+
+  const [directorToken, deputyToken, advisorToken, salespersonToken] =
+    await Promise.all([
+      loginAs("director@test.com"),
+      loginAs("deputy@test.com"),
+      loginAs("advisor@test.com"),
+      loginAs("salesperson@test.com"),
+    ]);
+
+  return { ...db, directorToken, deputyToken, advisorToken, salespersonToken };
 };
