@@ -67,13 +67,12 @@ export const createUser = async (
 ): Promise<IUser> => {
   // deputy can only create users in their own regions
   if (requesterRole === "deputy") {
-    if (!data.region) throw new ForbiddenError();
-    await verifyDeputyRegionAccess(requesterId, data.region);
-
-    // deputy cannot create director or deputy
     if (data.role === "director" || data.role === "deputy") {
       throw new ForbiddenError();
-    }
+    } // deputy cannot create director or deputy
+
+    if (!data.region) throw new ForbiddenError();
+    await verifyDeputyRegionAccess(requesterId, data.region);
   }
 
   const existingUser = await User.findOne({ email: data.email });

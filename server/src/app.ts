@@ -11,6 +11,7 @@ import { errorHandler } from "./middleware/error.middleware";
 
 import authRoutes from "./routes/auth.routes";
 import regionRoutes from "./routes/region.routes";
+import userRoutes from "./routes/user.routes";
 
 import "./models/Region";
 import "./models/User";
@@ -33,21 +34,25 @@ const corsOptions = {
   credentials: true,
 };
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: { message: "Too many requests, please try again later" },
-});
-
 const app = express();
 
 app.use(helmet()); //safety HTTP headers
 app.use(cors(corsOptions)); //allow only selected origins
 app.use(morgan("dev")); //pretty log requests
-app.use("/api", limiter); //limit requests
+if (process.env.NODE_ENV !== "test") {
+  app.use(
+    "/api",
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+      message: { message: "Too many requests, please try again later" },
+    }),
+  );
+} //limit requests
 app.use(express.json()); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
 app.use("/api/regions", regionRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });

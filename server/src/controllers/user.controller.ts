@@ -46,18 +46,10 @@ export const createUser = async (
       region,
     } = req.body;
 
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !temporaryPassword ||
-      !role ||
-      !grade ||
-      !region
-    ) {
+    if (!firstName || !lastName || !email || !temporaryPassword || !role) {
       next(
         new BadRequestError(
-          "firstName, lastName, email, temporaryPassword, role, grade and region are required",
+          "firstName, lastName, email, temporaryPassword and role are required",
         ),
       );
       return;
