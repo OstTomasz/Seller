@@ -1,0 +1,94 @@
+import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+import { Button } from "./Button";
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}
+
+const sizeStyles = {
+  sm: "max-w-sm",
+  md: "max-w-md",
+  lg: "max-w-2xl",
+};
+
+export const Modal = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+  className,
+  size = "md",
+}: ModalProps) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // focus trap — when modal open move focus
+  useEffect(() => {
+    if (isOpen) panelRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? "modal-title" : undefined}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        ref={panelRef}
+        tabIndex={-1} // let focus but not interact with tab order
+        className={cn(
+          "w-full bg-bg-elevated border border-gold-500 rounded-xl shadow-2xl outline-none",
+          sizeStyles[size],
+          className,
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {title ? (
+          <div className="flex items-center justify-between px-6 py-4 border-b border-celery-700">
+            <h2
+              id="modal-title"
+              className="text-lg font-semibold text-celery-100"
+            >
+              {title}
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label="Close modal"
+              className="p-1.5"
+            >
+              <X size={16} />
+            </Button>
+          </div>
+        ) : null}
+        <div className="px-6 py-4">{children}</div>
+      </div>
+    </div>
+  );
+};

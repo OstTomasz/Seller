@@ -97,6 +97,10 @@ export const createUser = async (
     if (!regionId) throw new ForbiddenError();
     await verifyDeputyRegionAccess(requesterId, regionId);
   }
+  
+  if (!data.email.endsWith("@seller.com")) {
+  throw new BadRequestError("Email must end with @seller.com");
+}
 
   const existingUser = await User.findOne({ email: data.email });
   if (existingUser)
@@ -275,6 +279,8 @@ export const resetPassword = async (
   if (requesterRole === "deputy") {
     await verifyDeputyUserAccess(requesterId, user);
   }
+
+  
 
   user.password = temporaryPassword;
   user.mustChangePassword = true;

@@ -3,6 +3,7 @@ import { useAuthStore } from "@/store/authStore";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { ForcePasswordChange } from "@/features/auth/ForcePasswordChange";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
+import { LogoutButton } from "@/features/auth/LogoutButton";
 
 // Protected route — redirects to /login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -47,6 +48,7 @@ export const AppRouter = () => {
           element={
             <ProtectedRoute>
               <div className="text-white">Dashboard — coming soon</div>
+              <LogoutButton />
             </ProtectedRoute>
           }
         />

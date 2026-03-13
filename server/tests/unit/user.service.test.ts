@@ -168,6 +168,22 @@ describe("createUser", () => {
       ),
     ).rejects.toThrow("User with this email already exists");
   });
+it("should throw BadRequestError for email not ending with @seller.com", async () => {
+  await expect(
+    userService.createUser(
+      {
+        firstName: "New",
+        lastName: "User",
+        email: "new@gmail.com",
+        temporaryPassword: "temp1234",
+        role: "salesperson",
+        grade: 1,
+      },
+      db.directorId,
+      "director",
+    ),
+  ).rejects.toThrow("Email must end with @seller.com");
+});
 });
 
 // ─── updateUser ───────────────────────────────────────────────────────────────

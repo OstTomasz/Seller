@@ -1,1 +1,94 @@
 @import "tailwindcss";
+
+@theme {
+  /* Background */
+  --color-bg-base: #030712;
+  --color-bg-surface: #0f1a0f;
+  --color-bg-elevated: #162316;
+
+  /* Celery greens */
+  --color-celery-900: #0d1f0d;
+  --color-celery-800: #162316;
+  --color-celery-700: #1e3a1e;
+  --color-celery-600: #2d5a2d;
+  --color-celery-500: #3d7a3d;
+  --color-celery-400: #5ca85c;
+  --color-celery-300: #7dc87d;
+  --color-celery-200: #a8e0a8;
+  --color-celery-100: #d4f0d4;
+
+  /* Gold accents */
+  --color-gold-900: #2a1f00;
+  --color-gold-700: #7a5c00;
+  --color-gold-500: #c9960c;
+  --color-gold-400: #e0ac1a;
+  --color-gold-300: #f0c93a;
+
+  /* Status */
+  --color-error: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
+}
+
+@layer base {
+  * {
+    cursor: default;
+  }
+
+  button,
+  button *,
+  a,
+  a *,
+  [role="button"],
+  [role="button"] *,
+  label[for],
+  select {
+    cursor: pointer;
+  }
+
+  input,
+  textarea {
+    cursor: text;
+  }
+
+  tr.cursor-pointer td {
+    cursor: pointer;
+  }
+
+    /* fluid typography & spacing */
+  input, textarea, select {
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    padding: clamp(0.5rem, 1.5vw, 0.625rem) clamp(0.75rem, 2vw, 1rem);
+  }
+
+  button {
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    padding: clamp(0.5rem, 1.5vw, 0.625rem) clamp(0.75rem, 2vw, 1rem);
+  }
+
+
+  disabled,
+  [disabled],
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /* unified transition */
+  *,
+  *::before,
+  *::after {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  /* visible focus ring for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid #c9960c;
+    outline-offset: 2px;
+  }
+
+  /* remove outline for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}

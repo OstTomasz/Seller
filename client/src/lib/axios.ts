@@ -24,14 +24,13 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const data = error.response?.data;
 
-    // token expired or invalid — force logout
-    if (status === 401) {
+    // only redirect on 401 if NOT on login page
+    if (status === 401 && window.location.pathname !== "/login") {
       useAuthStore.getState().logout();
       window.location.href = "/login";
       return Promise.reject(error);
     }
 
-    // password change required — redirect
     if (status === 403 && data?.mustChangePassword) {
       window.location.href = "/change-password";
       return Promise.reject(error);
