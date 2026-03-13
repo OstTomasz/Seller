@@ -20,17 +20,13 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginHeader = () => (
   <div className="flex flex-col items-center mb-8 gap-3">
     <img
-      src="/src/assets/logo.png"
+      src="/src/assets/logo.avif"
       alt="Seller CRM logo"
-      className="object-contain"
-      style={{ width: "clamp(120px, 70%, 280px)" }}
+      className="object-contain w-fluid-logo"
     />
-    <h1
-      className="font-bold text-celery-100 tracking-wide"
-      style={{ fontSize: "clamp(1.7rem, 4vw, 2.25rem)" }}
-    >
-      Seller CRM
-    </h1>
+<h1 className="font-bold text-celery-300 tracking-wide text-fluid-hero">
+  Seller CRM
+</h1>
     <p className="text-sm text-celery-500">Sign in to your account</p>
   </div>
 );
@@ -70,10 +66,7 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-bg-base flex items-center justify-center px-4">
-      <div
-        className="w-full"
-        style={{ maxWidth: "clamp(320px, 90vw, 480px)" }}
-      >
+<div className="w-full max-w-fluid-form">
         <LoginHeader />
         <Card
           elevated
