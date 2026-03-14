@@ -260,6 +260,10 @@ export const changePassword = async (
   const isValid = await user.comparePassword(currentPassword);
   if (!isValid) throw new BadRequestError("Current password is incorrect");
 
+  // prevent reusing the same password
+  const isSamePassword = await user.comparePassword(newPassword);
+  if (isSamePassword) throw new BadRequestError("New password must be different from current password");
+
   user.password = newPassword;
   user.mustChangePassword = false;
   await user.save();

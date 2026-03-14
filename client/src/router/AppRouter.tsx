@@ -5,23 +5,27 @@ import { ForcePasswordChange } from "@/features/auth/ForcePasswordChange";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
 import { LogoutButton } from "@/features/auth/LogoutButton";
 
-// Protected route — redirects to /login if not authenticated
+// Redirects to /login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { token, user } = useAuthStore();
 
   if (!token) return <Navigate to="/login" replace />;
-
-  // force password change before accessing any other page
-  if (user?.mustChangePassword)
-    return <Navigate to="/change-password" replace />;
+  if (user?.mustChangePassword) return <Navigate to="/change-password" replace />;
 
   return <>{children}</>;
 };
 
-// Auth route — redirects to / if already logged in
+// Redirects to / if already logged in
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuthStore();
   if (token) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+// Requires token but blocks access to other pages until password is changed
+const PasswordChangeRoute = ({ children }: { children: React.ReactNode }) => {
+  const { token } = useAuthStore();
+  if (!token) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -29,7 +33,7 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
+        {/* Public */}
         <Route
           path="/login"
           element={
@@ -39,16 +43,25 @@ export const AppRouter = () => {
           }
         />
 
-        {/* Force password change — needs token but blocks other pages */}
-        <Route path="/change-password" element={<ForcePasswordChange />} />
+        {/* Requires token, shown before accessing app */}
+        <Route
+          path="/change-password"
+          element={
+            <PasswordChangeRoute>
+              <ForcePasswordChange />
+            </PasswordChangeRoute>
+          }
+        />
 
-        {/* Protected routes */}
+        {/* Protected — will wrap with layout later */}
         <Route
           path="/"
           element={
             <ProtectedRoute>
-              <div className="text-white">Dashboard — coming soon</div>
-              <LogoutButton />
+              <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center gap-4">
+                <p className="text-celery-300">Dashboard — coming soon</p>
+                <LogoutButton />
+              </div>
             </ProtectedRoute>
           }
         />

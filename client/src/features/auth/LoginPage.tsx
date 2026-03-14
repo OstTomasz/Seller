@@ -24,9 +24,9 @@ const LoginHeader = () => (
       alt="Seller CRM logo"
       className="object-contain w-fluid-logo"
     />
-<h1 className="font-bold text-celery-300 tracking-wide text-fluid-hero">
-  Seller CRM
-</h1>
+    <h1 className="font-bold text-celery-300 tracking-wide text-fluid-hero">
+      Seller CRM
+    </h1>
     <p className="text-sm text-celery-500">Sign in to your account</p>
   </div>
 );
@@ -65,8 +65,8 @@ export const LoginPage = () => {
   const onSubmit = (data: LoginFormData) => login(data);
 
   return (
-    <div className="min-h-screen bg-bg-base flex items-center justify-center px-4">
-<div className="w-full max-w-fluid-form">
+<div className="min-h-screen bg-bg-base flex items-center justify-center px-4 py-8 sm:py-4">
+<div className="max-w-fluid-form">
         <LoginHeader />
         <Card
           elevated
@@ -97,7 +97,7 @@ export const LoginPage = () => {
             </Button>
           </form>
           <p className="text-center text-xs text-celery-500 mt-6">
-            Forgot your password? Contact your administrator.
+            Forgot your password? Contact your supervisor.
           </p>
         </Card>
       </div>
