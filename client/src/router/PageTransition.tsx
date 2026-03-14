@@ -3,24 +3,23 @@ import { useLocation, useOutlet } from "react-router-dom";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 
 const pageVariants: Variants = {
-  initial: { opacity: 0, x: 60 },
+  initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    x: 0,
     transition: {
-      duration: 0.45,
-      ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
+      duration: 0.2,
+      ease: "easeOut",
     },
   },
   exit: {
     opacity: 0,
-    x: -40,
     transition: {
-      duration: 0.35,
-      ease: [0.4, 0, 0.2, 1] as [number, number, number, number],
+      duration: 0.15,
+      ease: "easeIn",
     },
   },
 };
+
 
 export const PageTransition = () => {
   const { pathname } = useLocation();

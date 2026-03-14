@@ -1,10 +1,13 @@
-// src/features/layout/Topbar.tsx
+// src/components/layout/Topbar.tsx
 import { Menu, LogOut } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useScrolled } from "@/hooks/useScrolled";
 import { Button } from "@/components/ui";
+import { SidebarLink } from "./SidebarLink";
+import { getNavLinks } from "./navLinks";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/topbar-logo.avif";
+import { AppLogo } from "./AppLogo";
+
 
 interface TopbarProps {
   onMenuOpen: () => void;
@@ -14,11 +17,13 @@ export const Topbar = ({ onMenuOpen }: TopbarProps) => {
   const { user, logout } = useAuthStore();
   const scrolled = useScrolled();
 
+  const navLinks = user ? getNavLinks(user.role) : [];
+
   return (
     <header
       className={cn(
         "topbar-header",
-        "sticky top-0 z-40 px-4 lg:hidden",
+        "sticky top-0 z-40 px-4",
         "flex items-center justify-between",
         "bg-bg-elevated border-b border-celery-700",
         scrolled ? "is-scrolled" : "",
@@ -31,41 +36,30 @@ export const Topbar = ({ onMenuOpen }: TopbarProps) => {
           size="sm"
           onClick={onMenuOpen}
           aria-label="Open menu"
-          className="p-2"
+          className="p-2 lg:hidden"
         >
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div className="flex items-center gap-2">
-          <img
-            src={logo}
-            alt="Seller CRM"
-            className={cn(
-              "topbar-logo w-auto object-contain",
-              scrolled ? "is-scrolled" : "",
-            )}
-          />
-          <span className="font-heading font-semibold text-celery-300 text-sm tracking-wide">
-            Seller CRM
-          </span>
-        </div>
+<AppLogo scrolled={scrolled} />
       </div>
+
+      {/* Center — desktop nav */}
+      <nav className="hidden lg:flex items-center gap-1">
+        {navLinks.map((link) => (
+          <SidebarLink key={link.to} {...link} variant="nav" />
+        ))}
+      </nav>
 
       {/* Right — user info + logout */}
       <div className="flex items-center gap-3">
         {user ? (
-          <div
-            className={cn(
-              "topbar-user-info flex flex-col items-end leading-tight",
-              scrolled ? "is-scrolled" : "",
-            )}
-          >
-            <span className="text-xs font-medium text-celery-300">
-              {user.firstName}
-            </span>
-            <span className="text-xs text-celery-500 capitalize">
-              {user.role}
-            </span>
+          <div className={cn(
+            "topbar-user-info flex flex-col items-end leading-tight",
+            scrolled ? "is-scrolled" : "",
+          )}>
+            <span className="text-xs font-medium text-celery-300">{user.firstName}</span>
+            <span className="text-xs text-celery-500 capitalize">{user.role}</span>
           </div>
         ) : null}
 
