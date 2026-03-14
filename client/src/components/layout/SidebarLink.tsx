@@ -1,4 +1,3 @@
-// src/components/layout/SidebarLink.tsx
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";

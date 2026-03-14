@@ -1,0 +1,76 @@
+import { ArrowUp, MessageSquarePlus } from "lucide-react";
+import { useState } from "react";
+import { SupportModal } from "./SupportModal";
+import { SocialLinks } from "./SocialLinks";
+
+interface FooterProps {
+  variant?: "full" | "minimal";
+}
+
+
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+export const Footer = ({ variant = "full" }: FooterProps) => {
+  const year = new Date().getFullYear();
+  const [supportOpen, setSupportOpen] = useState(false);
+
+  return (
+    <>
+      <footer className="border-t border-celery-700 bg-bg-elevated px-4 py-4 sm:px-6">
+
+        {variant === "full" ? (
+          // ── Full layout ──────────────────────────────────────
+          <div className="flex flex-col items-center gap-3 sm:grid sm:grid-cols-3 sm:items-center">
+
+            {/* Left — socials */}
+<SocialLinks />
+
+            {/* Center — copyright */}
+            <div className="flex justify-center order-last sm:order-0">
+              <span className="text-xs text-celery-500">
+                © {year} Seller CRM
+              </span>
+            </div>
+
+            {/* Right — report + back to top */}
+            <div className="flex items-center justify-center gap-4 sm:justify-end">
+              <button
+                onClick={() => setSupportOpen(true)}
+                className="flex items-center gap-1.5 text-xs text-celery-500 hover:text-celery-400"
+              >
+                <MessageSquarePlus className="h-3.5 w-3.5" />
+                <span>Support</span>
+              </button>
+              <button
+                onClick={scrollToTop}
+                aria-label="Back to top"
+                className="flex items-center gap-1.5 text-xs text-celery-500 hover:text-celery-400"
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </button>
+            </div>
+
+          </div>
+        ) : (
+          // ── Minimal layout (login page) ──────────────────────
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+
+            {/* Socials */}
+<SocialLinks />
+
+            {/* Copyright */}
+            <span className="text-xs text-celery-500">
+              © {year} Seller CRM
+            </span>
+
+          </div>
+        )}
+
+      </footer>
+
+      {variant === "full" ? (
+        <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
+      ) : null}
+    </>
+  );
+};

@@ -1,4 +1,3 @@
-// src/components/layout/Topbar.tsx
 import { Menu, LogOut } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useScrolled } from "@/hooks/useScrolled";

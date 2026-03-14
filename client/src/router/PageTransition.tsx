@@ -1,4 +1,3 @@
-// src/router/PageTransition.tsx
 import { useLocation, useOutlet } from "react-router-dom";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 

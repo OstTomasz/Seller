@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/authStore";
 import { authApi } from "@/api/auth";
 import { ApiError } from "@/types";
 import { Button, Card, Input } from "@/components/ui";
+import { Footer } from "@/components/layout/Footer";
 
 const loginSchema = z.object({
   email: z.email("Invalid email address").endsWith("@seller.com", "Email domain must be @seller.com"),
@@ -65,42 +66,38 @@ export const LoginPage = () => {
   const onSubmit = (data: LoginFormData) => login(data);
 
   return (
-<div className="min-h-screen bg-bg-base flex items-center justify-center px-4 py-8 sm:py-4">
-<div className="max-w-fluid-form">
-        <LoginHeader />
-        <Card
-          elevated
-          className="shadow-2xl"
-        >
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              error={errors.email?.message}
-              {...register("email")}
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register("password")}
-            />
-            <Button
-              type="submit"
-              isLoading={isPending}
-              size="lg"
-              className="w-full mt-2"
-            >
-              Sign in
-            </Button>
-          </form>
-          <p className="text-center text-xs text-celery-500 mt-6">
-            Forgot your password? Contact your supervisor.
-          </p>
-        </Card>
+    <div className="min-h-screen bg-bg-base flex flex-col">
+      {/* center content takes all available space */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-4">
+        <div className="max-w-fluid-form w-full">
+          <LoginHeader />
+          <Card elevated className="shadow-2xl">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+              <Input
+                label="Email"
+                type="email"
+                placeholder="you@example.com"
+                error={errors.email?.message}
+                {...register("email")}
+              />
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                error={errors.password?.message}
+                {...register("password")}
+              />
+              <Button type="submit" isLoading={isPending} size="lg" className="w-full mt-2">
+                Sign in
+              </Button>
+            </form>
+            <p className="text-center text-xs text-celery-500 mt-6">
+              Forgot your password? Contact your supervisor.
+            </p>
+          </Card>
+        </div>
       </div>
+      <Footer variant="minimal" />
     </div>
   );
 };

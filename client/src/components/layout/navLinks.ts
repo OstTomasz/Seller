@@ -1,4 +1,3 @@
-// src/components/layout/navLinks.ts
 import {
   LayoutDashboard,
   Users,
