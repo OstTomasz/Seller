@@ -4,6 +4,7 @@ import { LoginPage } from "@/features/auth/LoginPage";
 import { ForcePasswordChange } from "@/features/auth/ForcePasswordChange";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
 import { LogoutButton } from "@/features/auth/LogoutButton";
+import { Topbar } from "@/features/layout/Topbar";
 
 // Redirects to /login if not authenticated
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,7 +59,9 @@ export const AppRouter = () => {
           path="/"
           element={
             <ProtectedRoute>
-              <div className="min-h-screen bg-bg-base flex flex-col items-center justify-center gap-4">
+<Topbar onMenuOpen={() => { }} />
+
+              <div className="min-h-500 bg-bg-base flex flex-col items-center justify-center gap-4">
                 <p className="text-celery-300">Dashboard — coming soon</p>
                 <LogoutButton />
               </div>
