@@ -1,7 +1,7 @@
 import { ArrowUp, MessageSquarePlus } from "lucide-react";
 import { useState } from "react";
 import { SupportModal } from "./SupportModal";
-import { SocialLinks } from "./SocialLinks";
+import { SocialLinks } from "../../shared/SocialLinks";
 
 interface FooterProps {
   variant?: "full" | "minimal";

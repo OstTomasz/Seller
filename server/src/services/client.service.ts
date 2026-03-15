@@ -1,42 +1,65 @@
+// server/src/services/client.service.ts
+import mongoose from "mongoose";
 import Client from "../models/Client";
 import Position from "../models/Position";
 import User from "../models/User";
 import Region from "../models/Region";
 import { IClient, IAddress, UserRole } from "../types";
-import {
-  BadRequestError,
-  ForbiddenError,
-  NotFoundError,
-} from "../utils/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "../utils/errors";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-// Get advisor position for a given region (XX-1)
+const deepPopulate = (query: mongoose.Query<any, any>) =>
+  query
+    .populate({
+      path: "assignedTo",
+      populate: [
+        { path: "currentHolder", select: "firstName lastName" },
+        {
+          path: "region",
+          select: "name parentRegion",
+          populate: { path: "parentRegion", select: "name" },
+        },
+      ],
+    })
+    .populate({
+      path: "assignedAdvisor",
+      populate: { path: "currentHolder", select: "firstName lastName" },
+    });
+
+const deepPopulateDoc = async (client: IClient): Promise<IClient> => {
+  await client.populate([
+    {
+      path: "assignedTo",
+      populate: [
+        { path: "currentHolder", select: "firstName lastName" },
+        {
+          path: "region",
+          select: "name parentRegion",
+          populate: { path: "parentRegion", select: "name" },
+        },
+      ],
+    },
+    {
+      path: "assignedAdvisor",
+      populate: { path: "currentHolder", select: "firstName lastName" },
+    },
+  ]);
+  return client;
+};
+
 const getAdvisorPosition = async (regionId: string) => {
   const region = await Region.findById(regionId);
   if (!region) throw new NotFoundError("Region not found");
-
-  const advisorPosition = await Position.findOne({
-    region: regionId,
-    type: "advisor",
-  });
-
-  return advisorPosition ?? null;
+  return await Position.findOne({ region: regionId, type: "advisor" }) ?? null;
 };
 
-// Get region ID from a position
-const getRegionFromPosition = async (
-  positionId: string,
-): Promise<string | null> => {
+const getRegionFromPosition = async (positionId: string): Promise<string | null> => {
   const position = await Position.findById(positionId);
   return position?.region?.toString() ?? null;
 };
 
-// Get all position IDs in a superregion (deputy's access scope)
-const getPositionIdsInSuperregion = async (
-  deputyUserId: string,
-): Promise<string[]> => {
-  // find deputy's position → region (superregion)
+const getPositionIdsInSuperregion = async (deputyUserId: string): Promise<string[]> => {
   const deputyUser = await User.findById(deputyUserId).populate("position");
   if (!deputyUser?.position) return [];
 
@@ -44,24 +67,14 @@ const getPositionIdsInSuperregion = async (
   if (!deputyPosition?.region) return [];
 
   const superregionId = deputyPosition.region.toString();
-
-  // find all subregions of this superregion
   const subregions = await Region.find({ parentRegion: superregionId });
   const subregionIds = subregions.map((r) => r._id.toString());
 
-  // find all positions in those subregions
-  const positions = await Position.find({
-    region: { $in: subregionIds },
-  });
-
+  const positions = await Position.find({ region: { $in: subregionIds } });
   return positions.map((p) => p._id.toString());
 };
 
-// Verify salesperson position belongs to advisor's region
-const verifyAdvisorAccess = async (
-  advisorUserId: string,
-  targetPositionId: string,
-): Promise<void> => {
+const verifyAdvisorAccess = async (advisorUserId: string, targetPositionId: string): Promise<void> => {
   const advisorUser = await User.findById(advisorUserId);
   if (!advisorUser?.position) throw new ForbiddenError();
 
@@ -76,18 +89,11 @@ const verifyAdvisorAccess = async (
   }
 };
 
-// Verify deputy has access to a client's position
-const verifyDeputyAccess = async (
-  deputyUserId: string,
-  targetPositionId: string,
-): Promise<void> => {
+const verifyDeputyAccess = async (deputyUserId: string, targetPositionId: string): Promise<void> => {
   const allowedPositionIds = await getPositionIdsInSuperregion(deputyUserId);
-  if (!allowedPositionIds.includes(targetPositionId)) {
-    throw new ForbiddenError();
-  }
+  if (!allowedPositionIds.includes(targetPositionId)) throw new ForbiddenError();
 };
 
-// Verify requester has access to a specific client
 const verifyClientAccess = async (
   client: IClient,
   requesterId: string,
@@ -102,12 +108,10 @@ const verifyClientAccess = async (
     if (user?.position?.toString() !== assignedToId) throw new ForbiddenError();
     return;
   }
-
   if (requesterRole === "advisor") {
     await verifyAdvisorAccess(requesterId, assignedToId);
     return;
   }
-
   if (requesterRole === "deputy") {
     await verifyDeputyAccess(requesterId, assignedToId);
     return;
@@ -123,40 +127,31 @@ export const getClients = async (
   requesterRole: UserRole,
 ): Promise<IClient[]> => {
   if (requesterRole === "director") {
-    return await Client.find()
-      .populate("assignedTo")
-      .populate("assignedAdvisor")
-      .sort({ companyName: 1 });
+    return await deepPopulate(Client.find().sort({ companyName: 1 }));
   }
 
   if (requesterRole === "salesperson") {
     const user = await User.findById(requesterId);
     if (!user?.position) return [];
-
-    return await Client.find({ assignedTo: user.position })
-      .populate("assignedTo")
-      .populate("assignedAdvisor")
-      .sort({ companyName: 1 });
+    return await deepPopulate(
+      Client.find({ assignedTo: user.position }).sort({ companyName: 1 })
+    );
   }
 
   if (requesterRole === "advisor") {
     const user = await User.findById(requesterId);
     if (!user?.position) return [];
-
-    return await Client.find({ assignedAdvisor: user.position })
-      .populate("assignedTo")
-      .populate("assignedAdvisor")
-      .sort({ companyName: 1 });
+    return await deepPopulate(
+      Client.find({ assignedAdvisor: user.position }).sort({ companyName: 1 })
+    );
   }
 
   if (requesterRole === "deputy") {
     const positionIds = await getPositionIdsInSuperregion(requesterId);
     if (positionIds.length === 0) return [];
-
-    return await Client.find({ assignedTo: { $in: positionIds } })
-      .populate("assignedTo")
-      .populate("assignedAdvisor")
-      .sort({ companyName: 1 });
+    return await deepPopulate(
+      Client.find({ assignedTo: { $in: positionIds } }).sort({ companyName: 1 })
+    );
   }
 
   return [];
@@ -168,13 +163,10 @@ export const getClientById = async (
   requesterRole: UserRole,
 ): Promise<IClient> => {
   const client = await Client.findById(clientId);
-
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
-
-  await client.populate(["assignedTo", "assignedAdvisor"]);
-  return client;
+  return await deepPopulateDoc(client);
 };
 
 export const createClient = async (
@@ -192,31 +184,25 @@ export const createClient = async (
   let assignedAdvisorPositionId: string | null = null;
 
   if (requesterRole === "salesperson") {
-    // salesperson creates → assignedTo = own position
     const user = await User.findById(requesterId);
     if (!user?.position) throw new ForbiddenError();
 
     assignedToPositionId = user.position.toString();
-
-    // auto-assign advisor from own region
     const regionId = await getRegionFromPosition(assignedToPositionId);
     if (regionId) {
       const advisorPos = await getAdvisorPosition(regionId);
       assignedAdvisorPositionId = advisorPos?._id.toString() ?? null;
     }
   } else if (requesterRole === "advisor") {
-    // advisor creates → assignedTo = indicated salesperson, assignedAdvisor = own position
     if (!data.salespersonPositionId)
       throw new BadRequestError("salespersonPositionId is required");
 
     await verifyAdvisorAccess(requesterId, data.salespersonPositionId);
-
     assignedToPositionId = data.salespersonPositionId;
 
     const advisorUser = await User.findById(requesterId);
     assignedAdvisorPositionId = advisorUser?.position?.toString() ?? null;
   } else {
-    // deputy/director → assignedTo = indicated salesperson, assignedAdvisor = auto from region
     if (!data.salespersonPositionId)
       throw new BadRequestError("salespersonPositionId is required");
 
@@ -225,7 +211,6 @@ export const createClient = async (
     }
 
     assignedToPositionId = data.salespersonPositionId;
-
     const regionId = await getRegionFromPosition(assignedToPositionId);
     if (regionId) {
       const advisorPos = await getAdvisorPosition(regionId);
@@ -244,7 +229,7 @@ export const createClient = async (
     lastActivityAt: new Date(),
   });
 
-  return client;
+  return await deepPopulateDoc(client);
 };
 
 export const updateClient = async (
@@ -263,15 +248,9 @@ export const updateClient = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  const updated = await Client.findByIdAndUpdate(
-    clientId,
-    { ...data },
-    { returnDocument: "after", runValidators: true },
-  )
-    .populate("assignedTo")
-    .populate("assignedAdvisor");
-
-  return updated!;
+  return await deepPopulate(
+    Client.findByIdAndUpdate(clientId, { ...data }, { returnDocument: "after", runValidators: true })
+  ) as IClient;
 };
 
 export const updateClientStatus = async (
@@ -286,23 +265,17 @@ export const updateClientStatus = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  // only salesperson (own), deputy (superregion), director can change status
   if (requesterRole === "advisor") throw new ForbiddenError();
 
   if (status === "inactive" && !inactivityReason) {
-    throw new BadRequestError(
-      "inactivityReason is required when status is inactive",
-    );
+    throw new BadRequestError("inactivityReason is required when status is inactive");
   }
 
   if (status === "archived") {
-    throw new BadRequestError(
-      "Use archive request endpoint to archive a client",
-    );
+    throw new BadRequestError("Use archive request endpoint to archive a client");
   }
 
   const updateData: Record<string, unknown> = { status };
-
   if (status === "inactive") {
     updateData.inactivityReason = inactivityReason;
   } else {
@@ -310,14 +283,9 @@ export const updateClientStatus = async (
     updateData.lastActivityAt = new Date();
   }
 
-  const updated = await Client.findByIdAndUpdate(clientId, updateData, {
-    returnDocument: "after",
-    runValidators: true,
-  })
-    .populate("assignedTo")
-    .populate("assignedAdvisor");
-
-  return updated!;
+  return await deepPopulate(
+    Client.findByIdAndUpdate(clientId, updateData, { returnDocument: "after", runValidators: true })
+  ) as IClient;
 };
 
 export const requestArchive = async (
@@ -331,28 +299,16 @@ export const requestArchive = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  // only salesperson can submit archive request
   if (requesterRole !== "salesperson") throw new ForbiddenError();
+  if (client.status === "archived") throw new BadRequestError("Client is already archived");
 
-  if (client.status === "archived") {
-    throw new BadRequestError("Client is already archived");
-  }
-
-  const updated = await Client.findByIdAndUpdate(
-    clientId,
-    {
-      archiveRequest: {
-        requestedAt: new Date(),
-        requestedBy: requesterId,
-        reason,
-      },
-    },
-    { returnDocument: "after" },
-  )
-    .populate("assignedTo")
-    .populate("assignedAdvisor");
-
-  return updated!;
+  return await deepPopulate(
+    Client.findByIdAndUpdate(
+      clientId,
+      { archiveRequest: { requestedAt: new Date(), requestedBy: requesterId, reason } },
+      { returnDocument: "after" },
+    )
+  ) as IClient;
 };
 
 export const approveArchive = async (
@@ -360,10 +316,7 @@ export const approveArchive = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  // only deputy and director can approve
-  if (requesterRole !== "deputy" && requesterRole !== "director") {
-    throw new ForbiddenError();
-  }
+  if (requesterRole !== "deputy" && requesterRole !== "director") throw new ForbiddenError();
 
   const client = await Client.findById(clientId);
   if (!client) throw new NotFoundError("Client not found");
@@ -376,20 +329,18 @@ export const approveArchive = async (
     await verifyDeputyAccess(requesterId, client.assignedTo.toString());
   }
 
-  const updated = await Client.findByIdAndUpdate(
-    clientId,
-    {
-      status: "archived",
-      "archiveRequest.requestedAt": null,
-      "archiveRequest.requestedBy": null,
-      "archiveRequest.reason": null,
-    },
-    { returnDocument: "after" },
-  )
-    .populate("assignedTo")
-    .populate("assignedAdvisor");
-
-  return updated!;
+  return await deepPopulate(
+    Client.findByIdAndUpdate(
+      clientId,
+      {
+        status: "archived",
+        "archiveRequest.requestedAt": null,
+        "archiveRequest.requestedBy": null,
+        "archiveRequest.reason": null,
+      },
+      { returnDocument: "after" },
+    )
+  ) as IClient;
 };
 
 export const unarchiveClient = async (
@@ -400,22 +351,15 @@ export const unarchiveClient = async (
   const client = await Client.findById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
-  if (client.status !== "archived") {
-    throw new BadRequestError("Client is not archived");
-  }
+  if (client.status !== "archived") throw new BadRequestError("Client is not archived");
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  const updated = await Client.findByIdAndUpdate(
-    clientId,
-    {
-      status: "active",
-      lastActivityAt: new Date(),
-    },
-    { returnDocument: "after" },
-  )
-    .populate("assignedTo")
-    .populate("assignedAdvisor");
-
-  return updated!;
+  return await deepPopulate(
+    Client.findByIdAndUpdate(
+      clientId,
+      { status: "active", lastActivityAt: new Date() },
+      { returnDocument: "after" },
+    )
+  ) as IClient;
 };

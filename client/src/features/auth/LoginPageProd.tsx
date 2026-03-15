@@ -1,4 +1,3 @@
-// src/features/auth/LoginPage.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,33 +17,6 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
-
-type TestUser = { email: string; password: string; note: string };
-type TestLabel = { label: string };
-
-const TEST_USERS: (TestUser | TestLabel)[] = [
-  { email: "director@seller.com",    password: "password123", note: "" },
-  { label: "--- Poland North ---" },
-  { email: "deputy1@seller.com",     password: "password123", note: "" },
-  { email: "advisor.pom@seller.com", password: "Password123", note: "" },
-  { email: "sp1.pom@seller.com",     password: "Password123", note: "(5 clients)" },
-  { email: "sp2.pom@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.pom@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "advisor.war@seller.com", password: "password123", note: "" },
-  { email: "sp1.war@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp2.war@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.war@seller.com",     password: "password123", note: "(5 clients)" },
-  { label: "--- Poland South ---" },
-  { email: "deputy2@seller.com",     password: "password123", note: "" },
-  { email: "advisor.mal@seller.com", password: "password123", note: "" },
-  { email: "sp1.mal@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp2.mal@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.mal@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "advisor.sla@seller.com", password: "password123", note: "" },
-  { email: "sp1.sla@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp2.sla@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.sla@seller.com",     password: "password123", note: "(5 clients)" },
-];
 
 const LoginHeader = () => (
   <div className="flex flex-col items-center mb-8 gap-3">
@@ -67,7 +39,6 @@ export const LoginPage = () => {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -94,13 +65,9 @@ export const LoginPage = () => {
 
   const onSubmit = (data: LoginFormData) => login(data);
 
-  const fillCredentials = (email: string, password: string) => {
-    setValue("email", email, { shouldValidate: true });
-    setValue("password", password, { shouldValidate: true });
-  };
-
   return (
     <div className="min-h-screen bg-bg-base flex flex-col">
+      {/* center content takes all available space */}
       <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-4">
         <div className="max-w-fluid-form w-full">
           <LoginHeader />
@@ -124,33 +91,9 @@ export const LoginPage = () => {
                 Sign in
               </Button>
             </form>
-
             <p className="text-center text-xs text-celery-500 mt-6">
               Forgot your password? Contact your supervisor.
             </p>
-
-            {/* Test users */}
-            <div className="mt-4 border-t border-celery-800 pt-4 font-mono text-sm flex flex-col gap-0.5">
-              {TEST_USERS.map((row, i) =>
-                "label" in row ? (
-                  <span key={i} className="text-celery-600 mt-2">{row.label}</span>
-                ) : (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => fillCredentials(row.email, row.password)}
-                    className="flex items-center gap-2 hover:bg-celery-800 rounded px-1 -mx-1 text-left"
-                  >
-                    <span className="text-celery-300">{row.email}</span>
-                    <span className="text-celery-700">/</span>
-                    <span className="text-celery-500">{row.password}</span>
-                    {row.note ? (
-                      <span className="text-celery-700 text-xs">{row.note}</span>
-                    ) : null}
-                  </button>
-                )
-              )}
-            </div>
 
           </Card>
         </div>

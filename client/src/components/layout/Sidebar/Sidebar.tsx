@@ -4,8 +4,9 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui";
 import { SidebarLink } from "./SidebarLink";
-import { mainLinks, managementLinks, MANAGEMENT_ROLES } from "./navLinks";
-import { AppLogo } from "./AppLogo";
+import { mainLinks, MANAGEMENT_ROLES, managementLinks } from "@/components/shared/navLinks";
+import { AppLogo } from "@/components/shared/AppLogo";
+
 
 interface SidebarProps {
   isOpen: boolean;

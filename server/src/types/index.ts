@@ -40,6 +40,7 @@ export interface IUser extends Document {
   createdBy: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
+    numericId: number;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -82,6 +83,7 @@ export interface IClient extends Document {
   contacts: IContact[];
   createdAt: Date;
   updatedAt: Date;
+    numericId: number;
 }
 
 //Helpers

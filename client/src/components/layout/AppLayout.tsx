@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Topbar } from "./Topbar";
-import { Sidebar } from "./Sidebar";
-import { Footer } from "./Footer";
+import { Topbar } from "./Topbar/Topbar";
+import { Footer } from "./Footer/Footer";
+import { Sidebar } from "./Sidebar/Sidebar";
 
 interface AppLayoutProps {
   children: React.ReactNode;

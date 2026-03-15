@@ -1,11 +1,11 @@
 import { Menu, LogOut } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
-import { useScrolled } from "@/hooks/useScrolled";
+import { useScrolled } from "@/components/layout/Topbar/hooks/useScrolled";
 import { Button } from "@/components/ui";
-import { SidebarLink } from "./SidebarLink";
-import { getNavLinks } from "./navLinks";
+import { SidebarLink } from "../Sidebar/SidebarLink";
+import { getNavLinks } from "../../shared/navLinks";
 import { cn } from "@/lib/utils";
-import { AppLogo } from "./AppLogo";
+import { AppLogo } from "../../shared/AppLogo";
 
 
 interface TopbarProps {

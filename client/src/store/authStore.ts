@@ -1,6 +1,9 @@
+// src/store/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { User } from "../types";
+import { queryClient } from "@/lib/queryClient";
+
 
 interface AuthState {
   token: string | null;
@@ -10,26 +13,27 @@ interface AuthState {
   logout: () => void;
 }
 
-// persist = automatically saves to localStorage
-// so after page refresh user stays logged in
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       token: null,
       user: null,
 
-      setAuth: (token, user) => set({ token, user }),
+setAuth: (token, user) => {
+  queryClient.clear(); // ← czyści cache przy każdym nowym logowaniu
+  set({ token, user });
+},
+      updateAuth: (token, updates) =>
+        set((state) => ({
+          token,
+          user: state.user ? { ...state.user, ...updates } : null,
+        })),
 
-updateAuth: (token: string, updates: Partial<User>) =>
-  set((state) => ({
-    token,
-    user: state.user ? { ...state.user, ...updates } : null,
-  })),
-
-      logout: () => set({ token: null, user: null }),
+      logout: () => {
+        queryClient.clear();
+        set({ token: null, user: null });
+      },
     }),
-    {
-      name: "auth-storage", // localStorage key
-    },
+    { name: "auth-storage" },
   ),
 );

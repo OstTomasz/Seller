@@ -5,6 +5,7 @@ import { ForcePasswordChange } from "@/features/auth/ForcePasswordChange";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
 import { PageTransition } from "./PageTransition";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ClientsPage } from "@/features/clients/ClientsPage";
 
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
@@ -40,14 +41,16 @@ export const AppRouter = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        {/* App pages — AppLayout poza animacją, tylko content się animuje */}
+
         <Route element={<ProtectedLayout><PageTransition /></ProtectedLayout>}>
           <Route path="/" element={
             <div className="flex flex-col items-center justify-center gap-4 py-20">
               <p className="text-celery-300">Dashboard — coming soon</p>
             </div>
           } />
-          <Route path="/clients" element={<p className="text-celery-300">Klienci</p>} />
+
+
+<Route path="/clients" element={<ClientsPage />} />
           <Route path="/reminders" element={<p className="text-celery-300">Przypomnienia</p>} />
           <Route path="/settings" element={<p className="text-celery-300">Ustawienia</p>} />
           <Route path="/management" element={<p className="text-celery-300">Zarządzanie</p>} />

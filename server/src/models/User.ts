@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 import bcrypt from "bcryptjs";
 import { IUser, UserRole } from "../types";
+import { getNextSequence } from "./Counter";
 
 const ROLES: UserRole[] = ["director", "deputy", "advisor", "salesperson"];
 
@@ -38,6 +39,10 @@ const userSchema = new Schema<IUser>(
       required: false,
       default: null,
     },
+    numericId: {
+  type: Number,
+  unique: true,
+},
   },
   { timestamps: true },
 );
@@ -45,6 +50,10 @@ const userSchema = new Schema<IUser>(
 // validating before saving - grade and position are required for advisor and salesperson
 userSchema.pre("save", async function () {
   const rolesRequiringPosition: UserRole[] = ["advisor", "salesperson"];
+
+  if (this.isNew) {
+    this.numericId = await getNextSequence("user");
+  }
 
   if (rolesRequiringPosition.includes(this.role)) {
     if (!this.position) {

@@ -1,5 +1,6 @@
 import { Schema, model } from "mongoose";
 import { IAddress, IClient } from "../types";
+import { getNextSequence } from "./Counter";
 
 // ─── sub-schemas ──────────────────────────────────────────────────────────────
 
@@ -63,9 +64,19 @@ const clientSchema = new Schema<IClient>(
       },
     },
     contacts: { type: [contactSchema], default: [] },
+    numericId: {
+  type: Number,
+  unique: true,
+},
   },
   { timestamps: true },
 );
+
+clientSchema.pre("save", async function () {
+  if (this.isNew) {
+    this.numericId = await getNextSequence("client");
+  }
+});
 
 // ─── indexes ──────────────────────────────────────────────────────────────────
 
