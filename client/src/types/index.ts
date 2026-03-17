@@ -5,13 +5,21 @@ export type ClientStatus = "active" | "reminder" | "inactive" | "archived";
 export interface Position {
   _id: string;
   code: string;
-  region: { _id: string; name: string; parentRegion: { _id: string; name: string } | null } | null;
+  region: {
+    _id: string;
+    name: string;
+    parentRegion: { _id: string; name: string } | null;
+  } | null;
   type: UserRole;
-  currentHolder: { _id: string; firstName: string; lastName: string } | null;
+  currentHolder: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
 }
 
 export interface User {
-    numericId: number;
+  numericId: number;
   _id: string;
   firstName: string;
   lastName: string;
@@ -55,7 +63,7 @@ export interface ArchiveRequest {
 }
 
 export interface Client {
-    numericId: number;
+  numericId: number;
   _id: string;
   companyName: string;
   nip: string | null;

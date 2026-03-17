@@ -7,3 +7,7 @@ export { Modal } from "./Modal";
 export { Table } from "./Table";
 export { Select } from "./Select";
 export { Spinner } from "./Spinner";
+export { Breadcrumbs } from "./Breadcrumbs";
+
+
+export type { BreadcrumbItem } from "./Breadcrumbs";
