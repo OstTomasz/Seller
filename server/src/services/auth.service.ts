@@ -1,3 +1,4 @@
+import { env } from "../config/env";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
 import { IUser, TokenPayload } from "../types";
@@ -16,7 +17,7 @@ const generateToken = (user: IUser): string => {
     mustChangePassword: user.mustChangePassword,
   };
 
-  return jwt.sign(payload, process.env.JWT_SECRET as string, {
+  return jwt.sign(payload, env.JWT_SECRET, {
     expiresIn: "7d",
   });
 };

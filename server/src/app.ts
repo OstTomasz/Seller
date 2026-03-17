@@ -6,7 +6,7 @@ import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { validateEnv } from "./config/env";
+import { env } from "./config/env";
 import { errorHandler } from "./middleware/error.middleware";
 
 import authRoutes from "./routes/auth.routes";
@@ -21,15 +21,10 @@ import "./models/Client";
 import { authenticate } from "./middleware/auth.middleware";
 import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";
 
-validateEnv();
-
 const allowedOrigins = ["http://localhost:5173"];
 
 const corsOptions = {
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void,
-  ) => {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -44,7 +39,7 @@ const app = express();
 app.use(helmet()); //safety HTTP headers
 app.use(cors(corsOptions)); //allow only selected origins
 app.use(morgan("dev")); //pretty log requests
-if (process.env.NODE_ENV !== "test") {
+if (env.NODE_ENV !== "test") {
   app.use(
     "/api",
     rateLimit({

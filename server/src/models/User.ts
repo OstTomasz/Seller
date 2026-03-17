@@ -1,5 +1,5 @@
+import { hashPassword, comparePassword } from "../utils/hash";
 import { Schema, model } from "mongoose";
-import bcrypt from "bcryptjs";
 import { IUser, UserRole } from "../types";
 import { getNextSequence } from "./Counter";
 
@@ -40,9 +40,9 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     numericId: {
-  type: Number,
-  unique: true,
-},
+      type: Number,
+      unique: true,
+    },
   },
   { timestamps: true },
 );
@@ -65,14 +65,12 @@ userSchema.pre("save", async function () {
   }
 
   if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 12);
+    this.password = await hashPassword(this.password);
   }
 });
 
-userSchema.methods.comparePassword = async function (
-  candidatePassword: string,
-): Promise<boolean> {
-  return await bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  return comparePassword(candidatePassword, this.password);
 };
 
 userSchema.methods.toJSON = function () {

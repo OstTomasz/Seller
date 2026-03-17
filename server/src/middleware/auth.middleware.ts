@@ -1,3 +1,4 @@
+import { env } from "../config/env";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { TokenPayload } from "../types";
@@ -12,11 +13,7 @@ declare global {
   }
 }
 
-export const authenticate = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void => {
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -26,10 +23,7 @@ export const authenticate = (
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string,
-    ) as TokenPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
 
     req.userId = decoded.userId;
     req.userRole = decoded.role;
