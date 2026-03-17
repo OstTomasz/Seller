@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useClients } from "./hooks/useClients";
 import { ClientsTable } from "./ClientsTable";
 import { Client } from "@/types";
-import { Button, Spinner } from "@/components/ui";
+import { Button, FetchError, Loader } from "@/components/ui";
 import { Plus } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
@@ -16,22 +16,9 @@ export const ClientsPage = () => {
   } | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
 
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="flex flex-col items-center gap-3">
-          <Spinner size="lg" />
-          <span className="text-sm text-celery-500">Loading clients...</span>
-        </div>
-      </div>
-    );
+  isLoading ? <Loader label="clients" /> : null;
 
-  if (isError)
-    return (
-      <div className="flex items-center justify-center py-20 text-error">
-        Failed to load clients
-      </div>
-    );
+  if (isError) return <FetchError label="clients" />;
 
   return (
     <div className="flex flex-col gap-6">

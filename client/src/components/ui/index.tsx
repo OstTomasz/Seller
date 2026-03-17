@@ -8,6 +8,7 @@ export { Table } from "./Table";
 export { Select } from "./Select";
 export { Spinner } from "./Spinner";
 export { Breadcrumbs } from "./Breadcrumbs";
-
+export { Loader } from "./Loader";
+export { FetchError } from "./FetchError";
 
 export type { BreadcrumbItem } from "./Breadcrumbs";

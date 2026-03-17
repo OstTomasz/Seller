@@ -1,9 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useClient } from "./hooks/useClient";
 import { useAuthStore } from "@/store/authStore";
-import { Breadcrumbs, Spinner, Badge, Card } from "@/components/ui";
+import { Breadcrumbs, Badge, Card, Loader, FetchError } from "@/components/ui";
 import { UserRole } from "@/types";
 import { MapPin, Phone, Mail, Users, FileText, Clock, LucideIcon } from "lucide-react";
+import { is } from "zod/v4/locales";
 
 const STATUS_LABELS: Record<string, string> = {
   active: "Active",
@@ -52,20 +53,9 @@ export const ClientPage = () => {
 
   const { data: client, isLoading, isError } = useClient(id!);
 
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="flex flex-col items-center gap-3">
-          <Spinner size="lg" />
-          <span className="text-sm text-celery-500">Loading client...</span>
-        </div>
-      </div>
-    );
+  isLoading ? <Loader label="client" /> : null;
 
-  if (isError || !client)
-    return (
-      <div className="flex items-center justify-center py-20 text-error">Failed to load client</div>
-    );
+  if (isError || !client) return <FetchError label="client" />;
 
   const salesperson = client.assignedTo?.currentHolder
     ? `${client.assignedTo.currentHolder.firstName} ${client.assignedTo.currentHolder.lastName}`
