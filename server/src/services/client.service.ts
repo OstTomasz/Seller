@@ -51,7 +51,7 @@ const deepPopulateDoc = async (client: IClient): Promise<IClient> => {
 const getAdvisorPosition = async (regionId: string) => {
   const region = await Region.findById(regionId);
   if (!region) throw new NotFoundError("Region not found");
-  return await Position.findOne({ region: regionId, type: "advisor" }) ?? null;
+  return (await Position.findOne({ region: regionId, type: "advisor" })) ?? null;
 };
 
 const getRegionFromPosition = async (positionId: string): Promise<string | null> => {
@@ -74,7 +74,10 @@ const getPositionIdsInSuperregion = async (deputyUserId: string): Promise<string
   return positions.map((p) => p._id.toString());
 };
 
-const verifyAdvisorAccess = async (advisorUserId: string, targetPositionId: string): Promise<void> => {
+const verifyAdvisorAccess = async (
+  advisorUserId: string,
+  targetPositionId: string,
+): Promise<void> => {
   const advisorUser = await User.findById(advisorUserId);
   if (!advisorUser?.position) throw new ForbiddenError();
 
@@ -89,7 +92,10 @@ const verifyAdvisorAccess = async (advisorUserId: string, targetPositionId: stri
   }
 };
 
-const verifyDeputyAccess = async (deputyUserId: string, targetPositionId: string): Promise<void> => {
+const verifyDeputyAccess = async (
+  deputyUserId: string,
+  targetPositionId: string,
+): Promise<void> => {
   const allowedPositionIds = await getPositionIdsInSuperregion(deputyUserId);
   if (!allowedPositionIds.includes(targetPositionId)) throw new ForbiddenError();
 };
@@ -133,16 +139,14 @@ export const getClients = async (
   if (requesterRole === "salesperson") {
     const user = await User.findById(requesterId);
     if (!user?.position) return [];
-    return await deepPopulate(
-      Client.find({ assignedTo: user.position }).sort({ companyName: 1 })
-    );
+    return await deepPopulate(Client.find({ assignedTo: user.position }).sort({ companyName: 1 }));
   }
 
   if (requesterRole === "advisor") {
     const user = await User.findById(requesterId);
     if (!user?.position) return [];
     return await deepPopulate(
-      Client.find({ assignedAdvisor: user.position }).sort({ companyName: 1 })
+      Client.find({ assignedAdvisor: user.position }).sort({ companyName: 1 }),
     );
   }
 
@@ -150,7 +154,7 @@ export const getClients = async (
     const positionIds = await getPositionIdsInSuperregion(requesterId);
     if (positionIds.length === 0) return [];
     return await deepPopulate(
-      Client.find({ assignedTo: { $in: positionIds } }).sort({ companyName: 1 })
+      Client.find({ assignedTo: { $in: positionIds } }).sort({ companyName: 1 }),
     );
   }
 
@@ -194,8 +198,7 @@ export const createClient = async (
       assignedAdvisorPositionId = advisorPos?._id.toString() ?? null;
     }
   } else if (requesterRole === "advisor") {
-    if (!data.salespersonPositionId)
-      throw new BadRequestError("salespersonPositionId is required");
+    if (!data.salespersonPositionId) throw new BadRequestError("salespersonPositionId is required");
 
     await verifyAdvisorAccess(requesterId, data.salespersonPositionId);
     assignedToPositionId = data.salespersonPositionId;
@@ -203,8 +206,7 @@ export const createClient = async (
     const advisorUser = await User.findById(requesterId);
     assignedAdvisorPositionId = advisorUser?.position?.toString() ?? null;
   } else {
-    if (!data.salespersonPositionId)
-      throw new BadRequestError("salespersonPositionId is required");
+    if (!data.salespersonPositionId) throw new BadRequestError("salespersonPositionId is required");
 
     if (requesterRole === "deputy") {
       await verifyDeputyAccess(requesterId, data.salespersonPositionId);
@@ -221,7 +223,7 @@ export const createClient = async (
   const client = await Client.create({
     companyName: data.companyName,
     nip: data.nip ?? null,
-    notes: data.notes ?? null,
+    notes: [],
     addresses: data.addresses,
     assignedTo: assignedToPositionId,
     assignedAdvisor: assignedAdvisorPositionId,
@@ -248,9 +250,13 @@ export const updateClient = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  return await deepPopulate(
-    Client.findByIdAndUpdate(clientId, { ...data }, { returnDocument: "after", runValidators: true })
-  ) as IClient;
+  return (await deepPopulate(
+    Client.findByIdAndUpdate(
+      clientId,
+      { ...data },
+      { returnDocument: "after", runValidators: true },
+    ),
+  )) as IClient;
 };
 
 export const updateClientStatus = async (
@@ -283,9 +289,12 @@ export const updateClientStatus = async (
     updateData.lastActivityAt = new Date();
   }
 
-  return await deepPopulate(
-    Client.findByIdAndUpdate(clientId, updateData, { returnDocument: "after", runValidators: true })
-  ) as IClient;
+  return (await deepPopulate(
+    Client.findByIdAndUpdate(clientId, updateData, {
+      returnDocument: "after",
+      runValidators: true,
+    }),
+  )) as IClient;
 };
 
 export const requestArchive = async (
@@ -302,13 +311,13 @@ export const requestArchive = async (
   if (requesterRole !== "salesperson") throw new ForbiddenError();
   if (client.status === "archived") throw new BadRequestError("Client is already archived");
 
-  return await deepPopulate(
+  return (await deepPopulate(
     Client.findByIdAndUpdate(
       clientId,
       { archiveRequest: { requestedAt: new Date(), requestedBy: requesterId, reason } },
       { returnDocument: "after" },
-    )
-  ) as IClient;
+    ),
+  )) as IClient;
 };
 
 export const approveArchive = async (
@@ -329,7 +338,7 @@ export const approveArchive = async (
     await verifyDeputyAccess(requesterId, client.assignedTo.toString());
   }
 
-  return await deepPopulate(
+  return (await deepPopulate(
     Client.findByIdAndUpdate(
       clientId,
       {
@@ -339,8 +348,8 @@ export const approveArchive = async (
         "archiveRequest.reason": null,
       },
       { returnDocument: "after" },
-    )
-  ) as IClient;
+    ),
+  )) as IClient;
 };
 
 export const unarchiveClient = async (
@@ -355,11 +364,11 @@ export const unarchiveClient = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  return await deepPopulate(
+  return (await deepPopulate(
     Client.findByIdAndUpdate(
       clientId,
       { status: "active", lastActivityAt: new Date() },
       { returnDocument: "after" },
-    )
-  ) as IClient;
+    ),
+  )) as IClient;
 };

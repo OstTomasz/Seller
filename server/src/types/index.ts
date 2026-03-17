@@ -1,10 +1,12 @@
 import { Document, Types } from "mongoose";
 
-export type UserRole = "director" | "deputy" | "advisor" | "salesperson";
-export type UserGrade = 1 | 2 | 3 | 4;
-export type ClientStatus = "active" | "reminder" | "inactive" | "archived";
+// re-export shared types so rest of server can import from "../types"
+export type { UserRole, UserGrade, ClientStatus, INote, TokenPayload } from "@seller/shared/types";
 
-//Region
+import type { UserRole, UserGrade } from "@seller/shared/types";
+
+// ── Mongoose documents ────────────────────────────────────────────────────────
+
 export interface IRegion extends Document {
   name: string;
   prefix: string;
@@ -13,8 +15,6 @@ export interface IRegion extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
-//Position
 
 export interface IPosition extends Document {
   code: string;
@@ -25,9 +25,8 @@ export interface IPosition extends Document {
   updatedAt: Date;
 }
 
-//User
-
 export interface IUser extends Document {
+  numericId: number;
   firstName: string;
   lastName: string;
   email: string;
@@ -40,13 +39,10 @@ export interface IUser extends Document {
   createdBy: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
-    numericId: number;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-//Client
-
-export interface IContact {
+export interface IMongoContact {
   _id: Types.ObjectId;
   firstName: string;
   lastName: string;
@@ -54,42 +50,43 @@ export interface IContact {
   email: string | null;
 }
 
-export interface IAddress {
+// re-export as IAddress so existing imports work
+export type IAddress = IMongoAddress;
+
+export interface IMongoAddress {
   _id: Types.ObjectId;
   label: string;
   street: string;
   city: string;
   postalCode: string;
-  contacts: IContact[];
+  contacts: IMongoContact[];
 }
 
-export interface IArchiveRequest {
-  requestedAt: Date | null;
-  requestedBy: Types.ObjectId | null;
-  reason: string | null;
+export interface IMongoNote {
+  _id: Types.ObjectId;
+  content: string;
+  createdBy: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IClient extends Document {
+  numericId: number;
   companyName: string;
   nip: string | null;
   assignedTo: Types.ObjectId;
   assignedAdvisor: Types.ObjectId | null;
-  status: ClientStatus;
+  status: string;
   lastActivityAt: Date | null;
   inactivityReason: string | null;
-  archiveRequest: IArchiveRequest;
-  notes: string | null;
-  addresses: IAddress[];
-  contacts: IContact[];
+  archiveRequest: {
+    requestedAt: Date | null;
+    requestedBy: Types.ObjectId | null;
+    reason: string | null;
+  };
+  notes: IMongoNote[];
+  addresses: IMongoAddress[];
+  contacts: IMongoContact[];
   createdAt: Date;
   updatedAt: Date;
-    numericId: number;
-}
-
-//Helpers
-
-export interface TokenPayload {
-  userId: string;
-  role: string;
-  mustChangePassword: boolean;
 }

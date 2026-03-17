@@ -1,6 +1,20 @@
-export type UserRole = "director" | "deputy" | "advisor" | "salesperson";
-export type UserGrade = 1 | 2 | 3 | 4;
-export type ClientStatus = "active" | "reminder" | "inactive" | "archived";
+export type {
+  UserRole,
+  UserGrade,
+  ClientStatus,
+  IContact,
+  IAddress,
+  IArchiveRequest,
+  INote,
+  IUserBase,
+  IClientBase,
+  ApiError,
+  TokenPayload,
+} from "@seller/shared/types";
+
+import type { IUserBase, IClientBase, UserRole, INote } from "@seller/shared/types";
+
+// ── Frontend-specific types (with populated relations) ────────────────────────
 
 export interface Position {
   _id: string;
@@ -18,19 +32,6 @@ export interface Position {
   } | null;
 }
 
-export interface User {
-  numericId: number;
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  grade: UserGrade | null;
-  position: Position | null;
-  isActive: boolean;
-  mustChangePassword: boolean;
-}
-
 export interface Region {
   _id: string;
   name: string;
@@ -39,49 +40,12 @@ export interface Region {
   deputy: Position | null;
 }
 
-export interface Contact {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  email: string | null;
+export interface User extends IUserBase {
+  position: Position | null;
 }
 
-export interface Address {
-  _id: string;
-  label: string;
-  street: string;
-  city: string;
-  postalCode: string;
-  contacts: Contact[];
-}
-
-export interface ArchiveRequest {
-  requestedAt: string | null;
-  requestedBy: string | null;
-  reason: string | null;
-}
-
-export interface Client {
-  numericId: number;
-  _id: string;
-  companyName: string;
-  nip: string | null;
+export interface Client extends Omit<IClientBase, "notes"> {
   assignedTo: Position;
   assignedAdvisor: Position | null;
-  status: ClientStatus;
-  lastActivityAt: string | null;
-  inactivityReason: string | null;
-  archiveRequest: ArchiveRequest;
-  notes: string | null;
-  addresses: Address[];
-  contacts: Contact[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-// API response wrappers
-export interface ApiError {
-  message: string;
-  mustChangePassword?: boolean;
+  notes: INote[];
 }
