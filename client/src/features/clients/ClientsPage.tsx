@@ -16,7 +16,7 @@ export const ClientsPage = () => {
   } | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
 
-  isLoading ? <Loader label="clients" /> : null;
+  if (isLoading) return <Loader label="clients" />;
 
   if (isError) return <FetchError label="clients" />;
 

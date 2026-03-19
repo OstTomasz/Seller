@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useClient } from "./hooks/useClient";
 import { useAuthStore } from "@/store/authStore";
-import { Breadcrumbs, Badge, Card, Loader, FetchError, Button } from "@/components/ui";
+import { Breadcrumbs, Card, Loader, FetchError, Button } from "@/components/ui";
 import { INoteAuthor, UserRole } from "@/types";
 import { MapPin, Phone, Mail, Users, FileText, Clock, Pencil, LucideIcon } from "lucide-react";
 import { EditBasicModal } from "./EditBasicModal";
@@ -10,19 +10,19 @@ import { EditAddressesModal } from "./EditAddressesModal";
 import { EditNotesModal } from "./EditNotesModal";
 import { EditAssignmentModal } from "./EditAssignmentModal";
 
-const STATUS_LABELS: Record<string, string> = {
-  active: "Active",
-  reminder: "Reminder",
-  inactive: "Inactive",
-  archived: "Archived",
-};
-
-const STATUS_BADGE_VARIANTS: Record<string, "active" | "warning" | "error" | "muted"> = {
-  active: "active",
-  reminder: "warning",
-  inactive: "error",
-  archived: "muted",
-};
+// v2
+// const STATUS_LABELS: Record<string, string> = {
+//   active: "Active",
+//   reminder: "Reminder",
+//   inactive: "Inactive",
+//   archived: "Archived",
+// };
+// const STATUS_BADGE_VARIANTS: Record<string, "active" | "warning" | "error" | "muted"> = {
+//   active: "active",
+//   reminder: "warning",
+//   inactive: "error",
+//   archived: "muted",
+// };
 
 const formatDate = (date: string | null) => {
   if (!date) return "—";
@@ -105,9 +105,9 @@ export const ClientPage = () => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3">
             <h1 className="text-fluid-h1 font-bold text-celery-100">{client.companyName}</h1>
-            <Badge variant={STATUS_BADGE_VARIANTS[client.status] ?? "muted"}>
+            {/* <Badge variant={STATUS_BADGE_VARIANTS[client.status] ?? "muted"}>
               {STATUS_LABELS[client.status] ?? client.status}
-            </Badge>
+            </Badge> v2*/}
           </div>
           <div className="flex items-center gap-4 text-sm text-celery-500">
             <span>ID: {client.numericId}</span>

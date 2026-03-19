@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Client, UserRole } from "@/types";
-import { Badge } from "@/components/ui";
+// import { Badge } from "@/components/ui"; v2
 import { cn } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -21,12 +21,13 @@ const STATUS_LABELS: Record<string, string> = {
   archived: "Archived",
 };
 
-const STATUS_BADGE_VARIANTS: Record<string, "active" | "warning" | "error" | "muted"> = {
-  active: "active",
-  reminder: "warning",
-  inactive: "error",
-  archived: "muted",
-};
+//v2
+// const STATUS_BADGE_VARIANTS: Record<string, "active" | "warning" | "error" | "muted"> = {
+//   active: "active",
+//   reminder: "warning",
+//   inactive: "error",
+//   archived: "muted",
+// };
 
 const formatDate = (date: string | null) => {
   if (!date) return "—";
@@ -60,7 +61,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
   const { user } = useAuthStore();
   const role = user?.role as UserRole;
 
-  const [sortField, setSortField] = useState<SortField>("companyName");
+  const [sortField, setSortField] = useState<SortField>("lastActivityAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -86,13 +87,13 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
   const uniqueSalespersons = useMemo(() => {
     const names = clients.map((c) =>
       c.assignedTo?.currentHolder
-        ? `${(c.assignedTo as any).currentHolder.firstName} ${(c.assignedTo as any).currentHolder.lastName}`
+        ? `${c.assignedTo.currentHolder.firstName} ${c.assignedTo.currentHolder.lastName}`
         : "—",
     );
     return [...new Set(names)];
   }, [clients]);
   const uniqueRegions = useMemo(() => {
-    const regions = clients.map((c) => (c.assignedTo as any)?.region?.name ?? "—");
+    const regions = clients.map((c) => c.assignedTo?.region?.name ?? "—");
     return [...new Set(regions)];
   }, [clients]);
   const uniqueSuperregions = useMemo(() => {
@@ -278,7 +279,9 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                 </span>
               </th>
 
-              <th className="px-4 py-3 text-left">Status</th>
+              {/* v2-client status
+              <th className="px-4 py-3 text-left">Status</th> 
+              */}
 
               {/* Last activity */}
               <th
@@ -307,7 +310,8 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
               <tr>
                 <td
                   colSpan={
-                    7 + (showSalesperson ? 1 : 0) + (showRegion ? 1 : 0) + (showSuperregion ? 1 : 0)
+                    6 + (showSalesperson ? 1 : 0) + (showRegion ? 1 : 0) + (showSuperregion ? 1 : 0)
+                    //v2 - 7 over 6
                   }
                   className="px-4 py-8 text-center text-celery-600"
                 >
@@ -349,11 +353,13 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                       </button>
                     </td>
 
-                    <td className="px-4 py-3">
-                      <Badge variant={STATUS_BADGE_VARIANTS[client.status] ?? "muted"}>
-                        {STATUS_LABELS[client.status] ?? client.status}
-                      </Badge>
-                    </td>
+                    {/* V2 - client status
+
+<td className="px-4 py-3">
+  <Badge variant={STATUS_BADGE_VARIANTS[client.status] ?? "muted"}>
+    {STATUS_LABELS[client.status] ?? client.status}
+  </Badge>
+</td> */}
 
                     <td className="px-4 py-3 text-celery-400">
                       {formatDate(client.lastActivityAt)}
