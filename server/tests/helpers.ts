@@ -4,7 +4,24 @@ import mongoose, { Types } from "mongoose";
 import User from "../src/models/User";
 import Region from "../src/models/Region";
 import Position from "../src/models/Position";
+import Client from "../src/models/Client";
 
+interface ClientTestBase {
+  salespersonPositionId: string;
+  advisorPositionId: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const createTestClient = async (ctx: ClientTestBase, overrides: any = {}) =>
+  await Client.create({
+    companyName: "Test Company",
+    assignedTo: ctx.salespersonPositionId,
+    assignedAdvisor: ctx.advisorPositionId,
+    status: "active",
+    addresses: [sampleAddress],
+    notes: [],
+    ...overrides,
+  });
 export const clearDB = async () => {
   const collections = mongoose.connection.collections;
   for (const key in collections) {
@@ -12,13 +29,8 @@ export const clearDB = async () => {
   }
 };
 
-export const loginAs = async (
-  email: string,
-  password = "password123",
-): Promise<string> => {
-  const res = await request(app)
-    .post("/api/auth/login")
-    .send({ email, password });
+export const loginAs = async (email: string, password = "password123"): Promise<string> => {
+  const res = await request(app).post("/api/auth/login").send({ email, password });
   return res.body.token;
 };
 
@@ -98,7 +110,7 @@ export const createTestDB = async (): Promise<TestDB> => {
   const director = await User.create({
     firstName: "Jan",
     lastName: "Director",
-    email: "director@test.com",
+    email: "director@seller.com",
     password: "password123",
     role: "director",
     mustChangePassword: false,
@@ -108,7 +120,7 @@ export const createTestDB = async (): Promise<TestDB> => {
   const deputy = await User.create({
     firstName: "Anna",
     lastName: "Deputy",
-    email: "deputy@test.com",
+    email: "deputy@seller.com",
     password: "password123",
     role: "deputy",
     mustChangePassword: false,
@@ -118,7 +130,7 @@ export const createTestDB = async (): Promise<TestDB> => {
   const advisor = await User.create({
     firstName: "Piotr",
     lastName: "Advisor",
-    email: "advisor@test.com",
+    email: "advisor@seller.com",
     password: "password123",
     role: "advisor",
     grade: 1,
@@ -129,7 +141,7 @@ export const createTestDB = async (): Promise<TestDB> => {
   const salesperson = await User.create({
     firstName: "Marek",
     lastName: "Salesperson",
-    email: "salesperson@test.com",
+    email: "salesperson@seller.com",
     password: "password123",
     role: "salesperson",
     grade: 1,
@@ -171,13 +183,12 @@ export const createTestDB = async (): Promise<TestDB> => {
 export const createTestContext = async (): Promise<TestContext> => {
   const db = await createTestDB();
 
-  const [directorToken, deputyToken, advisorToken, salespersonToken] =
-    await Promise.all([
-      loginAs("director@test.com"),
-      loginAs("deputy@test.com"),
-      loginAs("advisor@test.com"),
-      loginAs("salesperson@test.com"),
-    ]);
+  const [directorToken, deputyToken, advisorToken, salespersonToken] = await Promise.all([
+    loginAs("director@seller.com"),
+    loginAs("deputy@seller.com"),
+    loginAs("advisor@seller.com"),
+    loginAs("salesperson@seller.com"),
+  ]);
 
   return { ...db, directorToken, deputyToken, advisorToken, salespersonToken };
 };

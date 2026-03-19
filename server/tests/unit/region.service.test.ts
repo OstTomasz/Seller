@@ -105,7 +105,7 @@ describe("Region Service", () => {
       const otherDeputy = await User.create({
         firstName: "Other",
         lastName: "Deputy",
-        email: "other@test.com",
+        email: "other@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -177,7 +177,7 @@ describe("Region Service", () => {
       const deputy = await User.create({
         firstName: "Anna",
         lastName: "Deputy",
-        email: "deputy@test.com",
+        email: "deputy@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -213,7 +213,7 @@ describe("Region Service", () => {
       const myDeputy = await User.create({
         firstName: "My",
         lastName: "Deputy",
-        email: "mydeputy@test.com",
+        email: "mydeputy@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -232,7 +232,7 @@ describe("Region Service", () => {
       const otherDeputy = await User.create({
         firstName: "Other",
         lastName: "Deputy",
-        email: "otherdeputy@test.com",
+        email: "otherdeputy@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -304,11 +304,7 @@ describe("Region Service", () => {
       const fakeId = new mongoose.Types.ObjectId().toString();
 
       await expect(
-        regionService.deleteRegion(
-          fakeId,
-          new mongoose.Types.ObjectId().toString(),
-          "director",
-        ),
+        regionService.deleteRegion(fakeId, new mongoose.Types.ObjectId().toString(), "director"),
       ).rejects.toThrow(NotFoundError);
     });
 
@@ -342,7 +338,7 @@ describe("Region Service", () => {
       const deputy = await User.create({
         firstName: "Anna",
         lastName: "Deputy",
-        email: "deputy@test.com",
+        email: "deputy@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -359,11 +355,7 @@ describe("Region Service", () => {
       });
 
       await expect(
-        regionService.deleteRegion(
-          superregion._id.toString(),
-          deputy._id.toString(),
-          "deputy",
-        ),
+        regionService.deleteRegion(superregion._id.toString(), deputy._id.toString(), "deputy"),
       ).rejects.toThrow(ForbiddenError);
     });
 
@@ -377,7 +369,7 @@ describe("Region Service", () => {
       const myDeputy = await User.create({
         firstName: "My",
         lastName: "Deputy",
-        email: "mydeputy@test.com",
+        email: "mydeputy@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -396,7 +388,7 @@ describe("Region Service", () => {
       const otherDeputy = await User.create({
         firstName: "Other",
         lastName: "Deputy",
-        email: "otherdeputy@test.com",
+        email: "otherdeputy@seller.com",
         password: "password123",
         role: "deputy",
         mustChangePassword: false,
@@ -419,11 +411,7 @@ describe("Region Service", () => {
       });
 
       await expect(
-        regionService.deleteRegion(
-          subregion._id.toString(),
-          myDeputy._id.toString(),
-          "deputy",
-        ),
+        regionService.deleteRegion(subregion._id.toString(), myDeputy._id.toString(), "deputy"),
       ).rejects.toThrow(ForbiddenError);
     });
   });
@@ -442,9 +430,7 @@ describe("Region Service", () => {
     it("should throw NotFoundError for non-existent region", async () => {
       const fakeId = new mongoose.Types.ObjectId().toString();
 
-      await expect(regionService.getRegionById(fakeId)).rejects.toThrow(
-        NotFoundError,
-      );
+      await expect(regionService.getRegionById(fakeId)).rejects.toThrow(NotFoundError);
     });
   });
 });

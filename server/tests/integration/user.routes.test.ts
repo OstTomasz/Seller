@@ -52,7 +52,7 @@ describe("GET /api/users/:id", () => {
       .set("Authorization", `Bearer ${ctx.directorToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.user.email).toBe("advisor@test.com");
+    expect(res.body.user.email).toBe("advisor@seller.com");
   });
 
   it("should return 404 for non-existent user", async () => {
@@ -82,7 +82,7 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "Salesperson",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -108,7 +108,7 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "Salesperson",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -125,7 +125,7 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "Director",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "director",
       });
@@ -157,7 +157,7 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "Salesperson",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -174,7 +174,7 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "Salesperson",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -191,7 +191,7 @@ describe("POST /api/users", () => {
       .send({
         firstName: "New",
         lastName: "User",
-        email: "advisor@test.com",
+        email: "advisor@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -253,7 +253,7 @@ describe("PATCH /api/users/:id", () => {
     const otherUser = await User.create({
       firstName: "Other",
       lastName: "User",
-      email: "other@test.com",
+      email: "other@seller.com",
       password: "password123",
       role: "salesperson",
       grade: 1,
@@ -454,7 +454,7 @@ describe("mustChangePassword middleware", () => {
     await User.create({
       firstName: "New",
       lastName: "User",
-      email: "newuser@test.com",
+      email: "newuser@seller.com",
       password: "temp1234",
       role: "salesperson",
       grade: 1,
@@ -462,11 +462,9 @@ describe("mustChangePassword middleware", () => {
       mustChangePassword: true,
     });
 
-    const newUserToken = await loginAs("newuser@test.com", "temp1234");
+    const newUserToken = await loginAs("newuser@seller.com", "temp1234");
 
-    const res = await request(app)
-      .get("/api/users")
-      .set("Authorization", `Bearer ${newUserToken}`);
+    const res = await request(app).get("/api/users").set("Authorization", `Bearer ${newUserToken}`);
 
     expect(res.status).toBe(403);
     expect(res.body.mustChangePassword).toBe(true);
@@ -484,7 +482,7 @@ describe("mustChangePassword middleware", () => {
     await User.create({
       firstName: "New",
       lastName: "User",
-      email: "newuser@test.com",
+      email: "newuser@seller.com",
       password: "temp1234",
       role: "salesperson",
       grade: 1,
@@ -492,7 +490,7 @@ describe("mustChangePassword middleware", () => {
       mustChangePassword: true,
     });
 
-    const newUserToken = await loginAs("newuser@test.com", "temp1234");
+    const newUserToken = await loginAs("newuser@seller.com", "temp1234");
 
     const res = await request(app)
       .patch("/api/users/me/password")

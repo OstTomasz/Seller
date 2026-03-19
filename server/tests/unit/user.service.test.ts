@@ -34,14 +34,12 @@ describe("getUsers", () => {
 describe("getUserById", () => {
   it("should return user by id", async () => {
     const user = await userService.getUserById(db.advisorId);
-    expect(user.email).toBe("advisor@test.com");
+    expect(user.email).toBe("advisor@seller.com");
   });
 
   it("should throw NotFoundError for non-existent user", async () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
-    await expect(userService.getUserById(fakeId)).rejects.toThrow(
-      "User not found",
-    );
+    await expect(userService.getUserById(fakeId)).rejects.toThrow("User not found");
   });
 });
 
@@ -60,7 +58,7 @@ describe("createUser", () => {
       {
         firstName: "New",
         lastName: "User",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -70,7 +68,7 @@ describe("createUser", () => {
       "director",
     );
 
-    expect(user.email).toBe("new@test.com");
+    expect(user.email).toBe("new@seller.com");
     expect(user.mustChangePassword).toBe(true);
     expect(user.createdBy?.toString()).toBe(db.directorId);
   });
@@ -88,7 +86,7 @@ describe("createUser", () => {
       {
         firstName: "New",
         lastName: "User",
-        email: "new@test.com",
+        email: "new@seller.com",
         temporaryPassword: "temp1234",
         role: "salesperson",
         grade: 1,
@@ -98,7 +96,7 @@ describe("createUser", () => {
       "deputy",
     );
 
-    expect(user.email).toBe("new@test.com");
+    expect(user.email).toBe("new@seller.com");
   });
 
   it("deputy should NOT create a director", async () => {
@@ -107,7 +105,7 @@ describe("createUser", () => {
         {
           firstName: "New",
           lastName: "Director",
-          email: "new@test.com",
+          email: "new@seller.com",
           temporaryPassword: "temp1234",
           role: "director",
         },
@@ -139,7 +137,7 @@ describe("createUser", () => {
         {
           firstName: "New",
           lastName: "User",
-          email: "new@test.com",
+          email: "new@seller.com",
           temporaryPassword: "temp1234",
           role: "salesperson",
           grade: 1,
@@ -157,7 +155,7 @@ describe("createUser", () => {
         {
           firstName: "New",
           lastName: "User",
-          email: "advisor@test.com",
+          email: "advisor@seller.com",
           temporaryPassword: "temp1234",
           role: "salesperson",
           grade: 1,
@@ -168,22 +166,22 @@ describe("createUser", () => {
       ),
     ).rejects.toThrow("User with this email already exists");
   });
-it("should throw BadRequestError for email not ending with @seller.com", async () => {
-  await expect(
-    userService.createUser(
-      {
-        firstName: "New",
-        lastName: "User",
-        email: "new@gmail.com",
-        temporaryPassword: "temp1234",
-        role: "salesperson",
-        grade: 1,
-      },
-      db.directorId,
-      "director",
-    ),
-  ).rejects.toThrow("Email must end with @seller.com");
-});
+  it("should throw BadRequestError for email not ending with @seller.com", async () => {
+    await expect(
+      userService.createUser(
+        {
+          firstName: "New",
+          lastName: "User",
+          email: "new@gmail.com",
+          temporaryPassword: "temp1234",
+          role: "salesperson",
+          grade: 1,
+        },
+        db.directorId,
+        "director",
+      ),
+    ).rejects.toThrow("Email must end with @seller.com");
+  });
 });
 
 // ─── updateUser ───────────────────────────────────────────────────────────────
@@ -230,7 +228,7 @@ describe("updateUser", () => {
     const outsideUser = await User.create({
       firstName: "Outside",
       lastName: "User",
-      email: "outside@test.com",
+      email: "outside@seller.com",
       password: "password123",
       role: "salesperson",
       grade: 1,
@@ -251,12 +249,7 @@ describe("updateUser", () => {
   it("should throw NotFoundError for non-existent user", async () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
     await expect(
-      userService.updateUser(
-        fakeId,
-        { firstName: "Updated" },
-        db.directorId,
-        "director",
-      ),
+      userService.updateUser(fakeId, { firstName: "Updated" }, db.directorId, "director"),
     ).rejects.toThrow("User not found");
   });
 });
@@ -265,21 +258,13 @@ describe("updateUser", () => {
 
 describe("updateUserRoleAndGrade", () => {
   it("should update role and grade", async () => {
-    const updated = await userService.updateUserRoleAndGrade(
-      db.advisorId,
-      "salesperson",
-      2,
-    );
+    const updated = await userService.updateUserRoleAndGrade(db.advisorId, "salesperson", 2);
     expect(updated.role).toBe("salesperson");
     expect(updated.grade).toBe(2);
   });
 
   it("should set grade to null when changing to director", async () => {
-    const updated = await userService.updateUserRoleAndGrade(
-      db.advisorId,
-      "director",
-      null,
-    );
+    const updated = await userService.updateUserRoleAndGrade(db.advisorId, "director", null);
     expect(updated.role).toBe("director");
     expect(updated.grade).toBeNull();
   });
@@ -292,9 +277,9 @@ describe("updateUserRoleAndGrade", () => {
 
   it("should throw NotFoundError for non-existent user", async () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
-    await expect(
-      userService.updateUserRoleAndGrade(fakeId, "salesperson", 1),
-    ).rejects.toThrow("User not found");
+    await expect(userService.updateUserRoleAndGrade(fakeId, "salesperson", 1)).rejects.toThrow(
+      "User not found",
+    );
   });
 });
 
@@ -302,21 +287,13 @@ describe("updateUserRoleAndGrade", () => {
 
 describe("toggleUserActive", () => {
   it("should deactivate active user", async () => {
-    const updated = await userService.toggleUserActive(
-      db.advisorId,
-      db.directorId,
-      "director",
-    );
+    const updated = await userService.toggleUserActive(db.advisorId, db.directorId, "director");
     expect(updated.isActive).toBe(false);
   });
 
   it("should reactivate inactive user", async () => {
     await User.findByIdAndUpdate(db.advisorId, { isActive: false });
-    const updated = await userService.toggleUserActive(
-      db.advisorId,
-      db.directorId,
-      "director",
-    );
+    const updated = await userService.toggleUserActive(db.advisorId, db.directorId, "director");
     expect(updated.isActive).toBe(true);
   });
 
@@ -345,7 +322,7 @@ describe("toggleUserActive", () => {
     const outsideUser = await User.create({
       firstName: "Outside",
       lastName: "User",
-      email: "outside@test.com",
+      email: "outside@seller.com",
       password: "password123",
       role: "salesperson",
       grade: 1,
@@ -354,11 +331,7 @@ describe("toggleUserActive", () => {
     });
 
     await expect(
-      userService.toggleUserActive(
-        outsideUser._id.toString(),
-        db.deputyId,
-        "deputy",
-      ),
+      userService.toggleUserActive(outsideUser._id.toString(), db.deputyId, "deputy"),
     ).rejects.toThrow("Forbidden");
   });
 });
@@ -367,11 +340,7 @@ describe("toggleUserActive", () => {
 
 describe("changePassword", () => {
   it("should change password and set mustChangePassword to false", async () => {
-    await userService.changePassword(
-      db.advisorId,
-      "password123",
-      "newpassword123",
-    );
+    await userService.changePassword(db.advisorId, "password123", "newpassword123");
 
     const user = await User.findById(db.advisorId);
     expect(user?.mustChangePassword).toBe(false);
@@ -382,11 +351,7 @@ describe("changePassword", () => {
 
   it("should throw BadRequestError for wrong current password", async () => {
     await expect(
-      userService.changePassword(
-        db.advisorId,
-        "wrongpassword",
-        "newpassword123",
-      ),
+      userService.changePassword(db.advisorId, "wrongpassword", "newpassword123"),
     ).rejects.toThrow("Current password is incorrect");
   });
 
@@ -402,12 +367,7 @@ describe("changePassword", () => {
 
 describe("resetPassword", () => {
   it("should reset password and set mustChangePassword to true", async () => {
-    await userService.resetPassword(
-      db.advisorId,
-      "temp1234",
-      db.directorId,
-      "director",
-    );
+    await userService.resetPassword(db.advisorId, "temp1234", db.directorId, "director");
 
     const user = await User.findById(db.advisorId);
     expect(user?.mustChangePassword).toBe(true);
@@ -418,12 +378,7 @@ describe("resetPassword", () => {
 
   it("deputy should reset password of user in own region", async () => {
     await expect(
-      userService.resetPassword(
-        db.advisorId,
-        "temp1234",
-        db.deputyId,
-        "deputy",
-      ),
+      userService.resetPassword(db.advisorId, "temp1234", db.deputyId, "deputy"),
     ).resolves.not.toThrow();
   });
 
@@ -446,7 +401,7 @@ describe("resetPassword", () => {
     const outsideUser = await User.create({
       firstName: "Outside",
       lastName: "User",
-      email: "outside@test.com",
+      email: "outside@seller.com",
       password: "password123",
       role: "salesperson",
       grade: 1,
@@ -455,12 +410,7 @@ describe("resetPassword", () => {
     });
 
     await expect(
-      userService.resetPassword(
-        outsideUser._id.toString(),
-        "temp1234",
-        db.deputyId,
-        "deputy",
-      ),
+      userService.resetPassword(outsideUser._id.toString(), "temp1234", db.deputyId, "deputy"),
     ).rejects.toThrow("Forbidden");
   });
 

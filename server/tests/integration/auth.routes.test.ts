@@ -14,7 +14,7 @@ describe("POST /api/auth/login", () => {
   it("should return token for valid credentials", async () => {
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "director@test.com", password: "password123" });
+      .send({ email: "director@seller.com", password: "password123" });
 
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty("token");
@@ -25,7 +25,7 @@ describe("POST /api/auth/login", () => {
   it("should return 401 for invalid password", async () => {
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "director@test.com", password: "wrongpassword" });
+      .send({ email: "director@seller.com", password: "wrongpassword" });
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe("Invalid credentials");
@@ -34,15 +34,13 @@ describe("POST /api/auth/login", () => {
   it("should return 401 for non-existent email", async () => {
     const res = await request(app)
       .post("/api/auth/login")
-      .send({ email: "nobody@test.com", password: "password123" });
+      .send({ email: "nobody@seller.com", password: "password123" });
 
     expect(res.status).toBe(401);
   });
 
   it("should return 400 when email is missing", async () => {
-    const res = await request(app)
-      .post("/api/auth/login")
-      .send({ password: "password123" });
+    const res = await request(app).post("/api/auth/login").send({ password: "password123" });
 
     expect(res.status).toBe(400);
   });
@@ -60,7 +58,7 @@ describe("GET /api/auth/me", () => {
       .set("Authorization", `Bearer ${ctx.directorToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.user.email).toBe("director@test.com");
+    expect(res.body.user.email).toBe("director@seller.com");
     expect(res.body.user.password).toBeUndefined();
   });
 
@@ -70,9 +68,7 @@ describe("GET /api/auth/me", () => {
   });
 
   it("should return 401 with invalid token", async () => {
-    const res = await request(app)
-      .get("/api/auth/me")
-      .set("Authorization", "Bearer invalidtoken");
+    const res = await request(app).get("/api/auth/me").set("Authorization", "Bearer invalidtoken");
 
     expect(res.status).toBe(401);
   });

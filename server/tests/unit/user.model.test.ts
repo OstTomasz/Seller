@@ -12,7 +12,7 @@ describe("User Model", () => {
     const user = await User.create({
       firstName: "Jan",
       lastName: "Kowalski",
-      email: "jan@test.com",
+      email: "jan@seller.com",
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
@@ -27,7 +27,7 @@ describe("User Model", () => {
     const user = await User.create({
       firstName: "Jan",
       lastName: "Kowalski",
-      email: "jan@test.com",
+      email: "jan@seller.com",
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
@@ -42,7 +42,7 @@ describe("User Model", () => {
     const user = await User.create({
       firstName: "Jan",
       lastName: "Kowalski",
-      email: "jan@test.com",
+      email: "jan@seller.com",
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
@@ -57,7 +57,7 @@ describe("User Model", () => {
     const user = await User.create({
       firstName: "Jan",
       lastName: "Kowalski",
-      email: "jan@test.com",
+      email: "jan@seller.com",
       password: "plainpassword123",
       role: "salesperson",
       grade: 1,
@@ -72,7 +72,7 @@ describe("User Model", () => {
     const user = new User({
       firstName: "Anna",
       lastName: "Nowak",
-      email: "anna@test.com",
+      email: "anna@seller.com",
       password: "password123",
       role: "advisor",
       grade: 5,
@@ -86,7 +86,7 @@ describe("User Model", () => {
     const user = new User({
       firstName: "Piotr",
       lastName: "Wiśniewski",
-      email: "piotr@test.com",
+      email: "piotr@seller.com",
       password: "password123",
       role: "salesperson",
       grade: 1,
@@ -102,15 +102,13 @@ describe("User Model", () => {
     const user = new User({
       firstName: "Piotr",
       lastName: "Wiśniewski",
-      email: "piotr2@test.com",
+      email: "piotr2@seller.com",
       password: "password123",
       role: "salesperson",
       grade: null,
       position: new mongoose.Types.ObjectId(),
     });
 
-    await expect(user.save()).rejects.toThrow(
-      "Grade is required for advisor and salesperson",
-    );
+    await expect(user.save()).rejects.toThrow("Grade is required for advisor and salesperson");
   });
 });

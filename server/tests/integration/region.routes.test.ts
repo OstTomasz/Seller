@@ -188,7 +188,7 @@ describe("PATCH /api/regions/:id/deputy", () => {
     const newDeputy = await User.create({
       firstName: "Nowy",
       lastName: "Deputy",
-      email: "newdeputy@test.com",
+      email: "newdeputy@seller.com",
       password: "password123",
       role: "deputy",
       mustChangePassword: false,

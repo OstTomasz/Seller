@@ -5,20 +5,9 @@ import Position from "../../src/models/Position";
 import Region from "../../src/models/Region";
 import * as clientService from "../../src/services/client.service";
 import { ForbiddenError, NotFoundError } from "../../src/utils/errors";
-import { clearDB, createTestDB, sampleAddress, TestDB } from "../helpers";
+import { clearDB, createTestClient, createTestDB, sampleAddress, TestDB } from "../helpers";
 
 let db: TestDB;
-
-const createClient = async (overrides = {}) => {
-  return await Client.create({
-    companyName: "Test Company",
-    assignedTo: db.salespersonPositionId,
-    assignedAdvisor: db.advisorPositionId,
-    status: "active",
-    addresses: [sampleAddress],
-    ...overrides,
-  });
-};
 
 beforeEach(async () => {
   await clearDB();
@@ -29,43 +18,40 @@ beforeEach(async () => {
 
 describe("getClients", () => {
   it("director should see all clients", async () => {
-    await createClient();
-    await createClient({ companyName: "Another Company" });
+    await createTestClient(db);
+    await createTestClient(db, { companyName: "Another Company" });
 
     const clients = await clientService.getClients(db.directorId, "director");
     expect(clients).toHaveLength(2);
   });
 
   it("salesperson should see only own clients", async () => {
-    await createClient();
+    await createTestClient(db);
     const otherPosition = await Position.create({
       code: "PO-99",
       region: db.regionId,
       type: "salesperson",
       currentHolder: null,
     });
-    await createClient({
+    await createTestClient(db, {
       companyName: "Other Company",
       assignedTo: otherPosition._id,
     });
 
-    const clients = await clientService.getClients(
-      db.salespersonId,
-      "salesperson",
-    );
+    const clients = await clientService.getClients(db.salespersonId, "salesperson");
     expect(clients).toHaveLength(1);
     expect(clients[0].companyName).toBe("Test Company");
   });
 
   it("advisor should see clients in own region", async () => {
-    await createClient();
+    await createTestClient(db);
 
     const clients = await clientService.getClients(db.advisorId, "advisor");
     expect(clients).toHaveLength(1);
   });
 
   it("deputy should see clients in own superregion", async () => {
-    await createClient();
+    await createTestClient(db);
 
     const clients = await clientService.getClients(db.deputyId, "deputy");
     expect(clients).toHaveLength(1);
@@ -87,7 +73,7 @@ describe("getClients", () => {
       type: "salesperson",
       currentHolder: null,
     });
-    await createClient({ assignedTo: otherPosition._id });
+    await createTestClient(db, { assignedTo: otherPosition._id });
 
     const clients = await clientService.getClients(db.deputyId, "deputy");
     expect(clients).toHaveLength(0);
@@ -98,7 +84,7 @@ describe("getClients", () => {
 
 describe("getClientById", () => {
   it("director should get any client", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const found = await clientService.getClientById(
       client._id.toString(),
@@ -109,7 +95,7 @@ describe("getClientById", () => {
   });
 
   it("salesperson should get own client", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const found = await clientService.getClientById(
       client._id.toString(),
@@ -126,39 +112,40 @@ describe("getClientById", () => {
       type: "salesperson",
       currentHolder: null,
     });
-    const client = await createClient({ assignedTo: otherPosition._id });
+    const client = await createTestClient(db, { assignedTo: otherPosition._id });
 
     await expect(
-      clientService.getClientById(
-        client._id.toString(),
-        db.salespersonId,
-        "salesperson",
-      ),
+      clientService.getClientById(client._id.toString(), db.salespersonId, "salesperson"),
     ).rejects.toThrow(ForbiddenError);
   });
 
   it("should throw NotFoundError for non-existent client", async () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
 
-    await expect(
-      clientService.getClientById(fakeId, db.directorId, "director"),
-    ).rejects.toThrow(NotFoundError);
+    await expect(clientService.getClientById(fakeId, db.directorId, "director")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 });
 
-// ─── createClient ─────────────────────────────────────────────────────────────
+// ─── createTestClient ─────────────────────────────────────────────────────────────
 
-describe("createClient", () => {
+describe("createTestClient", () => {
   it("salesperson should create client with auto-assigned advisor", async () => {
-    const client = await clientService.createClient(
-      { companyName: "New Company", addresses: [sampleAddress] },
-      db.salespersonId,
-      "salesperson",
-    );
+    try {
+      const client = await clientService.createClient(
+        { companyName: "New Company", addresses: [sampleAddress] },
+        db.salespersonId,
+        "salesperson",
+      );
 
-    expect(client.companyName).toBe("New Company");
-    expect(client.assignedTo.toString()).toBe(db.salespersonPositionId);
-    expect(client.assignedAdvisor?.toString()).toBe(db.advisorPositionId);
+      expect(client.companyName).toBe("New Company");
+      expect(client.assignedTo._id.toString()).toBe(db.salespersonPositionId);
+      expect(client.assignedAdvisor?._id.toString()).toBe(db.advisorPositionId);
+    } catch (error: any) {
+      console.log("DEBUG ERROR:", error.message, error.stack);
+      throw error;
+    }
   });
 
   it("advisor should create client assigned to salesperson", async () => {
@@ -172,8 +159,8 @@ describe("createClient", () => {
       "advisor",
     );
 
-    expect(client.assignedTo.toString()).toBe(db.salespersonPositionId);
-    expect(client.assignedAdvisor?.toString()).toBe(db.advisorPositionId);
+    expect(client.assignedTo._id.toString()).toBe(db.salespersonPositionId);
+    expect(client.assignedAdvisor?._id.toString()).toBe(db.advisorPositionId);
   });
 
   it("advisor should NOT create client for salesperson outside own region", async () => {
@@ -212,8 +199,7 @@ describe("createClient", () => {
       db.directorId,
       "director",
     );
-
-    expect(client.assignedTo.toString()).toBe(db.salespersonPositionId);
+    expect(client.assignedTo._id.toString()).toBe(db.salespersonPositionId);
   });
 
   it("deputy should NOT create client for salesperson outside own superregion", async () => {
@@ -251,7 +237,7 @@ describe("createClient", () => {
 
 describe("updateClient", () => {
   it("salesperson should update own client", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const updated = await clientService.updateClient(
       client._id.toString(),
@@ -264,7 +250,7 @@ describe("updateClient", () => {
   });
 
   it("advisor should update client in own region", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const updated = await clientService.updateClient(
       client._id.toString(),
@@ -283,7 +269,7 @@ describe("updateClient", () => {
       type: "salesperson",
       currentHolder: null,
     });
-    const client = await createClient({ assignedTo: otherPosition._id });
+    const client = await createTestClient(db, { assignedTo: otherPosition._id });
 
     await expect(
       clientService.updateClient(
@@ -299,12 +285,7 @@ describe("updateClient", () => {
     const fakeId = new mongoose.Types.ObjectId().toString();
 
     await expect(
-      clientService.updateClient(
-        fakeId,
-        { companyName: "Updated" },
-        db.directorId,
-        "director",
-      ),
+      clientService.updateClient(fakeId, { companyName: "Updated" }, db.directorId, "director"),
     ).rejects.toThrow(NotFoundError);
   });
 });
@@ -313,7 +294,7 @@ describe("updateClient", () => {
 
 describe("updateClientStatus", () => {
   it("salesperson should change own client status", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const updated = await clientService.updateClientStatus(
       client._id.toString(),
@@ -327,7 +308,7 @@ describe("updateClientStatus", () => {
   });
 
   it("should require inactivityReason for inactive status", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     await expect(
       clientService.updateClientStatus(
@@ -341,7 +322,7 @@ describe("updateClientStatus", () => {
   });
 
   it("should set inactivityReason when status is inactive", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const updated = await clientService.updateClientStatus(
       client._id.toString(),
@@ -356,7 +337,7 @@ describe("updateClientStatus", () => {
   });
 
   it("should clear inactivityReason when status changes from inactive", async () => {
-    const client = await createClient({
+    const client = await createTestClient(db, {
       status: "inactive",
       inactivityReason: "No contact",
     });
@@ -373,7 +354,7 @@ describe("updateClientStatus", () => {
   });
 
   it("should NOT allow direct archive via status endpoint", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     await expect(
       clientService.updateClientStatus(
@@ -387,7 +368,7 @@ describe("updateClientStatus", () => {
   });
 
   it("advisor should NOT change client status", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     await expect(
       clientService.updateClientStatus(
@@ -405,7 +386,7 @@ describe("updateClientStatus", () => {
 
 describe("requestArchive", () => {
   it("salesperson should submit archive request", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     const updated = await clientService.requestArchive(
       client._id.toString(),
@@ -419,7 +400,7 @@ describe("requestArchive", () => {
   });
 
   it("advisor should NOT submit archive request", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     await expect(
       clientService.requestArchive(
@@ -432,7 +413,7 @@ describe("requestArchive", () => {
   });
 
   it("should NOT submit archive request for already archived client", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(db, { status: "archived" });
 
     await expect(
       clientService.requestArchive(
@@ -449,7 +430,7 @@ describe("requestArchive", () => {
 
 describe("approveArchive", () => {
   it("director should approve archive request", async () => {
-    const client = await createClient({
+    const client = await createTestClient(db, {
       archiveRequest: {
         requestedAt: new Date(),
         requestedBy: new mongoose.Types.ObjectId(),
@@ -467,7 +448,7 @@ describe("approveArchive", () => {
   });
 
   it("deputy should approve archive request in own superregion", async () => {
-    const client = await createClient({
+    const client = await createTestClient(db, {
       archiveRequest: {
         requestedAt: new Date(),
         requestedBy: new mongoose.Types.ObjectId(),
@@ -485,7 +466,7 @@ describe("approveArchive", () => {
   });
 
   it("salesperson should NOT approve archive request", async () => {
-    const client = await createClient({
+    const client = await createTestClient(db, {
       archiveRequest: {
         requestedAt: new Date(),
         requestedBy: new mongoose.Types.ObjectId(),
@@ -494,23 +475,15 @@ describe("approveArchive", () => {
     });
 
     await expect(
-      clientService.approveArchive(
-        client._id.toString(),
-        db.salespersonId,
-        "salesperson",
-      ),
+      clientService.approveArchive(client._id.toString(), db.salespersonId, "salesperson"),
     ).rejects.toThrow(ForbiddenError);
   });
 
   it("should throw BadRequestError when no archive request exists", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     await expect(
-      clientService.approveArchive(
-        client._id.toString(),
-        db.directorId,
-        "director",
-      ),
+      clientService.approveArchive(client._id.toString(), db.directorId, "director"),
     ).rejects.toThrow("No archive request");
   });
 });
@@ -519,7 +492,7 @@ describe("approveArchive", () => {
 
 describe("unarchiveClient", () => {
   it("salesperson should unarchive own client", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(db, { status: "archived" });
 
     const updated = await clientService.unarchiveClient(
       client._id.toString(),
@@ -531,19 +504,15 @@ describe("unarchiveClient", () => {
   });
 
   it("should throw BadRequestError when client is not archived", async () => {
-    const client = await createClient();
+    const client = await createTestClient(db);
 
     await expect(
-      clientService.unarchiveClient(
-        client._id.toString(),
-        db.salespersonId,
-        "salesperson",
-      ),
+      clientService.unarchiveClient(client._id.toString(), db.salespersonId, "salesperson"),
     ).rejects.toThrow("Client is not archived");
   });
 
   it("advisor should unarchive client in own region", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(db, { status: "archived" });
 
     const updated = await clientService.unarchiveClient(
       client._id.toString(),
@@ -555,7 +524,7 @@ describe("unarchiveClient", () => {
   });
 
   it("director should unarchive any client", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(db, { status: "archived" });
 
     const updated = await clientService.unarchiveClient(
       client._id.toString(),

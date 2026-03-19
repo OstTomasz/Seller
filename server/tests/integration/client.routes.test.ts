@@ -2,27 +2,16 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 import app from "../../src/app";
-import Client from "../../src/models/Client";
 import Position from "../../src/models/Position";
 import {
   clearDB,
+  createTestClient,
   createTestContext,
   sampleAddress,
   TestContext,
 } from "../helpers";
 
 let ctx: TestContext;
-
-const createClient = async (overrides = {}) => {
-  return await Client.create({
-    companyName: "Test Company",
-    assignedTo: ctx.salespersonPositionId,
-    assignedAdvisor: ctx.advisorPositionId,
-    status: "active",
-    addresses: [sampleAddress],
-    ...overrides,
-  });
-};
 
 beforeEach(async () => {
   await clearDB();
@@ -33,8 +22,8 @@ beforeEach(async () => {
 
 describe("GET /api/clients", () => {
   it("director should see all clients", async () => {
-    await createClient();
-    await createClient({ companyName: "Another Company" });
+    await createTestClient(ctx);
+    await createTestClient(ctx, { companyName: "Another Company" });
 
     const res = await request(app)
       .get("/api/clients")
@@ -45,8 +34,8 @@ describe("GET /api/clients", () => {
   });
 
   it("salesperson should see only own clients", async () => {
-    await createClient(); // assigned to ctx.salespersonPositionId
-    await createClient({
+    await createTestClient(ctx); // assigned to ctx.salespersonPositionId
+    await createTestClient(ctx, {
       companyName: "Other Company",
       assignedTo: ctx.advisorPositionId, // different position
     });
@@ -61,7 +50,7 @@ describe("GET /api/clients", () => {
   });
 
   it("advisor should see clients in own region", async () => {
-    await createClient(); // assignedAdvisor = ctx.advisorPositionId
+    await createTestClient(ctx); // assignedAdvisor = ctx.advisorPositionId
 
     const res = await request(app)
       .get("/api/clients")
@@ -72,7 +61,7 @@ describe("GET /api/clients", () => {
   });
 
   it("deputy should see clients in own superregion", async () => {
-    await createClient();
+    await createTestClient(ctx);
 
     const res = await request(app)
       .get("/api/clients")
@@ -92,7 +81,7 @@ describe("GET /api/clients", () => {
 
 describe("GET /api/clients/:id", () => {
   it("director should get client by id", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .get(`/api/clients/${client._id}`)
@@ -103,7 +92,7 @@ describe("GET /api/clients/:id", () => {
   });
 
   it("salesperson should get own client", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .get(`/api/clients/${client._id}`)
@@ -119,7 +108,7 @@ describe("GET /api/clients/:id", () => {
       type: "salesperson",
       currentHolder: null,
     });
-    const client = await createClient({ assignedTo: otherPosition._id });
+    const client = await createTestClient(ctx, { assignedTo: otherPosition._id });
 
     const res = await request(app)
       .get(`/api/clients/${client._id}`)
@@ -227,7 +216,7 @@ describe("POST /api/clients", () => {
 
 describe("PATCH /api/clients/:id", () => {
   it("salesperson should update own client", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}`)
@@ -239,7 +228,7 @@ describe("PATCH /api/clients/:id", () => {
   });
 
   it("advisor should update client in own region", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}`)
@@ -256,7 +245,7 @@ describe("PATCH /api/clients/:id", () => {
       type: "salesperson",
       currentHolder: null,
     });
-    const client = await createClient({ assignedTo: otherPosition._id });
+    const client = await createTestClient(ctx, { assignedTo: otherPosition._id });
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}`)
@@ -267,7 +256,7 @@ describe("PATCH /api/clients/:id", () => {
   });
 
   it("director should update any client", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}`)
@@ -282,7 +271,7 @@ describe("PATCH /api/clients/:id", () => {
 
 describe("PATCH /api/clients/:id/status", () => {
   it("salesperson should change own client status to inactive", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/status`)
@@ -295,7 +284,7 @@ describe("PATCH /api/clients/:id/status", () => {
   });
 
   it("should return 400 when inactivityReason is missing for inactive status", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/status`)
@@ -306,7 +295,7 @@ describe("PATCH /api/clients/:id/status", () => {
   });
 
   it("should return 400 when trying to set status to archived directly", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/status`)
@@ -317,7 +306,7 @@ describe("PATCH /api/clients/:id/status", () => {
   });
 
   it("advisor should NOT change client status", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/status`)
@@ -328,7 +317,7 @@ describe("PATCH /api/clients/:id/status", () => {
   });
 
   it("deputy should change status of client in own superregion", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/status`)
@@ -343,7 +332,7 @@ describe("PATCH /api/clients/:id/status", () => {
 
 describe("PATCH /api/clients/:id/archive-request", () => {
   it("salesperson should submit archive request", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/archive-request`)
@@ -351,14 +340,12 @@ describe("PATCH /api/clients/:id/archive-request", () => {
       .send({ reason: "Client closed business" });
 
     expect(res.status).toBe(200);
-    expect(res.body.client.archiveRequest.reason).toBe(
-      "Client closed business",
-    );
+    expect(res.body.client.archiveRequest.reason).toBe("Client closed business");
     expect(res.body.client.archiveRequest.requestedAt).not.toBeNull();
   });
 
   it("advisor should NOT submit archive request", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/archive-request`)
@@ -369,7 +356,7 @@ describe("PATCH /api/clients/:id/archive-request", () => {
   });
 
   it("should return 400 when reason is missing", async () => {
-    const client = await createClient();
+    const client = await createTestClient(ctx);
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/archive-request`)
@@ -384,7 +371,7 @@ describe("PATCH /api/clients/:id/archive-request", () => {
 
 describe("PATCH /api/clients/:id/archive-approve", () => {
   it("director should approve archive request", async () => {
-    const client = await createClient({
+    const client = await createTestClient(ctx, {
       archiveRequest: {
         requestedAt: new Date(),
         requestedBy: new mongoose.Types.ObjectId(),
@@ -401,7 +388,7 @@ describe("PATCH /api/clients/:id/archive-approve", () => {
   });
 
   it("deputy should approve archive request for client in own superregion", async () => {
-    const client = await createClient({
+    const client = await createTestClient(ctx, {
       archiveRequest: {
         requestedAt: new Date(),
         requestedBy: new mongoose.Types.ObjectId(),
@@ -418,7 +405,7 @@ describe("PATCH /api/clients/:id/archive-approve", () => {
   });
 
   it("salesperson should NOT approve archive request", async () => {
-    const client = await createClient({
+    const client = await createTestClient(ctx, {
       archiveRequest: {
         requestedAt: new Date(),
         requestedBy: new mongoose.Types.ObjectId(),
@@ -434,7 +421,7 @@ describe("PATCH /api/clients/:id/archive-approve", () => {
   });
 
   it("should return 400 when no archive request exists", async () => {
-    const client = await createClient(); // no archiveRequest
+    const client = await createTestClient(ctx); // no archiveRequest
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/archive-approve`)
@@ -448,7 +435,7 @@ describe("PATCH /api/clients/:id/archive-approve", () => {
 
 describe("PATCH /api/clients/:id/unarchive", () => {
   it("salesperson should unarchive own client", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(ctx, { status: "archived" });
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/unarchive`)
@@ -459,7 +446,7 @@ describe("PATCH /api/clients/:id/unarchive", () => {
   });
 
   it("advisor should unarchive client in own region", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(ctx, { status: "archived" });
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/unarchive`)
@@ -469,7 +456,7 @@ describe("PATCH /api/clients/:id/unarchive", () => {
   });
 
   it("should return 400 when client is not archived", async () => {
-    const client = await createClient(); // status: active
+    const client = await createTestClient(ctx); // status: active
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/unarchive`)
@@ -479,7 +466,7 @@ describe("PATCH /api/clients/:id/unarchive", () => {
   });
 
   it("director should unarchive any client", async () => {
-    const client = await createClient({ status: "archived" });
+    const client = await createTestClient(ctx, { status: "archived" });
 
     const res = await request(app)
       .patch(`/api/clients/${client._id}/unarchive`)

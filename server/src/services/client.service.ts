@@ -381,6 +381,7 @@ export const updateClientSalesperson = async (
 ): Promise<IClient> => {
   const client = await Client.findById(clientId);
   if (!client) throw new NotFoundError("Client not found");
+  if (requesterRole === "salesperson") throw new ForbiddenError();
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
