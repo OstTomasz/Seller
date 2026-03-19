@@ -5,6 +5,7 @@ import * as clientRepository from "../repositories/client.repository";
 import * as positionRepository from "../repositories/position.repository";
 import * as regionRepository from "../repositories/region.repository";
 import * as userRepository from "../repositories/user.repository";
+import { getPositionIdsInSuperregion } from "../utils/rbac";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -17,21 +18,6 @@ const getAdvisorPosition = async (regionId: string) => {
 const getRegionFromPosition = async (positionId: string): Promise<string | null> => {
   const position = await positionRepository.findPositionById(positionId);
   return position?.region?.toString() ?? null;
-};
-
-const getPositionIdsInSuperregion = async (deputyUserId: string): Promise<string[]> => {
-  const deputyUser = await userRepository.findRawUserById(deputyUserId);
-  if (!deputyUser?.position) return [];
-
-  const deputyPosition = await positionRepository.findPositionById(deputyUser.position.toString());
-  if (!deputyPosition?.region) return [];
-
-  const superregionId = deputyPosition.region.toString();
-  const subregions = await regionRepository.findSubregionsByParentId(superregionId);
-  const subregionIds = subregions.map((r) => r._id.toString());
-
-  const positions = await positionRepository.findPositionsByRegionIds(subregionIds);
-  return positions.map((p) => p._id.toString());
 };
 
 const verifyAdvisorAccess = async (

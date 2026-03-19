@@ -22,15 +22,7 @@ export const getUserById = wrapAsync(
 
 export const createUser = wrapAsync(
   async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-    const {
-      firstName,
-      lastName,
-      email,
-      temporaryPassword,
-      role,
-      grade,
-      positionId,
-    } = req.body;
+    const { firstName, lastName, email, temporaryPassword, role, grade, positionId } = req.body;
 
     if (!firstName || !lastName || !email || !temporaryPassword || !role) {
       throw new BadRequestError(
@@ -81,11 +73,7 @@ export const updateUserRoleAndGrade = wrapAsync(
       throw new BadRequestError("role is required");
     }
 
-    const user = await userService.updateUserRoleAndGrade(
-      id,
-      role,
-      grade ?? null,
-    );
+    const user = await userService.updateUserRoleAndGrade(id, role, grade ?? null);
     res.status(200).json({ user });
   },
 );
@@ -94,11 +82,7 @@ export const toggleUserActive = wrapAsync(
   async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
 
-    const user = await userService.toggleUserActive(
-      id,
-      req.userId!,
-      req.userRole as UserRole,
-    );
+    const user = await userService.toggleUserActive(id, req.userId!, req.userRole as UserRole);
 
     res.status(200).json({ user });
   },
@@ -116,11 +100,7 @@ export const changePassword = wrapAsync(
       throw new BadRequestError("New password must be at least 8 characters");
     }
 
-    const user = await userService.changePassword(
-      req.userId!,
-      currentPassword,
-      newPassword,
-    );
+    const user = await userService.changePassword(req.userId!, currentPassword, newPassword);
 
     const token = generateTokenForUser(user);
 
@@ -137,13 +117,14 @@ export const resetPassword = wrapAsync(
       throw new BadRequestError("temporaryPassword is required");
     }
 
-    await userService.resetPassword(
-      id,
-      temporaryPassword,
-      req.userId!,
-      req.userRole as UserRole,
-    );
+    await userService.resetPassword(id, temporaryPassword, req.userId!, req.userRole as UserRole);
 
     res.status(200).json({ message: "Password reset successfully" });
+  },
+);
+export const getSalespersons = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    const users = await userService.getSalespersons(req.userId!, req.userRole as UserRole);
+    res.status(200).json({ users });
   },
 );

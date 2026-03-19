@@ -18,6 +18,10 @@ const deepPopulate = (query: mongoose.Query<unknown, unknown>) =>
     .populate({
       path: "assignedAdvisor",
       populate: { path: "currentHolder", select: "firstName lastName" },
+    })
+    .populate({
+      path: "notes.createdBy",
+      select: "firstName lastName",
     });
 
 export const findClientById = async (clientId: string): Promise<IClient | null> =>
@@ -72,4 +76,3 @@ export const updateClientById = async (
       runValidators: true,
     }),
   )) as IClient | null;
-

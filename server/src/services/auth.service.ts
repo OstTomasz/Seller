@@ -41,3 +41,10 @@ export const getMe = async (userId: string): Promise<IUser> => {
   if (!user) throw new NotFoundError("User not found");
   return user;
 };
+export const verifyPassword = async (userId: string, password: string): Promise<void> => {
+  const user = await userRepository.findRawUserById(userId);
+  if (!user) throw new NotFoundError("User not found");
+
+  const isValid = await user.comparePassword(password);
+  if (!isValid) throw new UnauthorizedError("Invalid password");
+};

@@ -8,4 +8,6 @@ router.post("/login", authController.login);
 
 router.get("/me", authenticate, authController.getMe);
 
+router.post("/verify-password", authenticate, authController.verifyPassword);
+
 export default router;

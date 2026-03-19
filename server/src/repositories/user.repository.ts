@@ -30,6 +30,21 @@ export const findActiveUserByEmail = async (email: string) =>
   User.findOne({ email, isActive: true });
 
 /**
+ * Returns all salesperson users with populated position and region.
+ */
+export const findSalespersonUsers = async (): Promise<IUser[]> =>
+  User.find({ role: "salesperson", isActive: true })
+    .populate({
+      path: "position",
+      populate: {
+        path: "region",
+        select: "name parentRegion",
+        populate: { path: "parentRegion", select: "name" },
+      },
+    })
+    .select("-password");
+
+/**
  * Creates a new user with the given data.
  */
 export const createUser = async (data: {
@@ -87,11 +102,6 @@ export const updateUserRoleAndGradeById = async (
   role: UserRole,
   grade: UserGrade | null,
 ): Promise<IUser | null> =>
-  User.findByIdAndUpdate(
-    userId,
-    { role, grade },
-    { returnDocument: "after", runValidators: true },
-  )
+  User.findByIdAndUpdate(userId, { role, grade }, { returnDocument: "after", runValidators: true })
     .populate("position")
     .select("-password");
-

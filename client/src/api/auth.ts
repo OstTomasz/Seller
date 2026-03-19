@@ -22,9 +22,11 @@ interface ChangePasswordResponse {
 }
 
 export const authApi = {
-  login: (payload: LoginPayload) =>
-    api.post<LoginResponse>("/auth/login", payload),
+  login: (payload: LoginPayload) => api.post<LoginResponse>("/auth/login", payload),
 
   changePassword: (payload: ChangePasswordPayload) =>
     api.patch<ChangePasswordResponse>("/users/me/password", payload),
+
+  verifyPassword: (password: string) =>
+    api.post<{ verified: boolean }>("/auth/verify-password", { password }),
 };

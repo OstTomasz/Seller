@@ -10,6 +10,7 @@ export type {
   IClientBase,
   ApiError,
   TokenPayload,
+  INoteAuthor,
 } from "@seller/shared/types";
 
 import type { IUserBase, IClientBase, UserRole, INote } from "@seller/shared/types";

@@ -21,3 +21,12 @@ export const getMe = wrapAsync(
     res.status(200).json({ user });
   },
 );
+export const verifyPassword = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    const { password } = req.body;
+    if (!password) throw new BadRequestError("Password is required");
+
+    await authService.verifyPassword(req.userId!, password);
+    res.status(200).json({ verified: true });
+  },
+);

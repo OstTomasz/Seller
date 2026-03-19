@@ -9,20 +9,13 @@ router.patch("/me/password", userController.changePassword);
 
 // All logged in users can read
 router.get("/", userController.getUsers);
+router.get("/salespersons", requireRole("director", "deputy"), userController.getSalespersons);
 router.get("/:id", userController.getUserById);
 
 // Director and deputy can create and manage users
 router.post("/", requireRole("director", "deputy"), userController.createUser);
-router.patch(
-  "/:id",
-  requireRole("director", "deputy"),
-  userController.updateUser,
-);
-router.patch(
-  "/:id/role",
-  requireRole("director"),
-  userController.updateUserRoleAndGrade,
-);
+router.patch("/:id", requireRole("director", "deputy"), userController.updateUser);
+router.patch("/:id/role", requireRole("director"), userController.updateUserRoleAndGrade);
 router.patch(
   "/:id/toggle-active",
   requireRole("director", "deputy"),

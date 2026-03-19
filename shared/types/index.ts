@@ -5,12 +5,7 @@ import { z } from "zod";
 export const userRoleSchema = z.enum(["director", "deputy", "advisor", "salesperson"]);
 export type UserRole = z.infer<typeof userRoleSchema>;
 
-export const userGradeSchema = z.union([
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-]);
+export const userGradeSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]);
 export type UserGrade = z.infer<typeof userGradeSchema>;
 
 export const clientStatusSchema = z.enum(["active", "reminder", "inactive", "archived"]);
@@ -44,10 +39,17 @@ export const archiveRequestSchema = z.object({
 });
 export type IArchiveRequest = z.infer<typeof archiveRequestSchema>;
 
+export const noteAuthorSchema = z.object({
+  _id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+});
+export type INoteAuthor = z.infer<typeof noteAuthorSchema>;
+
 export const noteSchema = z.object({
   _id: z.string(),
   content: z.string(),
-  createdBy: z.string(),
+  createdBy: z.union([z.string(), noteAuthorSchema]),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

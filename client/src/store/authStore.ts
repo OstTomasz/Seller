@@ -1,9 +1,7 @@
-// src/store/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { User } from "../types";
 import { queryClient } from "@/lib/queryClient";
-
 
 interface AuthState {
   token: string | null;
@@ -19,10 +17,10 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       user: null,
 
-setAuth: (token, user) => {
-  queryClient.clear(); // ← czyści cache przy każdym nowym logowaniu
-  set({ token, user });
-},
+      setAuth: (token, user) => {
+        queryClient.clear(); // ← czyści cache przy każdym nowym logowaniu
+        set({ token, user });
+      },
       updateAuth: (token, updates) =>
         set((state) => ({
           token,

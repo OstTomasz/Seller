@@ -1,20 +1,14 @@
 import { IUser, UserGrade, UserRole } from "../types";
-import {
-  ForbiddenError,
-  NotFoundError,
-  BadRequestError,
-  ConflictError,
-} from "../utils/errors";
+import { ForbiddenError, NotFoundError, BadRequestError, ConflictError } from "../utils/errors";
 import * as userRepository from "../repositories/user.repository";
 import * as positionRepository from "../repositories/position.repository";
 import * as regionRepository from "../repositories/region.repository";
+import { getPositionIdsInSuperregion } from "../utils/rbac";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 // Gets region ID from a position
-const getRegionFromPosition = async (
-  positionId: string,
-): Promise<string | null> => {
+const getRegionFromPosition = async (positionId: string): Promise<string | null> => {
   const position = await positionRepository.findPositionById(positionId);
   return position?.region?.toString() ?? null;
 };
@@ -28,10 +22,7 @@ const getDeputyUserId = async (regionId: string): Promise<string | null> => {
 };
 
 // Checks if a region belongs to deputy's superregion
-const verifyDeputyRegionAccess = async (
-  deputyUserId: string,
-  regionId: string,
-): Promise<void> => {
+const verifyDeputyRegionAccess = async (deputyUserId: string, regionId: string): Promise<void> => {
   const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
@@ -43,10 +34,7 @@ const verifyDeputyRegionAccess = async (
 };
 
 // Checks if deputy has access to a specific user
-const verifyDeputyUserAccess = async (
-  deputyUserId: string,
-  targetUser: IUser,
-): Promise<void> => {
+const verifyDeputyUserAccess = async (deputyUserId: string, targetUser: IUser): Promise<void> => {
   if (!targetUser.position) throw new ForbiddenError();
 
   const regionId = await getRegionFromPosition(targetUser.position.toString());
@@ -98,8 +86,7 @@ export const createUser = async (
   }
 
   const existingUser = await userRepository.findUserByEmail(data.email);
-  if (existingUser)
-    throw new ConflictError("User with this email already exists");
+  if (existingUser) throw new ConflictError("User with this email already exists");
 
   // verify position is vacant
   if (data.positionId) {
@@ -206,8 +193,7 @@ export const toggleUserActive = async (
   const user = await userRepository.findRawUserById(userId);
   if (!user) throw new NotFoundError("User not found");
 
-  if (userId === requesterId)
-    throw new BadRequestError("Cannot deactivate yourself");
+  if (userId === requesterId) throw new BadRequestError("Cannot deactivate yourself");
 
   if (requesterRole === "deputy") {
     await verifyDeputyUserAccess(requesterId, user);
@@ -230,7 +216,8 @@ export const changePassword = async (
 
   // prevent reusing the same password
   const isSamePassword = await user.comparePassword(newPassword);
-  if (isSamePassword) throw new BadRequestError("New password must be different from current password");
+  if (isSamePassword)
+    throw new BadRequestError("New password must be different from current password");
 
   user.password = newPassword;
   user.mustChangePassword = false;
@@ -252,9 +239,27 @@ export const resetPassword = async (
     await verifyDeputyUserAccess(requesterId, user);
   }
 
-  
-
   user.password = temporaryPassword;
   user.mustChangePassword = true;
   await user.save();
+};
+
+export const getSalespersons = async (
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser[]> => {
+  if (requesterRole === "director") {
+    return userRepository.findSalespersonUsers();
+  }
+
+  if (requesterRole === "deputy") {
+    const positionIds = await getPositionIdsInSuperregion(requesterId);
+    const all = await userRepository.findSalespersonUsers();
+    return all.filter((u) => {
+      const posId = (u.position as unknown as { _id: { toString(): string } })?._id?.toString();
+      return posId ? positionIds.includes(posId) : false;
+    });
+  }
+
+  return [];
 };

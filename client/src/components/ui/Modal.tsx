@@ -11,6 +11,7 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   size?: "sm" | "md" | "lg";
+  disableOutsideClick?: boolean;
 }
 
 const sizeStyles = {
@@ -22,6 +23,7 @@ const sizeStyles = {
 export const Modal = ({
   isOpen,
   onClose,
+  disableOutsideClick = false,
   title,
   children,
   className,
@@ -60,8 +62,8 @@ export const Modal = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby={title ? "modal-title" : undefined}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm"
+          onClick={disableOutsideClick ? undefined : onClose}
         >
           <motion.div
             key="modal-panel"
@@ -72,7 +74,7 @@ export const Modal = ({
             ref={panelRef}
             tabIndex={-1}
             className={cn(
-              "w-full bg-bg-elevated border border-gold-500 rounded-xl shadow-2xl outline-none",
+              "w-full my-auto bg-bg-elevated border border-gold-500 rounded-xl shadow-2xl outline-none",
               sizeStyles[size],
               className,
             )}
