@@ -1,19 +1,19 @@
-import Region from "../models/Region";
-import Position from "../models/Position";
-import User from "../models/User";
 import { IRegion, UserRole } from "../types";
 import {
   BadRequestError,
   ForbiddenError,
   NotFoundError,
 } from "../utils/errors";
+import * as regionRepository from "../repositories/region.repository";
+import * as positionRepository from "../repositories/position.repository";
+import * as userRepository from "../repositories/user.repository";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 const getDeputyUserId = async (region: IRegion): Promise<string | null> => {
   if (!region.deputy) return null;
 
-  const position = await Position.findById(region.deputy);
+  const position = await positionRepository.findPositionById(region.deputy.toString());
   return position?.currentHolder?.toString() ?? null;
 };
 
@@ -21,7 +21,7 @@ const verifyDeputyAccess = async (
   deputyUserId: string,
   regionId: string,
 ): Promise<void> => {
-  const region = await Region.findById(regionId);
+  const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
   // if superregion — check deputy position directly
@@ -32,7 +32,7 @@ const verifyDeputyAccess = async (
   }
 
   // if subregion — check parent superregion's deputy position
-  const superregion = await Region.findById(region.parentRegion);
+  const superregion = await regionRepository.findRegionById(region.parentRegion.toString());
   if (!superregion) throw new NotFoundError("Superregion not found");
 
   const holderId = await getDeputyUserId(superregion);
@@ -53,7 +53,7 @@ export const createRegion = async (
     await verifyDeputyAccess(requesterId, parentRegionId);
   }
 
-  const region = await Region.create({
+  const region = await regionRepository.createRegion({
     name,
     prefix,
     parentRegion: parentRegionId || null,
@@ -62,7 +62,7 @@ export const createRegion = async (
   // auto-create position for the new region
   if (!parentRegionId) {
     // superregion → create deputy position e.g. "NP-1"
-    const deputyPosition = await Position.create({
+    const deputyPosition = await positionRepository.createPosition({
       code: `${prefix}-1`,
       region: region._id,
       type: "deputy",
@@ -74,7 +74,7 @@ export const createRegion = async (
     await region.save();
   } else {
     // subregion → create advisor position e.g. "PO-1"
-    await Position.create({
+    await positionRepository.createPosition({
       code: `${prefix}-1`,
       region: region._id,
       type: "advisor",
@@ -92,7 +92,7 @@ export const updateRegionName = async (
   requesterRole: UserRole,
 ): Promise<IRegion> => {
   if (requesterRole === "deputy") {
-    const region = await Region.findById(regionId);
+    const region = await regionRepository.findRegionById(regionId);
     if (!region) throw new NotFoundError("Region not found");
 
     // deputy can only rename subregions, not superregions
@@ -101,11 +101,7 @@ export const updateRegionName = async (
     await verifyDeputyAccess(requesterId, regionId);
   }
 
-  const region = await Region.findByIdAndUpdate(
-    regionId,
-    { name },
-    { returnDocument: "after", runValidators: true },
-  );
+  const region = await regionRepository.updateRegionById(regionId, { name });
 
   if (!region) throw new NotFoundError("Region not found");
   return region;
@@ -118,7 +114,7 @@ export const updateRegionDeputy = async (
 ): Promise<IRegion> => {
   if (requesterRole !== "director") throw new ForbiddenError();
 
-  const region = await Region.findById(regionId);
+  const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
   if (region.parentRegion !== null) {
@@ -130,16 +126,14 @@ export const updateRegionDeputy = async (
   }
 
   // update currentHolder on the deputy position
-  await Position.findByIdAndUpdate(region.deputy, {
-    currentHolder: deputyUserId,
-  });
+  await positionRepository.updatePositionCurrentHolder(region.deputy.toString(), deputyUserId);
 
   // update user's position reference
   if (deputyUserId) {
-    await User.findByIdAndUpdate(deputyUserId, { position: region.deputy });
+    await userRepository.updateUserById(deputyUserId, { position: region.deputy });
   }
 
-  const updated = await Region.findById(regionId).populate("deputy");
+  const updated = await regionRepository.findRegionByIdPopulated(regionId);
   return updated!;
 };
 
@@ -148,7 +142,7 @@ export const deleteRegion = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<void> => {
-  const region = await Region.findById(regionId);
+  const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
   if (requesterRole === "deputy") {
@@ -156,28 +150,28 @@ export const deleteRegion = async (
     await verifyDeputyAccess(requesterId, regionId);
   }
 
-  const hasChildren = await Region.exists({ parentRegion: regionId });
+  const hasChildren = await regionRepository.regionHasChildren(regionId);
   if (hasChildren)
     throw new BadRequestError("Cannot delete region with subregions");
 
   // delete all positions in this region
-  await Position.deleteMany({ region: regionId });
+  await positionRepository.deletePositionsByRegionId(regionId);
 
-  await Region.findByIdAndDelete(regionId);
+  await regionRepository.deleteRegionById(regionId);
 };
 
 export const getRegions = async (): Promise<IRegion[]> => {
-  return await Region.find().populate("deputy").sort({ createdAt: 1 });
+  return (await regionRepository.findAllRegionsPopulated()) as IRegion[];
 };
 
 export const getRegionById = async (regionId: string): Promise<IRegion> => {
-  const region = await Region.findById(regionId).populate("deputy");
+  const region = await regionRepository.findRegionByIdPopulated(regionId);
   if (!region) throw new NotFoundError("Region not found");
   return region;
 };
 
 export const getRegionByPrefix = async (prefix: string): Promise<IRegion> => {
-  const region = await Region.findOne({ prefix });
+  const region = await regionRepository.findRegionByPrefix(prefix);
   if (!region) throw new NotFoundError("Region not found");
   return region;
 };

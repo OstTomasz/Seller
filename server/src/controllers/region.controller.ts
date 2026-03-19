@@ -2,18 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import * as regionService from "../services/region.service";
 import { UserRole } from "../types";
 import { BadRequestError } from "../utils/errors";
+import { wrapAsync } from "../utils/wrapAsync";
 
-export const createRegion = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const createRegion = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { name, prefix, parentRegionId } = req.body;
 
     if (!name || !prefix) {
-      next(new BadRequestError("Name and prefix are required"));
-      return;
+      throw new BadRequestError("Name and prefix are required");
     }
 
     const region = await regionService.createRegion(
@@ -24,22 +20,15 @@ export const createRegion = async (
       parentRegionId,
     );
     res.status(201).json({ region });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateRegionName = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateRegionName = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { name } = req.body;
     if (!name) {
-      next(new BadRequestError("Name is required"));
-      return;
+      throw new BadRequestError("Name is required");
     }
 
     const region = await regionService.updateRegionName(
@@ -49,17 +38,11 @@ export const updateRegionName = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ region });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateRegionDeputy = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateRegionDeputy = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { deputyId } = req.body;
 
@@ -69,48 +52,28 @@ export const updateRegionDeputy = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ region });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const deleteRegion = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const deleteRegion = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     await regionService.deleteRegion(id, req.userId!, req.userRole as UserRole);
     res.status(200).json({ message: "Region deleted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const getRegions = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const getRegions = wrapAsync(
+  async (_req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const regions = await regionService.getRegions();
     res.status(200).json({ regions });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const getRegionById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const getRegionById = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const region = await regionService.getRegionById(id);
     res.status(200).json({ region });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);

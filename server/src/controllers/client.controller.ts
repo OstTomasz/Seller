@@ -2,50 +2,33 @@ import { Request, Response, NextFunction } from "express";
 import * as clientService from "../services/client.service";
 import { UserRole } from "../types";
 import { BadRequestError } from "../utils/errors";
+import { wrapAsync } from "../utils/wrapAsync";
 
-export const getClients = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const getClients = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const clients = await clientService.getClients(req.userId!, req.userRole as UserRole);
     res.status(200).json({ clients });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const getClientById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const getClientById = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const client = await clientService.getClientById(id, req.userId!, req.userRole as UserRole);
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const createClient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const createClient = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { companyName, nip, notes, addresses, salespersonPositionId } = req.body;
 
     if (!companyName) {
-      next(new BadRequestError("companyName is required"));
-      return;
+      throw new BadRequestError("companyName is required");
     }
 
     if (!addresses || addresses.length === 0) {
-      next(new BadRequestError("At least one address is required"));
-      return;
+      throw new BadRequestError("At least one address is required");
     }
 
     const client = await clientService.createClient(
@@ -55,17 +38,11 @@ export const createClient = async (
     );
 
     res.status(201).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateClient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateClient = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { companyName, nip, notes, addresses } = req.body;
 
@@ -77,23 +54,16 @@ export const updateClient = async (
     );
 
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateClientStatus = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateClientStatus = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { status, inactivityReason } = req.body;
 
     if (!status) {
-      next(new BadRequestError("status is required"));
-      return;
+      throw new BadRequestError("status is required");
     }
 
     const client = await clientService.updateClientStatus(
@@ -105,23 +75,16 @@ export const updateClientStatus = async (
     );
 
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const requestArchive = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const requestArchive = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { reason } = req.body;
 
     if (!reason) {
-      next(new BadRequestError("reason is required"));
-      return;
+      throw new BadRequestError("reason is required");
     }
 
     const client = await clientService.requestArchive(
@@ -132,54 +95,35 @@ export const requestArchive = async (
     );
 
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const approveArchive = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const approveArchive = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
 
     const client = await clientService.approveArchive(id, req.userId!, req.userRole as UserRole);
 
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const unarchiveClient = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const unarchiveClient = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
 
     const client = await clientService.unarchiveClient(id, req.userId!, req.userRole as UserRole);
 
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
-export const updateClientSalesperson = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+  },
+);
+export const updateClientSalesperson = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { salespersonPositionId } = req.body;
 
     if (!salespersonPositionId) {
-      next(new BadRequestError("salespersonPositionId is required"));
-      return;
+      throw new BadRequestError("salespersonPositionId is required");
     }
 
     const client = await clientService.updateClientSalesperson(
@@ -189,40 +133,30 @@ export const updateClientSalesperson = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const addNote = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
+export const addNote = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { content } = req.body;
 
     if (!content) {
-      next(new BadRequestError("content is required"));
-      return;
+      throw new BadRequestError("content is required");
     }
 
     const client = await clientService.addNote(id, content, req.userId!, req.userRole as UserRole);
     res.status(201).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateNote = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateNote = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, noteId } = req.params as { id: string; noteId: string };
     const { content } = req.body;
 
     if (!content) {
-      next(new BadRequestError("content is required"));
-      return;
+      throw new BadRequestError("content is required");
     }
 
     const client = await clientService.updateNote(
@@ -233,17 +167,11 @@ export const updateNote = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const deleteNote = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const deleteNote = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, noteId } = req.params as { id: string; noteId: string };
     const client = await clientService.deleteNote(
       id,
@@ -252,23 +180,16 @@ export const deleteNote = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const addAddress = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const addAddress = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { label, street, city, postalCode } = req.body;
 
     if (!label || !street || !city || !postalCode) {
-      next(new BadRequestError("label, street, city and postalCode are required"));
-      return;
+      throw new BadRequestError("label, street, city and postalCode are required");
     }
 
     const client = await clientService.addAddress(
@@ -278,17 +199,11 @@ export const addAddress = async (
       req.userRole as UserRole,
     );
     res.status(201).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateAddress = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateAddress = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, addressId } = req.params as { id: string; addressId: string };
     const { label, street, city, postalCode } = req.body;
 
@@ -300,17 +215,11 @@ export const updateAddress = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const deleteAddress = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const deleteAddress = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, addressId } = req.params as { id: string; addressId: string };
     const client = await clientService.deleteAddress(
       id,
@@ -319,23 +228,16 @@ export const deleteAddress = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const addContact = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const addContact = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, addressId } = req.params as { id: string; addressId: string };
     const { firstName, lastName, phone, email } = req.body;
 
     if (!firstName || !lastName) {
-      next(new BadRequestError("firstName and lastName are required"));
-      return;
+      throw new BadRequestError("firstName and lastName are required");
     }
 
     const client = await clientService.addContact(
@@ -346,17 +248,11 @@ export const addContact = async (
       req.userRole as UserRole,
     );
     res.status(201).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateContact = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateContact = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, addressId, contactId } = req.params as {
       id: string;
       addressId: string;
@@ -373,17 +269,11 @@ export const updateContact = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const deleteContact = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const deleteContact = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id, addressId, contactId } = req.params as {
       id: string;
       addressId: string;
@@ -397,7 +287,5 @@ export const deleteContact = async (
       req.userRole as UserRole,
     );
     res.status(200).json({ client });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);

@@ -3,40 +3,25 @@ import * as userService from "../services/user.service";
 import { UserRole } from "../types";
 import { BadRequestError } from "../utils/errors";
 import { generateTokenForUser } from "../services/auth.service";
+import { wrapAsync } from "../utils/wrapAsync";
 
-export const getUsers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const getUsers = wrapAsync(
+  async (_req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const users = await userService.getUsers();
     res.status(200).json({ users });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const getUserById = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const getUserById = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const user = await userService.getUserById(id);
     res.status(200).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const createUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const createUser = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const {
       firstName,
       lastName,
@@ -48,12 +33,9 @@ export const createUser = async (
     } = req.body;
 
     if (!firstName || !lastName || !email || !temporaryPassword || !role) {
-      next(
-        new BadRequestError(
-          "firstName, lastName, email, temporaryPassword and role are required",
-        ),
+      throw new BadRequestError(
+        "firstName, lastName, email, temporaryPassword and role are required",
       );
-      return;
     }
 
     const user = await userService.createUser(
@@ -71,17 +53,11 @@ export const createUser = async (
     );
 
     res.status(201).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateUser = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { firstName, lastName, email, positionId } = req.body;
 
@@ -93,23 +69,16 @@ export const updateUser = async (
     );
 
     res.status(200).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const updateUserRoleAndGrade = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const updateUserRoleAndGrade = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { role, grade } = req.body;
 
     if (!role) {
-      next(new BadRequestError("role is required"));
-      return;
+      throw new BadRequestError("role is required");
     }
 
     const user = await userService.updateUserRoleAndGrade(
@@ -118,17 +87,11 @@ export const updateUserRoleAndGrade = async (
       grade ?? null,
     );
     res.status(200).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const toggleUserActive = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const toggleUserActive = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
 
     const user = await userService.toggleUserActive(
@@ -138,27 +101,19 @@ export const toggleUserActive = async (
     );
 
     res.status(200).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const changePassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const changePassword = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
-      next(new BadRequestError("currentPassword and newPassword are required"));
-      return;
+      throw new BadRequestError("currentPassword and newPassword are required");
     }
 
     if (newPassword.length < 8) {
-      next(new BadRequestError("New password must be at least 8 characters"));
-      return;
+      throw new BadRequestError("New password must be at least 8 characters");
     }
 
     const user = await userService.changePassword(
@@ -167,28 +122,19 @@ export const changePassword = async (
       newPassword,
     );
 
-    // generate new token with mustChangePassword: false
-
     const token = generateTokenForUser(user);
 
     res.status(200).json({ message: "Password changed successfully", token });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);
 
-export const resetPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
+export const resetPassword = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
     const { temporaryPassword } = req.body;
 
     if (!temporaryPassword) {
-      next(new BadRequestError("temporaryPassword is required"));
-      return;
+      throw new BadRequestError("temporaryPassword is required");
     }
 
     await userService.resetPassword(
@@ -199,7 +145,5 @@ export const resetPassword = async (
     );
 
     res.status(200).json({ message: "Password reset successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
+  },
+);

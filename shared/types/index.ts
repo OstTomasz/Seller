@@ -1,93 +1,115 @@
-// ── Enums / primitives ────────────────────────────────────────────────────────
+import { z } from "zod";
 
-export type UserRole = "director" | "deputy" | "advisor" | "salesperson";
-export type UserGrade = 1 | 2 | 3 | 4;
-export type ClientStatus = "active" | "reminder" | "inactive" | "archived";
+// ── Enums / primitives (Zod as source of truth) ───────────────────────────────
 
-// ── Shared interfaces (used by both frontend and backend) ─────────────────────
+export const userRoleSchema = z.enum(["director", "deputy", "advisor", "salesperson"]);
+export type UserRole = z.infer<typeof userRoleSchema>;
 
-export interface IContact {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  phone: string | null;
-  email: string | null;
-}
+export const userGradeSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+]);
+export type UserGrade = z.infer<typeof userGradeSchema>;
 
-export interface IAddress {
-  _id: string;
-  label: string;
-  street: string;
-  city: string;
-  postalCode: string;
-  contacts: IContact[];
-}
+export const clientStatusSchema = z.enum(["active", "reminder", "inactive", "archived"]);
+export type ClientStatus = z.infer<typeof clientStatusSchema>;
 
-export interface IArchiveRequest {
-  requestedAt: string | null;
-  requestedBy: string | null;
-  reason: string | null;
-}
+// ── Shared schemas & types (used by both frontend and backend) ───────────────
 
-export interface INote {
-  _id: string;
-  content: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export const contactSchema = z.object({
+  _id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  phone: z.string().nullable(),
+  email: z.string().nullable(),
+});
+export type IContact = z.infer<typeof contactSchema>;
 
-export interface IRegionBase {
-  _id: string;
-  name: string;
-  prefix: string;
-}
+export const addressSchema = z.object({
+  _id: z.string(),
+  label: z.string(),
+  street: z.string(),
+  city: z.string(),
+  postalCode: z.string(),
+  contacts: z.array(contactSchema),
+});
+export type IAddress = z.infer<typeof addressSchema>;
 
-export interface IPositionBase {
-  _id: string;
-  code: string;
-  type: UserRole;
-}
+export const archiveRequestSchema = z.object({
+  requestedAt: z.string().nullable(),
+  requestedBy: z.string().nullable(),
+  reason: z.string().nullable(),
+});
+export type IArchiveRequest = z.infer<typeof archiveRequestSchema>;
 
-export interface IUserBase {
-  _id: string;
-  numericId: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  grade: UserGrade | null;
-  isActive: boolean;
-  mustChangePassword: boolean;
-}
+export const noteSchema = z.object({
+  _id: z.string(),
+  content: z.string(),
+  createdBy: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type INote = z.infer<typeof noteSchema>;
 
-export interface IClientBase {
-  _id: string;
-  numericId: number;
-  companyName: string;
-  nip: string | null;
-  status: ClientStatus;
-  lastActivityAt: string | null;
-  inactivityReason: string | null;
-  archiveRequest: IArchiveRequest;
-  notes: INote[];
-  addresses: IAddress[];
-  contacts: IContact[];
-  createdAt: string;
-  updatedAt: string;
-}
+export const regionBaseSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  prefix: z.string(),
+});
+export type IRegionBase = z.infer<typeof regionBaseSchema>;
+
+export const positionBaseSchema = z.object({
+  _id: z.string(),
+  code: z.string(),
+  type: userRoleSchema,
+});
+export type IPositionBase = z.infer<typeof positionBaseSchema>;
+
+export const userBaseSchema = z.object({
+  _id: z.string(),
+  numericId: z.number(),
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.string(),
+  role: userRoleSchema,
+  grade: userGradeSchema.nullable(),
+  isActive: z.boolean(),
+  mustChangePassword: z.boolean(),
+});
+export type IUserBase = z.infer<typeof userBaseSchema>;
+
+export const clientBaseSchema = z.object({
+  _id: z.string(),
+  numericId: z.number(),
+  companyName: z.string(),
+  nip: z.string().nullable(),
+  status: clientStatusSchema,
+  lastActivityAt: z.string().nullable(),
+  inactivityReason: z.string().nullable(),
+  archiveRequest: archiveRequestSchema,
+  notes: z.array(noteSchema),
+  addresses: z.array(addressSchema),
+  contacts: z.array(contactSchema),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type IClientBase = z.infer<typeof clientBaseSchema>;
 
 // ── API error ─────────────────────────────────────────────────────────────────
 
-export interface ApiError {
-  message: string;
-  mustChangePassword?: boolean;
-}
+export const apiErrorSchema = z.object({
+  message: z.string(),
+  mustChangePassword: z.boolean().optional(),
+});
+export type ApiError = z.infer<typeof apiErrorSchema>;
 
 // ── Token ─────────────────────────────────────────────────────────────────────
 
-export interface TokenPayload {
-  userId: string;
-  role: string;
-  mustChangePassword: boolean;
-}
+export const tokenPayloadSchema = z.object({
+  userId: z.string(),
+  role: z.string(),
+  mustChangePassword: z.boolean(),
+});
+export type TokenPayload = z.infer<typeof tokenPayloadSchema>;

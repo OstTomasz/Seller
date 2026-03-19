@@ -1,6 +1,3 @@
-import User from "../models/User";
-import Position from "../models/Position";
-import Region from "../models/Region";
 import { IUser, UserGrade, UserRole } from "../types";
 import {
   ForbiddenError,
@@ -8,6 +5,9 @@ import {
   BadRequestError,
   ConflictError,
 } from "../utils/errors";
+import * as userRepository from "../repositories/user.repository";
+import * as positionRepository from "../repositories/position.repository";
+import * as regionRepository from "../repositories/region.repository";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -15,15 +15,15 @@ import {
 const getRegionFromPosition = async (
   positionId: string,
 ): Promise<string | null> => {
-  const position = await Position.findById(positionId);
+  const position = await positionRepository.findPositionById(positionId);
   return position?.region?.toString() ?? null;
 };
 
 // Gets deputy's user ID from a superregion
 const getDeputyUserId = async (regionId: string): Promise<string | null> => {
-  const region = await Region.findById(regionId);
+  const region = await regionRepository.findRegionById(regionId);
   if (!region?.deputy) return null;
-  const position = await Position.findById(region.deputy);
+  const position = await positionRepository.findPositionById(region.deputy.toString());
   return position?.currentHolder?.toString() ?? null;
 };
 
@@ -32,7 +32,7 @@ const verifyDeputyRegionAccess = async (
   deputyUserId: string,
   regionId: string,
 ): Promise<void> => {
-  const region = await Region.findById(regionId);
+  const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
   // must be a subregion
@@ -58,16 +58,11 @@ const verifyDeputyUserAccess = async (
 // ─── service functions ────────────────────────────────────────────────────────
 
 export const getUsers = async (): Promise<IUser[]> => {
-  return await User.find()
-    .populate("position")
-    .select("-password")
-    .sort({ lastName: 1, firstName: 1 });
+  return userRepository.findAllUsers();
 };
 
 export const getUserById = async (userId: string): Promise<IUser> => {
-  const user = await User.findById(userId)
-    .populate("position")
-    .select("-password");
+  const user = await userRepository.findUserById(userId);
   if (!user) throw new NotFoundError("User not found");
   return user;
 };
@@ -97,25 +92,25 @@ export const createUser = async (
     if (!regionId) throw new ForbiddenError();
     await verifyDeputyRegionAccess(requesterId, regionId);
   }
-  
-  if (!data.email.endsWith("@seller.com")) {
-  throw new BadRequestError("Email must end with @seller.com");
-}
 
-  const existingUser = await User.findOne({ email: data.email });
+  if (!data.email.endsWith("@seller.com")) {
+    throw new BadRequestError("Email must end with @seller.com");
+  }
+
+  const existingUser = await userRepository.findUserByEmail(data.email);
   if (existingUser)
     throw new ConflictError("User with this email already exists");
 
   // verify position is vacant
   if (data.positionId) {
-    const position = await Position.findById(data.positionId);
+    const position = await positionRepository.findPositionById(data.positionId);
     if (!position) throw new NotFoundError("Position not found");
     if (position.currentHolder) {
       throw new BadRequestError("Position is already occupied");
     }
   }
 
-  const user = await User.create({
+  const user = await userRepository.createUser({
     firstName: data.firstName,
     lastName: data.lastName,
     email: data.email,
@@ -123,15 +118,12 @@ export const createUser = async (
     role: data.role,
     grade: data.grade ?? null,
     position: data.positionId ?? null,
-    mustChangePassword: true,
     createdBy: requesterId,
   });
 
   // assign user to position
   if (data.positionId) {
-    await Position.findByIdAndUpdate(data.positionId, {
-      currentHolder: user._id,
-    });
+    await positionRepository.updatePositionCurrentHolder(data.positionId, user._id.toString());
   }
 
   return user;
@@ -148,7 +140,7 @@ export const updateUser = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IUser> => {
-  const user = await User.findById(userId);
+  const user = await userRepository.findRawUserById(userId);
   if (!user) throw new NotFoundError("User not found");
 
   if (requesterRole === "deputy") {
@@ -165,19 +157,15 @@ export const updateUser = async (
   // if changing position — update old and new position
   if (data.positionId !== undefined) {
     if (user.position) {
-      await Position.findByIdAndUpdate(user.position, {
-        currentHolder: null,
-      });
+      await positionRepository.clearPositionCurrentHolder(user.position.toString());
     }
     if (data.positionId) {
-      const newPosition = await Position.findById(data.positionId);
+      const newPosition = await positionRepository.findPositionById(data.positionId);
       if (!newPosition) throw new NotFoundError("Position not found");
       if (newPosition.currentHolder) {
         throw new BadRequestError("Position is already occupied");
       }
-      await Position.findByIdAndUpdate(data.positionId, {
-        currentHolder: userId,
-      });
+      await positionRepository.updatePositionCurrentHolder(data.positionId, userId);
     }
   }
   const updateFields: Record<string, unknown> = {};
@@ -186,13 +174,7 @@ export const updateUser = async (
   if (data.email !== undefined) updateFields.email = data.email;
   if (data.positionId !== undefined) updateFields.position = data.positionId;
 
-  const updated = await User.findByIdAndUpdate(userId, updateFields, {
-    returnDocument: "after",
-    runValidators: true,
-  })
-    .populate("position")
-    .select("-password");
-
+  const updated = await userRepository.updateUserById(userId, updateFields);
   return updated!;
 };
 
@@ -201,7 +183,7 @@ export const updateUserRoleAndGrade = async (
   role: UserRole,
   grade: UserGrade | null,
 ): Promise<IUser> => {
-  const user = await User.findById(userId);
+  const user = await userRepository.findRawUserById(userId);
   if (!user) throw new NotFoundError("User not found");
 
   if ((role === "advisor" || role === "salesperson") && !grade) {
@@ -212,14 +194,7 @@ export const updateUserRoleAndGrade = async (
     grade = null;
   }
 
-  const updated = await User.findByIdAndUpdate(
-    userId,
-    { role, grade },
-    { returnDocument: "after", runValidators: true },
-  )
-    .populate("position")
-    .select("-password");
-
+  const updated = await userRepository.updateUserRoleAndGradeById(userId, role, grade);
   return updated!;
 };
 
@@ -228,7 +203,7 @@ export const toggleUserActive = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IUser> => {
-  const user = await User.findById(userId);
+  const user = await userRepository.findRawUserById(userId);
   if (!user) throw new NotFoundError("User not found");
 
   if (userId === requesterId)
@@ -238,14 +213,7 @@ export const toggleUserActive = async (
     await verifyDeputyUserAccess(requesterId, user);
   }
 
-  const updated = await User.findByIdAndUpdate(
-    userId,
-    { isActive: !user.isActive },
-    { returnDocument: "after" },
-  )
-    .populate("position")
-    .select("-password");
-
+  const updated = await userRepository.toggleUserActiveById(userId, !user.isActive);
   return updated!;
 };
 
@@ -254,7 +222,7 @@ export const changePassword = async (
   currentPassword: string,
   newPassword: string,
 ): Promise<IUser> => {
-  const user = await User.findById(userId);
+  const user = await userRepository.findRawUserById(userId);
   if (!user) throw new NotFoundError("User not found");
 
   const isValid = await user.comparePassword(currentPassword);
@@ -277,7 +245,7 @@ export const resetPassword = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<void> => {
-  const user = await User.findById(userId);
+  const user = await userRepository.findRawUserById(userId);
   if (!user) throw new NotFoundError("User not found");
 
   if (requesterRole === "deputy") {

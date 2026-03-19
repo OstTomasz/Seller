@@ -1,76 +1,37 @@
 // server/src/services/client.service.ts
 import mongoose from "mongoose";
-import Client from "../models/Client";
-import Position from "../models/Position";
-import User from "../models/User";
-import Region from "../models/Region";
 import { IClient, IAddress, UserRole } from "../types";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../utils/errors";
+import * as clientRepository from "../repositories/client.repository";
+import * as positionRepository from "../repositories/position.repository";
+import * as regionRepository from "../repositories/region.repository";
+import * as userRepository from "../repositories/user.repository";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const deepPopulate = (query: mongoose.Query<any, any>) =>
-  query
-    .populate({
-      path: "assignedTo",
-      populate: [
-        { path: "currentHolder", select: "firstName lastName" },
-        {
-          path: "region",
-          select: "name parentRegion",
-          populate: { path: "parentRegion", select: "name" },
-        },
-      ],
-    })
-    .populate({
-      path: "assignedAdvisor",
-      populate: { path: "currentHolder", select: "firstName lastName" },
-    });
-
-const deepPopulateDoc = async (client: IClient): Promise<IClient> => {
-  await client.populate([
-    {
-      path: "assignedTo",
-      populate: [
-        { path: "currentHolder", select: "firstName lastName" },
-        {
-          path: "region",
-          select: "name parentRegion",
-          populate: { path: "parentRegion", select: "name" },
-        },
-      ],
-    },
-    {
-      path: "assignedAdvisor",
-      populate: { path: "currentHolder", select: "firstName lastName" },
-    },
-  ]);
-  return client;
-};
-
 const getAdvisorPosition = async (regionId: string) => {
-  const region = await Region.findById(regionId);
+  const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
-  return (await Position.findOne({ region: regionId, type: "advisor" })) ?? null;
+  return (await positionRepository.findAdvisorPositionByRegionId(regionId)) ?? null;
 };
 
 const getRegionFromPosition = async (positionId: string): Promise<string | null> => {
-  const position = await Position.findById(positionId);
+  const position = await positionRepository.findPositionById(positionId);
   return position?.region?.toString() ?? null;
 };
 
 const getPositionIdsInSuperregion = async (deputyUserId: string): Promise<string[]> => {
-  const deputyUser = await User.findById(deputyUserId).populate("position");
+  const deputyUser = await userRepository.findRawUserById(deputyUserId);
   if (!deputyUser?.position) return [];
 
-  const deputyPosition = await Position.findById(deputyUser.position);
+  const deputyPosition = await positionRepository.findPositionById(deputyUser.position.toString());
   if (!deputyPosition?.region) return [];
 
   const superregionId = deputyPosition.region.toString();
-  const subregions = await Region.find({ parentRegion: superregionId });
+  const subregions = await regionRepository.findSubregionsByParentId(superregionId);
   const subregionIds = subregions.map((r) => r._id.toString());
 
-  const positions = await Position.find({ region: { $in: subregionIds } });
+  const positions = await positionRepository.findPositionsByRegionIds(subregionIds);
   return positions.map((p) => p._id.toString());
 };
 
@@ -78,13 +39,13 @@ const verifyAdvisorAccess = async (
   advisorUserId: string,
   targetPositionId: string,
 ): Promise<void> => {
-  const advisorUser = await User.findById(advisorUserId);
+  const advisorUser = await userRepository.findRawUserById(advisorUserId);
   if (!advisorUser?.position) throw new ForbiddenError();
 
-  const advisorPosition = await Position.findById(advisorUser.position);
+  const advisorPosition = await positionRepository.findPositionById(advisorUser.position.toString());
   if (!advisorPosition?.region) throw new ForbiddenError();
 
-  const targetPosition = await Position.findById(targetPositionId);
+  const targetPosition = await positionRepository.findPositionById(targetPositionId);
   if (!targetPosition) throw new NotFoundError("Position not found");
 
   if (advisorPosition.region.toString() !== targetPosition.region?.toString()) {
@@ -110,7 +71,7 @@ const verifyClientAccess = async (
   const assignedToId = client.assignedTo.toString();
 
   if (requesterRole === "salesperson") {
-    const user = await User.findById(requesterId);
+    const user = await userRepository.findRawUserById(requesterId);
     if (user?.position?.toString() !== assignedToId) throw new ForbiddenError();
     return;
   }
@@ -133,29 +94,25 @@ export const getClients = async (
   requesterRole: UserRole,
 ): Promise<IClient[]> => {
   if (requesterRole === "director") {
-    return await deepPopulate(Client.find().sort({ companyName: 1 }));
+    return clientRepository.findClientsForDirector();
   }
 
   if (requesterRole === "salesperson") {
-    const user = await User.findById(requesterId);
+    const user = await userRepository.findRawUserById(requesterId);
     if (!user?.position) return [];
-    return await deepPopulate(Client.find({ assignedTo: user.position }).sort({ companyName: 1 }));
+    return clientRepository.findClientsForSalesperson(user.position.toString());
   }
 
   if (requesterRole === "advisor") {
-    const user = await User.findById(requesterId);
+    const user = await userRepository.findRawUserById(requesterId);
     if (!user?.position) return [];
-    return await deepPopulate(
-      Client.find({ assignedAdvisor: user.position }).sort({ companyName: 1 }),
-    );
+    return clientRepository.findClientsForAdvisor(user.position.toString());
   }
 
   if (requesterRole === "deputy") {
     const positionIds = await getPositionIdsInSuperregion(requesterId);
     if (positionIds.length === 0) return [];
-    return await deepPopulate(
-      Client.find({ assignedTo: { $in: positionIds } }).sort({ companyName: 1 }),
-    );
+    return clientRepository.findClientsForDeputy(positionIds);
   }
 
   return [];
@@ -166,11 +123,13 @@ export const getClientById = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const createClient = async (
@@ -188,7 +147,7 @@ export const createClient = async (
   let assignedAdvisorPositionId: string | null = null;
 
   if (requesterRole === "salesperson") {
-    const user = await User.findById(requesterId);
+    const user = await userRepository.findRawUserById(requesterId);
     if (!user?.position) throw new ForbiddenError();
 
     assignedToPositionId = user.position.toString();
@@ -203,7 +162,7 @@ export const createClient = async (
     await verifyAdvisorAccess(requesterId, data.salespersonPositionId);
     assignedToPositionId = data.salespersonPositionId;
 
-    const advisorUser = await User.findById(requesterId);
+    const advisorUser = await userRepository.findRawUserById(requesterId);
     assignedAdvisorPositionId = advisorUser?.position?.toString() ?? null;
   } else {
     if (!data.salespersonPositionId) throw new BadRequestError("salespersonPositionId is required");
@@ -220,18 +179,17 @@ export const createClient = async (
     }
   }
 
-  const client = await Client.create({
+  const created = await clientRepository.createClient({
     companyName: data.companyName,
     nip: data.nip ?? null,
-    notes: [],
     addresses: data.addresses,
     assignedTo: assignedToPositionId,
     assignedAdvisor: assignedAdvisorPositionId,
-    status: "active",
-    lastActivityAt: new Date(),
   });
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(created._id.toString());
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const updateClient = async (
@@ -245,18 +203,14 @@ export const updateClient = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  return (await deepPopulate(
-    Client.findByIdAndUpdate(
-      clientId,
-      { ...data },
-      { returnDocument: "after", runValidators: true },
-    ),
-  )) as IClient;
+  const updated = await clientRepository.updateClientById(clientId, { ...data });
+  if (!updated) throw new NotFoundError("Client not found");
+  return updated;
 };
 
 export const updateClientStatus = async (
@@ -266,7 +220,7 @@ export const updateClientStatus = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -289,12 +243,9 @@ export const updateClientStatus = async (
     updateData.lastActivityAt = new Date();
   }
 
-  return (await deepPopulate(
-    Client.findByIdAndUpdate(clientId, updateData, {
-      returnDocument: "after",
-      runValidators: true,
-    }),
-  )) as IClient;
+  const updated = await clientRepository.updateClientById(clientId, updateData);
+  if (!updated) throw new NotFoundError("Client not found");
+  return updated;
 };
 
 export const requestArchive = async (
@@ -303,7 +254,7 @@ export const requestArchive = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -311,13 +262,11 @@ export const requestArchive = async (
   if (requesterRole !== "salesperson") throw new ForbiddenError();
   if (client.status === "archived") throw new BadRequestError("Client is already archived");
 
-  return (await deepPopulate(
-    Client.findByIdAndUpdate(
-      clientId,
-      { archiveRequest: { requestedAt: new Date(), requestedBy: requesterId, reason } },
-      { returnDocument: "after" },
-    ),
-  )) as IClient;
+  const updated = await clientRepository.updateClientById(clientId, {
+    archiveRequest: { requestedAt: new Date(), requestedBy: requesterId, reason },
+  });
+  if (!updated) throw new NotFoundError("Client not found");
+  return updated;
 };
 
 export const approveArchive = async (
@@ -327,7 +276,7 @@ export const approveArchive = async (
 ): Promise<IClient> => {
   if (requesterRole !== "deputy" && requesterRole !== "director") throw new ForbiddenError();
 
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   if (!client.archiveRequest.requestedAt) {
@@ -338,18 +287,14 @@ export const approveArchive = async (
     await verifyDeputyAccess(requesterId, client.assignedTo.toString());
   }
 
-  return (await deepPopulate(
-    Client.findByIdAndUpdate(
-      clientId,
-      {
-        status: "archived",
-        "archiveRequest.requestedAt": null,
-        "archiveRequest.requestedBy": null,
-        "archiveRequest.reason": null,
-      },
-      { returnDocument: "after" },
-    ),
-  )) as IClient;
+  const updated = await clientRepository.updateClientById(clientId, {
+    status: "archived",
+    "archiveRequest.requestedAt": null,
+    "archiveRequest.requestedBy": null,
+    "archiveRequest.reason": null,
+  });
+  if (!updated) throw new NotFoundError("Client not found");
+  return updated;
 };
 
 export const unarchiveClient = async (
@@ -357,20 +302,19 @@ export const unarchiveClient = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   if (client.status !== "archived") throw new BadRequestError("Client is not archived");
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  return (await deepPopulate(
-    Client.findByIdAndUpdate(
-      clientId,
-      { status: "active", lastActivityAt: new Date() },
-      { returnDocument: "after" },
-    ),
-  )) as IClient;
+  const updated = await clientRepository.updateClientById(clientId, {
+    status: "active",
+    lastActivityAt: new Date(),
+  });
+  if (!updated) throw new NotFoundError("Client not found");
+  return updated;
 };
 
 export const updateClientSalesperson = async (
@@ -379,7 +323,7 @@ export const updateClientSalesperson = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
   if (requesterRole === "salesperson") throw new ForbiddenError();
 
@@ -401,13 +345,12 @@ export const updateClientSalesperson = async (
     assignedAdvisorPositionId = advisorPos?._id.toString() ?? null;
   }
 
-  return (await deepPopulate(
-    Client.findByIdAndUpdate(
-      clientId,
-      { assignedTo: salespersonPositionId, assignedAdvisor: assignedAdvisorPositionId },
-      { returnDocument: "after", runValidators: true },
-    ),
-  )) as IClient;
+  const updated = await clientRepository.updateClientById(clientId, {
+    assignedTo: salespersonPositionId,
+    assignedAdvisor: assignedAdvisorPositionId,
+  });
+  if (!updated) throw new NotFoundError("Client not found");
+  return updated;
 };
 
 export const addNote = async (
@@ -416,15 +359,18 @@ export const addNote = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  client.notes.push({ content, createdBy: new mongoose.Types.ObjectId(requesterId) } as any);
+  const newNote = { content, createdBy: new mongoose.Types.ObjectId(requesterId) };
+  client.notes.push(newNote as unknown as (typeof client.notes)[number]);
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const updateNote = async (
@@ -434,7 +380,7 @@ export const updateNote = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -450,7 +396,9 @@ export const updateNote = async (
   note.content = content;
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const deleteNote = async (
@@ -459,7 +407,7 @@ export const deleteNote = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -477,7 +425,9 @@ export const deleteNote = async (
   client.notes.splice(noteIndex, 1);
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const addAddress = async (
@@ -486,15 +436,18 @@ export const addAddress = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  client.addresses.push({ ...data, contacts: [] } as any);
+  const newAddress = { ...data, contacts: [] };
+  client.addresses.push(newAddress as unknown as (typeof client.addresses)[number]);
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const updateAddress = async (
@@ -504,7 +457,7 @@ export const updateAddress = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -519,7 +472,9 @@ export const updateAddress = async (
 
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const deleteAddress = async (
@@ -528,7 +483,7 @@ export const deleteAddress = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -543,7 +498,9 @@ export const deleteAddress = async (
   client.addresses.splice(addressIndex, 1);
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const addContact = async (
@@ -553,7 +510,7 @@ export const addContact = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -561,10 +518,12 @@ export const addContact = async (
   const address = client.addresses.find((a) => a._id.toString() === addressId);
   if (!address) throw new NotFoundError("Address not found");
 
-  address.contacts.push(data as any);
+  address.contacts.push(data as unknown as (typeof address.contacts)[number]);
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const updateContact = async (
@@ -575,7 +534,7 @@ export const updateContact = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -593,7 +552,9 @@ export const updateContact = async (
 
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };
 
 export const deleteContact = async (
@@ -603,7 +564,7 @@ export const deleteContact = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
-  const client = await Client.findById(clientId);
+  const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
 
   await verifyClientAccess(client, requesterId, requesterRole);
@@ -617,5 +578,7 @@ export const deleteContact = async (
   address.contacts.splice(contactIndex, 1);
   await client.save();
 
-  return await deepPopulateDoc(client);
+  const populated = await clientRepository.findClientByIdPopulated(clientId);
+  if (!populated) throw new NotFoundError("Client not found");
+  return populated;
 };

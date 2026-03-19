@@ -1,8 +1,8 @@
 import { env } from "../config/env";
 import jwt from "jsonwebtoken";
-import User from "../models/User";
 import { IUser, TokenPayload } from "../types";
 import { UnauthorizedError, NotFoundError } from "../utils/errors";
+import * as userRepository from "../repositories/user.repository";
 
 // login resp
 interface LoginResult {
@@ -26,7 +26,7 @@ export const generateTokenForUser = (user: IUser): string => {
 };
 
 export const login = async (email: string, password: string) => {
-  const user = await User.findOne({ email, isActive: true });
+  const user = await userRepository.findActiveUserByEmail(email);
   if (!user) throw new UnauthorizedError("Invalid credentials");
 
   const isPasswordValid = await user.comparePassword(password);
@@ -37,7 +37,7 @@ export const login = async (email: string, password: string) => {
 };
 
 export const getMe = async (userId: string): Promise<IUser> => {
-  const user = await User.findById(userId).populate("position");
+  const user = await userRepository.findUserById(userId);
   if (!user) throw new NotFoundError("User not found");
   return user;
 };
