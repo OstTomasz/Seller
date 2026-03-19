@@ -500,3 +500,94 @@ describe("mustChangePassword middleware", () => {
     expect(res.status).toBe(200);
   });
 });
+
+// ─── GET /api/users/salespersons ──────────────────────────────────────────────
+
+describe("GET /api/users/salespersons", () => {
+  it("director should get all salespersons", async () => {
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.directorToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.users).toHaveLength(1);
+    expect(res.body.users[0].role).toBe("salesperson");
+  });
+
+  it("should not expose passwords", async () => {
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.directorToken}`);
+
+    res.body.users.forEach((user: { password?: string }) => {
+      expect(user.password).toBeUndefined();
+    });
+  });
+
+  it("deputy should get only salespersons in own superregion", async () => {
+    // salesperson in ctx is in ctx.regionId which belongs to ctx.superregionId
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.deputyToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.users).toHaveLength(1);
+    expect(res.body.users[0].role).toBe("salesperson");
+  });
+
+  it("deputy should NOT see salespersons outside own superregion", async () => {
+    // create salesperson in a completely different superregion
+    const otherSuperregion = await Region.create({ name: "Other Super", prefix: "OS" });
+    const otherRegion = await Region.create({
+      name: "Other Region",
+      prefix: "OR",
+      parentRegion: otherSuperregion._id,
+    });
+    const otherPosition = await Position.create({
+      code: "OR-99",
+      region: otherRegion._id,
+      type: "salesperson",
+      currentHolder: null,
+    });
+    await User.create({
+      firstName: "Outside",
+      lastName: "Salesperson",
+      email: "outside@seller.com",
+      password: "password123",
+      role: "salesperson",
+      grade: 1,
+      position: otherPosition._id,
+      mustChangePassword: false,
+      isActive: true,
+    });
+
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.deputyToken}`);
+
+    expect(res.status).toBe(200);
+    // deputy sees only 1 — the one in own superregion
+    expect(res.body.users).toHaveLength(1);
+  });
+
+  it("advisor should NOT access salespersons endpoint", async () => {
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.advisorToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("salesperson should NOT access salespersons endpoint", async () => {
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.salespersonToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("should return 401 without token", async () => {
+    const res = await request(app).get("/api/users/salespersons");
+    expect(res.status).toBe(401);
+  });
+});
