@@ -1,4 +1,3 @@
-// server/src/services/client.service.ts
 import mongoose from "mongoose";
 import { IClient, IAddress, UserRole } from "../types";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../utils/errors";
@@ -42,7 +41,9 @@ const verifyAdvisorAccess = async (
   const advisorUser = await userRepository.findRawUserById(advisorUserId);
   if (!advisorUser?.position) throw new ForbiddenError();
 
-  const advisorPosition = await positionRepository.findPositionById(advisorUser.position.toString());
+  const advisorPosition = await positionRepository.findPositionById(
+    advisorUser.position.toString(),
+  );
   if (!advisorPosition?.region) throw new ForbiddenError();
 
   const targetPosition = await positionRepository.findPositionById(targetPositionId);

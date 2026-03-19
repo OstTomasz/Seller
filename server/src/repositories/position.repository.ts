@@ -1,12 +1,13 @@
+import { Types } from "mongoose";
 import Position from "../models/Position";
 
 export const findPositionById = async (positionId: string) => Position.findById(positionId);
 
 export const createPosition = async (data: {
   code: string;
-  region: unknown;
+  region: string | Types.ObjectId;
   type: "director" | "deputy" | "advisor" | "salesperson";
-  currentHolder: unknown;
+  currentHolder: string | Types.ObjectId | null;
 }) => Position.create(data);
 
 export const findAdvisorPositionByRegionId = async (regionId: string) =>
@@ -19,11 +20,14 @@ export const updatePositionCurrentHolder = async (
   positionId: string,
   currentHolderUserId: string | null,
 ) =>
-  Position.findByIdAndUpdate(positionId, { currentHolder: currentHolderUserId });
+  Position.findByIdAndUpdate(
+    positionId,
+    { currentHolder: currentHolderUserId },
+    { returnDocument: "after" },
+  );
 
 export const clearPositionCurrentHolder = async (positionId: string) =>
   Position.findByIdAndUpdate(positionId, { currentHolder: null });
 
 export const deletePositionsByRegionId = async (regionId: string) =>
   Position.deleteMany({ region: regionId });
-
