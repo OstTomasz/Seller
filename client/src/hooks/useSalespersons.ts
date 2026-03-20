@@ -12,6 +12,6 @@ export const useSalespersons = (role: UserRole) => {
       const { data } = await usersApi.getSalespersons();
       return data.users;
     },
-    enabled: role === "deputy" || role === "director",
+    enabled: role === "deputy" || role === "director" || role === "advisor",
   });
 };

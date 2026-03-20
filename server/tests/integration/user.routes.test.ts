@@ -570,12 +570,50 @@ describe("GET /api/users/salespersons", () => {
     expect(res.body.users).toHaveLength(1);
   });
 
-  it("advisor should NOT access salespersons endpoint", async () => {
+  it("advisor should get only salespersons in own region", async () => {
     const res = await request(app)
       .get("/api/users/salespersons")
       .set("Authorization", `Bearer ${ctx.advisorToken}`);
 
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
+    expect(res.body.users).toHaveLength(1);
+    expect(res.body.users[0].role).toBe("salesperson");
+  });
+
+  it("advisor should NOT see salespersons outside own region", async () => {
+    const otherPosition = await Position.create({
+      code: "OR-99",
+      region: ctx.otherRegionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+    await User.create({
+      firstName: "Outside",
+      lastName: "Salesperson",
+      email: "outside@seller.com",
+      password: "password123",
+      role: "salesperson",
+      grade: 1,
+      position: otherPosition._id,
+      mustChangePassword: false,
+      isActive: true,
+    });
+
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.advisorToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.users).toHaveLength(1);
+  });
+
+  it("advisor should access salespersons endpoint", async () => {
+    const res = await request(app)
+      .get("/api/users/salespersons")
+      .set("Authorization", `Bearer ${ctx.advisorToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.users.every((u: { role: string }) => u.role === "salesperson")).toBe(true);
   });
 
   it("salesperson should NOT access salespersons endpoint", async () => {

@@ -261,5 +261,19 @@ export const getSalespersons = async (
     });
   }
 
+  if (requesterRole === "advisor") {
+    const advisorUser = await userRepository.findRawUserById(requesterId);
+    if (!advisorUser?.position) return [];
+
+    const regionId = await getRegionFromPosition(advisorUser.position.toString());
+    if (!regionId) return [];
+
+    const all = await userRepository.findSalespersonUsers();
+    return all.filter((u) => {
+      const pos = u.position as unknown as { region?: { _id: { toString(): string } } } | null;
+      return pos?.region?._id?.toString() === regionId;
+    });
+  }
+
   return [];
 };

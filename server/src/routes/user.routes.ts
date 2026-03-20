@@ -9,7 +9,11 @@ router.patch("/me/password", userController.changePassword);
 
 // All logged in users can read
 router.get("/", userController.getUsers);
-router.get("/salespersons", requireRole("director", "deputy"), userController.getSalespersons);
+router.get(
+  "/salespersons",
+  requireRole("director", "deputy", "advisor"),
+  userController.getSalespersons,
+);
 router.get("/:id", userController.getUserById);
 
 // Director and deputy can create and manage users
