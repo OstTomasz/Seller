@@ -49,7 +49,7 @@ export type INoteAuthor = z.infer<typeof noteAuthorSchema>;
 export const noteSchema = z.object({
   _id: z.string(),
   content: z.string(),
-  createdBy: z.union([z.string(), noteAuthorSchema]),
+  createdBy: z.union([z.string(), noteAuthorSchema]).nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

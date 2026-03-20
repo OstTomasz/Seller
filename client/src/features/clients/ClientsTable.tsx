@@ -1,10 +1,9 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Client, UserRole } from "@/types";
-// import { Badge } from "@/components/ui"; v2
 import { cn } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 
 type SortField = "companyName" | "lastActivityAt" | "_id";
 type SortDirection = "asc" | "desc";
@@ -20,14 +19,6 @@ const STATUS_LABELS: Record<string, string> = {
   inactive: "Inactive",
   archived: "Archived",
 };
-
-//v2
-// const STATUS_BADGE_VARIANTS: Record<string, "active" | "warning" | "error" | "muted"> = {
-//   active: "active",
-//   reminder: "warning",
-//   inactive: "error",
-//   archived: "muted",
-// };
 
 const formatDate = (date: string | null) => {
   if (!date) return "—";
@@ -60,30 +51,70 @@ const ROWS_PER_PAGE_OPTIONS = [10, 20] as const;
 export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => {
   const { user } = useAuthStore();
   const role = user?.role as UserRole;
-
-  const [sortField, setSortField] = useState<SortField>("lastActivityAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [regionFilter, setRegionFilter] = useState<string>("");
-  const [superregionFilter, setSuperregionFilter] = useState<string>("");
-  const [salespersonFilter, setSalespersonFilter] = useState<string>("");
-  const [page, setPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState<10 | 20>(10);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-    setPage(1);
+  const search = searchParams.get("search") ?? "";
+  const statusFilter = searchParams.get("status") ?? "";
+  const regionFilter = searchParams.get("region") ?? "";
+  const superregionFilter = searchParams.get("superregion") ?? "";
+  const salespersonFilter = searchParams.get("salesperson") ?? "";
+  const sortField = (searchParams.get("sort") ?? "lastActivityAt") as SortField;
+  const sortDirection = (searchParams.get("dir") ?? "asc") as SortDirection;
+  const page = Number(searchParams.get("page") ?? "1");
+  const rowsPerPage = Number(searchParams.get("rows") ?? "10") as 10 | 20;
+
+  /**
+   * Updates a single URL param, resets page to 1.
+   * Deletes the param if value is empty.
+   */
+  const setParam = (key: string, value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value) {
+        next.set(key, value);
+      } else {
+        next.delete(key);
+      }
+      next.set("page", "1");
+      return next;
+    });
   };
 
-  // unique values for filter dropdowns
+  const setPage = (p: number) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("page", String(p));
+      return next;
+    });
+  };
+
+  const setRowsPerPage = (n: 10 | 20) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("rows", String(n));
+      next.set("page", "1");
+      return next;
+    });
+  };
+
+  const handleSort = (field: SortField) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (sortField === field) {
+        next.set("dir", sortDirection === "asc" ? "desc" : "asc");
+      } else {
+        next.set("sort", field);
+        next.set("dir", "asc");
+      }
+      next.set("page", "1");
+      return next;
+    });
+  };
+
   const uniqueStatuses = useMemo(() => [...new Set(clients.map((c) => c.status))], [clients]);
+
   const uniqueSalespersons = useMemo(() => {
     const names = clients.map((c) =>
       c.assignedTo?.currentHolder
@@ -92,15 +123,18 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
     );
     return [...new Set(names)];
   }, [clients]);
+
   const uniqueRegions = useMemo(() => {
     const regions = clients.map((c) => c.assignedTo?.region?.name ?? "—");
     return [...new Set(regions)];
   }, [clients]);
+
   const uniqueSuperregions = useMemo(() => {
     const superregions = clients.map((c) => c.assignedTo?.region?.parentRegion?.name ?? "—");
     return [...new Set(superregions)];
   }, [clients]);
 
+  // ── Filtrowanie ───────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
     return clients.filter((c) => {
       const city = c.addresses?.[0]?.city ?? "";
@@ -164,19 +198,13 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           type="text"
           placeholder="Search by name, NIP, city..."
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setParam("search", e.target.value)}
           className="bg-bg-surface border border-celery-700 text-celery-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-gold-500 placeholder:text-celery-600 w-full sm:w-64"
         />
 
         <select
           value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setParam("status", e.target.value)}
           className="bg-bg-surface border border-celery-700 text-celery-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gold-500"
         >
           <option value="">All statuses</option>
@@ -191,10 +219,14 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           <select
             value={superregionFilter}
             onChange={(e) => {
-              setSuperregionFilter(e.target.value);
-              setRegionFilter("");
-              setSalespersonFilter("");
-              setPage(1);
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("superregion", e.target.value);
+                next.delete("region");
+                next.delete("salesperson");
+                next.set("page", "1");
+                return next;
+              });
             }}
             className="bg-bg-surface border border-celery-700 text-celery-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gold-500"
           >
@@ -211,10 +243,14 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           <select
             value={regionFilter}
             onChange={(e) => {
-              setRegionFilter(e.target.value);
-              setSuperregionFilter("");
-              setSalespersonFilter("");
-              setPage(1);
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("region", e.target.value);
+                next.delete("superregion");
+                next.delete("salesperson");
+                next.set("page", "1");
+                return next;
+              });
             }}
             className="bg-bg-surface border border-celery-700 text-celery-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gold-500"
           >
@@ -231,10 +267,14 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           <select
             value={salespersonFilter}
             onChange={(e) => {
-              setSalespersonFilter(e.target.value);
-              setRegionFilter("");
-              setSuperregionFilter("");
-              setPage(1);
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                next.set("salesperson", e.target.value);
+                next.delete("region");
+                next.delete("superregion");
+                next.set("page", "1");
+                return next;
+              });
             }}
             className="bg-bg-surface border border-celery-700 text-celery-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-gold-500"
           >
@@ -254,22 +294,19 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           <thead className="bg-celery-800 text-celery-500 uppercase text-xs tracking-wider">
             <tr>
               <th className="px-4 py-3 text-left">Actions</th>
-              {/* ID */}
               <th
                 className="px-4 py-3 text-left cursor-pointer select-none"
                 onClick={() => handleSort("_id")}
               >
-                <span className="flex items-center gap-1 cursor-pointer">
+                <span className="flex items-center gap-1">
                   ID <SortIcon field="_id" sortField={sortField} sortDirection={sortDirection} />
                 </span>
               </th>
-
-              {/* Company name */}
               <th
                 className="px-4 py-3 text-left cursor-pointer select-none"
                 onClick={() => handleSort("companyName")}
               >
-                <span className="flex items-center gap-1 cursor-pointer">
+                <span className="flex items-center gap-1">
                   Company{" "}
                   <SortIcon
                     field="companyName"
@@ -278,17 +315,11 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                   />
                 </span>
               </th>
-
-              {/* v2-client status
-              <th className="px-4 py-3 text-left">Status</th> 
-              */}
-
-              {/* Last activity */}
               <th
                 className="px-4 py-3 text-left cursor-pointer select-none"
                 onClick={() => handleSort("lastActivityAt")}
               >
-                <span className="flex items-center gap-1 cursor-pointer">
+                <span className="flex items-center gap-1">
                   Last activity{" "}
                   <SortIcon
                     field="lastActivityAt"
@@ -297,9 +328,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                   />
                 </span>
               </th>
-
               <th className="px-4 py-3 text-left">City</th>
-
               {showSalesperson ? <th className="px-4 py-3 text-left">Salesperson</th> : null}
               {showRegion ? <th className="px-4 py-3 text-left">Region</th> : null}
               {showSuperregion ? <th className="px-4 py-3 text-left">Superregion</th> : null}
@@ -311,7 +340,6 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                 <td
                   colSpan={
                     6 + (showSalesperson ? 1 : 0) + (showRegion ? 1 : 0) + (showSuperregion ? 1 : 0)
-                    //v2 - 7 over 6
                   }
                   className="px-4 py-8 text-center text-celery-600"
                 >
@@ -324,9 +352,9 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                 const salesperson = client.assignedTo?.currentHolder
                   ? `${client.assignedTo.currentHolder.firstName} ${client.assignedTo.currentHolder.lastName}`
                   : "—";
-
                 const region = client.assignedTo?.region?.name ?? "—";
                 const superregion = client.assignedTo?.region?.parentRegion?.name ?? "—";
+
                 return (
                   <tr
                     key={client._id}
@@ -343,30 +371,22 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                     <td className="px-4 py-3 text-celery-600 font-mono text-xs">
                       {client.numericId}
                     </td>
-
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => navigate(`/clients/${client._id}`)}
+                        onClick={() =>
+                          navigate(`/clients/${client._id}`, {
+                            state: { clientsSearch: location.search },
+                          })
+                        }
                         className="text-celery-200 hover:text-celery-100 font-medium text-left"
                       >
                         {client.companyName}
                       </button>
                     </td>
-
-                    {/* V2 - client status
-
-<td className="px-4 py-3">
-  <Badge variant={STATUS_BADGE_VARIANTS[client.status] ?? "muted"}>
-    {STATUS_LABELS[client.status] ?? client.status}
-  </Badge>
-</td> */}
-
                     <td className="px-4 py-3 text-celery-400">
                       {formatDate(client.lastActivityAt)}
                     </td>
-
                     <td className="px-4 py-3">{city}</td>
-
                     {showSalesperson ? <td className="px-4 py-3">{salesperson}</td> : null}
                     {showRegion ? <td className="px-4 py-3">{region}</td> : null}
                     {showSuperregion ? <td className="px-4 py-3">{superregion}</td> : null}
@@ -385,10 +405,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           {ROWS_PER_PAGE_OPTIONS.map((n) => (
             <button
               key={n}
-              onClick={() => {
-                setRowsPerPage(n);
-                setPage(1);
-              }}
+              onClick={() => setRowsPerPage(n)}
               className={cn(
                 "px-2 py-0.5 rounded text-xs border",
                 rowsPerPage === n
@@ -409,7 +426,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
             of {sorted.length}
           </span>
           <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
             className="px-2 py-1 rounded border border-celery-700 hover:border-celery-600 disabled:opacity-30 disabled:pointer-events-none"
           >
@@ -443,7 +460,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
               ),
             )}
           <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages || totalPages === 0}
             className="px-2 py-1 rounded border border-celery-700 hover:border-celery-600 disabled:opacity-30 disabled:pointer-events-none"
           >

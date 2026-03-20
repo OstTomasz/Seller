@@ -21,12 +21,14 @@ const FieldError = ({ message }: { message?: string }) =>
     <span className="min-h-4" />
   );
 
-const getNoteAuthor = (createdBy: string | INoteAuthor): string => {
+const getNoteAuthor = (createdBy: string | INoteAuthor | null): string => {
+  if (!createdBy) return "Unknown";
   if (typeof createdBy === "string") return "Unknown";
   return `${createdBy.firstName} ${createdBy.lastName}`;
 };
 
-const getCreatedById = (createdBy: string | INoteAuthor): string => {
+const getCreatedById = (createdBy: string | INoteAuthor | null): string => {
+  if (!createdBy) return "";
   if (typeof createdBy === "string") return createdBy;
   return createdBy._id;
 };

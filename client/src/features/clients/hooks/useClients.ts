@@ -8,5 +8,6 @@ export const useClients = () => {
       const { data } = await clientsApi.getAll();
       return data.clients;
     },
+    staleTime: 30 * 1000,
   });
 };

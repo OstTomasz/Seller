@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useClient } from "./hooks/useClient";
 import { useAuthStore } from "@/store/authStore";
 import { Breadcrumbs, Card, Loader, FetchError, Button } from "@/components/ui";
@@ -60,7 +60,8 @@ const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
   </div>
 );
 
-const getNoteAuthor = (createdBy: string | INoteAuthor): string => {
+const getNoteAuthor = (createdBy: string | INoteAuthor | null): string => {
+  if (!createdBy) return "Unknown";
   if (typeof createdBy === "string") return "Unknown";
   return `${createdBy.firstName} ${createdBy.lastName}`;
 };
@@ -73,6 +74,9 @@ export const ClientPage = () => {
   const [isEditAddressesOpen, setIsEditAddressesOpen] = useState(false);
   const [isEditNotesOpen, setIsEditNotesOpen] = useState(false);
   const [isEditAssignmentOpen, setIsEditAssignmentOpen] = useState(false);
+
+  const location = useLocation();
+  const clientsSearch = (location.state as { clientsSearch?: string } | null)?.clientsSearch ?? "";
 
   const { data: client, isLoading, isError } = useClient(id!);
 
@@ -98,7 +102,12 @@ export const ClientPage = () => {
   return (
     <div className="flex flex-col max-w-7xl mx-auto gap-6">
       {/* Breadcrumbs */}
-      <Breadcrumbs items={[{ label: "Clients", to: "/clients" }, { label: client.companyName }]} />
+      <Breadcrumbs
+        items={[
+          { label: "Clients", to: `/clients${clientsSearch}` },
+          { label: client.companyName },
+        ]}
+      />
 
       {/* Page header */}
       <div className="flex items-start justify-between">
