@@ -12,13 +12,13 @@ interface ClientsTableProps {
   clients: Client[];
   onActionsClick: (client: Client, anchor: HTMLElement) => void;
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  active: "Active",
-  reminder: "Reminder",
-  inactive: "Inactive",
-  archived: "Archived",
-};
+//v2
+// const STATUS_LABELS: Record<string, string> = {
+//   active: "Active",
+//   reminder: "Reminder",
+//   inactive: "Inactive",
+//   archived: "Archived",
+// };
 
 const formatDate = (date: string | null) => {
   if (!date) return "—";
@@ -56,7 +56,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
   const [searchParams, setSearchParams] = useSearchParams();
 
   const search = searchParams.get("search") ?? "";
-  const statusFilter = searchParams.get("status") ?? "";
+  // const statusFilter = searchParams.get("status") ?? ""; v2
   const regionFilter = searchParams.get("region") ?? "";
   const superregionFilter = searchParams.get("superregion") ?? "";
   const salespersonFilter = searchParams.get("salesperson") ?? "";
@@ -113,7 +113,8 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
     });
   };
 
-  const uniqueStatuses = useMemo(() => [...new Set(clients.map((c) => c.status))], [clients]);
+  //v2
+  // const uniqueStatuses = useMemo(() => [...new Set(clients.map((c) => c.status))], [clients]);
 
   const uniqueSalespersons = useMemo(() => {
     const names = clients.map((c) =>
@@ -150,16 +151,25 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
         (c.nip ?? "").includes(search) ||
         city.toLowerCase().includes(search.toLowerCase());
 
-      const matchesStatus = !statusFilter || c.status === statusFilter;
+      //v2
+      // const matchesStatus = !statusFilter || c.status === statusFilter;
       const matchesSalesperson = !salespersonFilter || salesperson === salespersonFilter;
       const matchesRegion = !regionFilter || region === regionFilter;
       const matchesSuperregion = !superregionFilter || superregion === superregionFilter;
 
       return (
-        matchesSearch && matchesStatus && matchesSalesperson && matchesRegion && matchesSuperregion
+        matchesSearch && matchesSalesperson && matchesRegion && matchesSuperregion
+        //&& matchesStatus v2
       );
     });
-  }, [clients, search, statusFilter, salespersonFilter, regionFilter, superregionFilter]);
+  }, [
+    clients,
+    search,
+    salespersonFilter,
+    regionFilter,
+    superregionFilter,
+    //statusFilter, v2
+  ]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -201,7 +211,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           onChange={(e) => setParam("search", e.target.value)}
           className="bg-bg-surface border border-celery-700 text-celery-100 rounded-lg px-3 py-2 text-sm outline-none focus:border-gold-500 placeholder:text-celery-600 w-full sm:w-64"
         />
-
+        {/* v2
         <select
           value={statusFilter}
           onChange={(e) => setParam("status", e.target.value)}
@@ -213,7 +223,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
               {STATUS_LABELS[s] ?? s}
             </option>
           ))}
-        </select>
+        </select> */}
 
         {showSuperregion ? (
           <select
