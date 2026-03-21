@@ -488,49 +488,48 @@ describe("approveArchive", () => {
 });
 
 // ─── unarchiveClient ──────────────────────────────────────────────────────────
-
 describe("unarchiveClient", () => {
-  it("salesperson should unarchive own client", async () => {
+  it("director should unarchive client with reason", async () => {
     const client = await createTestClient(db, { status: "archived" });
-
     const updated = await clientService.unarchiveClient(
       client._id.toString(),
-      db.salespersonId,
-      "salesperson",
+      "Client renewed contract",
+      db.directorId,
+      "director",
     );
-
     expect(updated.status).toBe("active");
+  });
+
+  it("salesperson should NOT unarchive client", async () => {
+    const client = await createTestClient(db, { status: "archived" });
+    await expect(
+      clientService.unarchiveClient(
+        client._id.toString(),
+        "reason",
+        db.salespersonId,
+        "salesperson",
+      ),
+    ).rejects.toThrow("Forbidden");
+  });
+
+  it("advisor should NOT unarchive client", async () => {
+    const client = await createTestClient(db, { status: "archived" });
+    await expect(
+      clientService.unarchiveClient(client._id.toString(), "reason", db.advisorId, "advisor"),
+    ).rejects.toThrow("Forbidden");
   });
 
   it("should throw BadRequestError when client is not archived", async () => {
     const client = await createTestClient(db);
-
     await expect(
-      clientService.unarchiveClient(client._id.toString(), db.salespersonId, "salesperson"),
+      clientService.unarchiveClient(client._id.toString(), "reason", db.directorId, "director"),
     ).rejects.toThrow("Client is not archived");
   });
 
-  it("advisor should unarchive client in own region", async () => {
+  it("should throw BadRequestError when reason is missing", async () => {
     const client = await createTestClient(db, { status: "archived" });
-
-    const updated = await clientService.unarchiveClient(
-      client._id.toString(),
-      db.advisorId,
-      "advisor",
-    );
-
-    expect(updated.status).toBe("active");
-  });
-
-  it("director should unarchive any client", async () => {
-    const client = await createTestClient(db, { status: "archived" });
-
-    const updated = await clientService.unarchiveClient(
-      client._id.toString(),
-      db.directorId,
-      "director",
-    );
-
-    expect(updated.status).toBe("active");
+    await expect(
+      clientService.unarchiveClient(client._id.toString(), "", db.directorId, "director"),
+    ).rejects.toThrow("Reason is required");
   });
 });

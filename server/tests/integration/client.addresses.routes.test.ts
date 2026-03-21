@@ -3,22 +3,9 @@ import request from "supertest";
 import mongoose from "mongoose";
 import app from "../../src/app";
 import Position from "../../src/models/Position";
-import {
-  clearDB,
-  createTestClient,
-  createTestContext,
-  sampleAddress,
-  TestContext,
-} from "../helpers";
+import { clearDB, createTestClient, createTestContext, newAddress, TestContext } from "../helpers";
 
 let ctx: TestContext;
-
-const newAddress = {
-  label: "Warehouse",
-  street: "Industrial Rd 5",
-  city: "Gdynia",
-  postalCode: "81-002",
-};
 
 beforeEach(async () => {
   await clearDB();

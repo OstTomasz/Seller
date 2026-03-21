@@ -5,6 +5,8 @@ import User from "../src/models/User";
 import Region from "../src/models/Region";
 import Position from "../src/models/Position";
 import Client from "../src/models/Client";
+import Notification from "../src/models/Notification";
+import { INotification } from "src/types";
 
 interface ClientTestBase {
   salespersonPositionId: string;
@@ -200,4 +202,27 @@ export const sampleAddress = {
   city: "Gdansk",
   postalCode: "80-001",
   contacts: [],
+};
+
+export const newAddress = {
+  label: "Warehouse",
+  street: "Industrial Rd 5",
+  city: "Gdynia",
+  postalCode: "81-002",
+};
+
+export const createTestNotification = async (
+  userId: string,
+  clientId: string,
+  read = false,
+): Promise<INotification> => {
+  const doc = await Notification.create({
+    userId: new mongoose.Types.ObjectId(userId),
+    type: "archive_request",
+    clientId: new mongoose.Types.ObjectId(clientId),
+    message: "Archive request",
+    read,
+    metadata: { companyName: "Test Company" },
+  });
+  return doc as unknown as INotification;
 };

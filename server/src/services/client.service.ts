@@ -651,6 +651,7 @@ export const unarchiveClient = async (
   requesterRole: UserRole,
 ): Promise<IClient> => {
   if (requesterRole !== "director") throw new ForbiddenError();
+  if (!reason?.trim()) throw new BadRequestError("Reason is required");
 
   const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");

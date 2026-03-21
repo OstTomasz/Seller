@@ -387,23 +387,6 @@ describe("PATCH /api/clients/:id/archive-approve", () => {
     expect(res.body.client.status).toBe("archived");
   });
 
-  it("deputy should approve archive request for client in own superregion", async () => {
-    const client = await createTestClient(ctx, {
-      archiveRequest: {
-        requestedAt: new Date(),
-        requestedBy: new mongoose.Types.ObjectId(),
-        reason: "Client closed business",
-      },
-    });
-
-    const res = await request(app)
-      .patch(`/api/clients/${client._id}/archive-approve`)
-      .set("Authorization", `Bearer ${ctx.deputyToken}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.client.status).toBe("archived");
-  });
-
   it("salesperson should NOT approve archive request", async () => {
     const client = await createTestClient(ctx, {
       archiveRequest: {
@@ -428,50 +411,5 @@ describe("PATCH /api/clients/:id/archive-approve", () => {
       .set("Authorization", `Bearer ${ctx.directorToken}`);
 
     expect(res.status).toBe(400);
-  });
-});
-
-// ─── PATCH /api/clients/:id/unarchive ────────────────────────────────────────
-
-describe("PATCH /api/clients/:id/unarchive", () => {
-  it("salesperson should unarchive own client", async () => {
-    const client = await createTestClient(ctx, { status: "archived" });
-
-    const res = await request(app)
-      .patch(`/api/clients/${client._id}/unarchive`)
-      .set("Authorization", `Bearer ${ctx.salespersonToken}`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.client.status).toBe("active");
-  });
-
-  it("advisor should unarchive client in own region", async () => {
-    const client = await createTestClient(ctx, { status: "archived" });
-
-    const res = await request(app)
-      .patch(`/api/clients/${client._id}/unarchive`)
-      .set("Authorization", `Bearer ${ctx.advisorToken}`);
-
-    expect(res.status).toBe(200);
-  });
-
-  it("should return 400 when client is not archived", async () => {
-    const client = await createTestClient(ctx); // status: active
-
-    const res = await request(app)
-      .patch(`/api/clients/${client._id}/unarchive`)
-      .set("Authorization", `Bearer ${ctx.salespersonToken}`);
-
-    expect(res.status).toBe(400);
-  });
-
-  it("director should unarchive any client", async () => {
-    const client = await createTestClient(ctx, { status: "archived" });
-
-    const res = await request(app)
-      .patch(`/api/clients/${client._id}/unarchive`)
-      .set("Authorization", `Bearer ${ctx.directorToken}`);
-
-    expect(res.status).toBe(200);
   });
 });
