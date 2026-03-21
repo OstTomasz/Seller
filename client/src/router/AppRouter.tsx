@@ -7,6 +7,7 @@ import { PageTransition } from "./PageTransition";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ClientsPage } from "@/features/clients/ClientsPage";
 import { ClientPage } from "@/features/clients/ClientPage";
+import { DashboardPage } from "@/features/dashboard/DashboardPage";
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuthStore();
@@ -60,14 +61,7 @@ export const AppRouter = () => {
             </ProtectedLayout>
           }
         >
-          <Route
-            path="/"
-            element={
-              <div className="flex flex-col items-center justify-center gap-4 py-20">
-                <p className="text-celery-300">Dashboard — coming soon</p>
-              </div>
-            }
-          />
+          <Route path="/" element={<DashboardPage />} />
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/clients/:id" element={<ClientPage />} />
           <Route path="/reminders" element={<p className="text-celery-300">Reminders</p>} />

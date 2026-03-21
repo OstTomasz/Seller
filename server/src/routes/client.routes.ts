@@ -14,17 +14,14 @@ router.patch("/:id", clientController.updateClient);
 router.patch("/:id/status", clientController.updateClientStatus);
 router.patch("/:id/salesperson", clientController.updateClientSalesperson);
 
-router.patch("/:id/archive-request", requireRole("salesperson"), clientController.requestArchive);
 router.patch(
-  "/:id/archive-approve",
-  requireRole("deputy", "director"),
-  clientController.approveArchive,
+  "/:id/archive-request",
+  requireRole("deputy", "salesperson"),
+  clientController.requestArchive,
 );
-router.patch(
-  "/:id/direct-archive",
-  requireRole("deputy", "director"),
-  clientController.directArchive,
-);
+router.patch("/:id/archive-approve", requireRole("director"), clientController.approveArchive);
+router.patch("/:id/archive-reject", requireRole("director"), clientController.rejectArchive);
+router.patch("/:id/direct-archive", requireRole("director"), clientController.directArchive);
 router.patch("/:id/unarchive", clientController.unarchiveClient);
 
 // ── Notes ─────────────────────────────────────────────────────────────────────

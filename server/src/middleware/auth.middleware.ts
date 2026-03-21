@@ -1,13 +1,14 @@
 import { env } from "../config/env";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { TokenPayload } from "../types";
+import { TokenPayload, UserRole } from "../types";
+import { userRoleSchema } from "@seller/shared/types";
 
 declare global {
   namespace Express {
     interface Request {
       userId?: string;
-      userRole?: string;
+      userRole?: UserRole;
       mustChangePassword?: boolean;
     }
   }
@@ -25,8 +26,14 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
 
+    const roleResult = userRoleSchema.safeParse(decoded.role);
+    if (!roleResult.success) {
+      res.status(401).json({ message: "Invalid token role" });
+      return;
+    }
+
     req.userId = decoded.userId;
-    req.userRole = decoded.role;
+    req.userRole = roleResult.data;
     req.mustChangePassword = decoded.mustChangePassword;
 
     next();

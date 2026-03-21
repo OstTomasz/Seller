@@ -513,7 +513,7 @@ export const requestArchive = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  if (requesterRole !== "salesperson") throw new ForbiddenError();
+  if (requesterRole !== "salesperson" && requesterRole !== "deputy") throw new ForbiddenError();
   if (client.status === "archived") throw new BadRequestError("Client is already archived");
 
   const updated = await clientRepository.updateClientById(clientId, {
@@ -522,7 +522,14 @@ export const requestArchive = async (
   if (!updated) throw new NotFoundError("Client not found");
 
   // ── send notification to deputy and director ───────────────────────────────
-  await notificationService.notifyArchiveRequest(clientId, client.companyName, requesterId);
+
+  await notificationService.notifyArchiveRequest(
+    clientId,
+    client.companyName,
+    reason,
+    client.assignedTo.toString(),
+    requesterRole,
+  );
 
   return updated;
 };
@@ -553,10 +560,51 @@ export const approveArchive = async (
   });
   if (!updated) throw new NotFoundError("Client not found");
 
+  // cleanup archive_request notifications + notify about archival
+  await notificationService.deleteArchiveRequestNotifications(clientId); // ← nowe
   await notificationService.notifyClientArchived(
     clientId,
     client.companyName,
     client.assignedTo.toString(),
+    client.archiveRequest.reason ?? "",
+  );
+
+  return updated;
+};
+
+export const rejectArchive = async (
+  clientId: string,
+  reason: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IClient> => {
+  if (requesterRole !== "deputy" && requesterRole !== "director") throw new ForbiddenError();
+
+  const client = await clientRepository.findClientById(clientId);
+  if (!client) throw new NotFoundError("Client not found");
+
+  if (!client.archiveRequest.requestedAt) {
+    throw new BadRequestError("No archive request found for this client");
+  }
+
+  if (requesterRole === "deputy") {
+    await verifyDeputyAccess(requesterId, client.assignedTo.toString());
+  }
+
+  const updated = await clientRepository.updateClientById(clientId, {
+    "archiveRequest.requestedAt": null,
+    "archiveRequest.requestedBy": null,
+    "archiveRequest.reason": null,
+  });
+  if (!updated) throw new NotFoundError("Client not found");
+
+  // cleanup archive_request notifications + notify salesperson
+  await notificationService.deleteArchiveRequestNotifications(clientId);
+  await notificationService.notifyArchiveRejected(
+    clientId,
+    client.companyName,
+    client.assignedTo.toString(),
+    reason,
   );
 
   return updated;
@@ -580,15 +628,17 @@ export const directArchive = async (
   const updated = await clientRepository.updateClientById(clientId, {
     status: "archived",
     "archiveRequest.reason": reason,
-    "archiveRequest.requestedAt": new Date(),
-    "archiveRequest.requestedBy": requesterId,
+    "archiveRequest.requestedAt": null,
+    "archiveRequest.requestedBy": null,
   });
   if (!updated) throw new NotFoundError("Client not found");
 
+  await notificationService.deleteArchiveRequestNotifications(clientId);
   await notificationService.notifyClientArchived(
     clientId,
     client.companyName,
     client.assignedTo.toString(),
+    reason,
   );
 
   return updated;

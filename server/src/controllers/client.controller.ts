@@ -314,3 +314,12 @@ export const checkNip = wrapAsync(
     res.status(200).json(result);
   },
 );
+
+export const rejectArchive = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const { reason } = req.body as { reason: string };
+  if (!reason?.trim()) throw new BadRequestError("Rejection reason is required");
+
+  const client = await clientService.rejectArchive(id, reason, req.userId!, req.userRole!);
+  res.status(200).json({ client });
+});

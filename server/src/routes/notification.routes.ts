@@ -6,6 +6,7 @@ const router = Router();
 router.get("/", notificationController.getNotifications);
 router.delete("/:id", notificationController.deleteNotification);
 router.patch("/:id/read", notificationController.markAsRead);
+router.patch("/:id/unread", notificationController.markAsUnread);
 router.post("/unarchive-request", notificationController.requestUnarchive);
 
 export default router;

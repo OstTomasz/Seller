@@ -10,6 +10,7 @@ export const createNotification = async (data: {
   type: NotificationType;
   clientId: string;
   message: string;
+  metadata?: { reason?: string; rejectionReason?: string; companyName?: string };
 }): Promise<INotification> => {
   const notification = new Notification(data);
   return notification.save() as Promise<INotification>;
@@ -19,7 +20,13 @@ export const createNotification = async (data: {
  * Creates notifications for multiple users at once.
  */
 export const createNotifications = async (
-  data: { userId: string; type: NotificationType; clientId: string; message: string }[],
+  data: {
+    userId: string;
+    type: NotificationType;
+    clientId: string;
+    message: string;
+    metadata?: { reason?: string; rejectionReason?: string; companyName?: string };
+  }[],
 ): Promise<void> => {
   await Notification.insertMany(data);
 };
@@ -51,3 +58,16 @@ export const markNotificationAsRead = async (
   userId: string,
 ): Promise<INotification | null> =>
   Notification.findOneAndUpdate({ _id: notificationId, userId }, { read: true }, { new: true });
+
+export const markNotificationAsUnread = async (
+  notificationId: string,
+  userId: string,
+): Promise<INotification | null> =>
+  Notification.findOneAndUpdate({ _id: notificationId, userId }, { read: false }, { new: true });
+
+/**
+ * Deletes archive_request notification for a given clientId.
+ */
+export const deleteArchiveRequestByClientId = async (clientId: string): Promise<void> => {
+  await Notification.deleteMany({ clientId, type: "archive_request" });
+};

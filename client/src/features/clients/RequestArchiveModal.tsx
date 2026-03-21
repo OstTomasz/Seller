@@ -76,9 +76,7 @@ export const RequestArchiveModal = ({ client, onClose }: RequestArchiveModalProp
           <FieldError message={errors.reason?.message} />
         </div>
 
-        <p className="text-xs text-celery-600">
-          Your request will be reviewed by your deputy and director.
-        </p>
+        <p className="text-xs text-celery-600">Your request will be reviewed by your director.</p>
 
         <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
           <Button

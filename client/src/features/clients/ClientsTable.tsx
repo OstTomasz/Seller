@@ -112,7 +112,7 @@ export const ClientsTable = ({ clients, onRequestArchive, onDirectArchive }: Cli
     variant?: "default" | "danger";
     disabled?: boolean;
   }[] => {
-    if (role === "salesperson") {
+    if (role === "salesperson" || role === "deputy") {
       return [
         {
           label: "Request archive",
@@ -127,7 +127,7 @@ export const ClientsTable = ({ clients, onRequestArchive, onDirectArchive }: Cli
       return [{ label: "No actions available", onClick: () => {}, disabled: true }];
     }
 
-    if (role === "deputy" || role === "director") {
+    if (role === "director") {
       return [
         {
           label: "Archive",

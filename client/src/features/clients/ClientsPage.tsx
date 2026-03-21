@@ -16,12 +16,6 @@ export const ClientsPage = () => {
   const [requestArchiveClient, setRequestArchiveClient] = useState<Client | null>(null);
   const [directArchiveClient, setDirectArchiveClient] = useState<Client | null>(null);
 
-  // const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  // const [actionsClient, setActionsClient] = useState<{
-  //   client: Client;
-  //   anchor: HTMLElement;
-  // } | null>(null);
-
   if (isLoading) return <Loader label="clients" />;
 
   if (isError) return <FetchError label="clients" />;

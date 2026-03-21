@@ -143,7 +143,6 @@ describe("createTestClient", () => {
       expect(client.assignedTo._id.toString()).toBe(db.salespersonPositionId);
       expect(client.assignedAdvisor?._id.toString()).toBe(db.advisorPositionId);
     } catch (error: any) {
-      console.log("DEBUG ERROR:", error.message, error.stack);
       throw error;
     }
   });

@@ -119,6 +119,7 @@ export type TokenPayload = z.infer<typeof tokenPayloadSchema>;
 export const notificationTypeSchema = z.enum([
   "archive_request",
   "archive_approved",
+  "archive_rejected",
   "unarchive_request",
   "client_unarchived",
 ]);
@@ -131,6 +132,15 @@ export const notificationClientSchema = z.object({
 });
 export type INotificationClient = z.infer<typeof notificationClientSchema>;
 
+export const notificationMetadataSchema = z
+  .object({
+    reason: z.string().optional(),
+    rejectionReason: z.string().optional(),
+    companyName: z.string().optional(),
+  })
+  .optional();
+export type INotificationMetadata = z.infer<typeof notificationMetadataSchema>;
+
 export const notificationSchema = z.object({
   _id: z.string(),
   userId: z.string(),
@@ -138,6 +148,7 @@ export const notificationSchema = z.object({
   clientId: z.union([z.string(), notificationClientSchema]),
   message: z.string(),
   read: z.boolean(),
+  metadata: notificationMetadataSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
 });

@@ -139,4 +139,7 @@ export const clientsApi = {
 
   directArchive: (id: string, reason: string) =>
     api.patch<{ client: Client }>(`/clients/${id}/direct-archive`, { reason }),
+
+  rejectArchive: (id: string, reason: string) =>
+    api.patch<{ client: Client }>(`/clients/${id}/archive-reject`, { reason }),
 };

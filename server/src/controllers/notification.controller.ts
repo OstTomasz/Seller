@@ -35,3 +35,8 @@ export const requestUnarchive = wrapAsync(
     res.status(200).json({ message: "Unarchive request sent" });
   },
 );
+export const markAsUnread = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const notification = await notificationService.markAsUnread(id, req.userId!);
+  res.status(200).json({ notification });
+});
