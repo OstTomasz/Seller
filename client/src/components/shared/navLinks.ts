@@ -1,11 +1,6 @@
-import {
-  LayoutDashboard,
-  Users,
-  Bell,
-  Settings,
-  UserCog,
-  FileText,
-} from "lucide-react";
+// client/src/components/shared/navLinks.ts
+
+import { LayoutDashboard, Users, Building2, Settings, UserCog, Archive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { UserRole } from "@/types";
 
@@ -15,21 +10,25 @@ export interface NavLink {
   label: string;
 }
 
-export const mainLinks: NavLink[] = [
-  { to: "/",          icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/clients",   icon: Users,           label: "Klienci" },
-  { to: "/reminders", icon: Bell,            label: "Przypomnienia" },
-  { to: "/settings",  icon: Settings,        label: "Ustawienia" },
-];
-
-export const managementLinks: NavLink[] = [
-  { to: "/management",           icon: UserCog,  label: "Zarządzanie" },
-  { to: "/management/documents", icon: FileText, label: "Dokumenty firmowe" },
-];
-
-export const MANAGEMENT_ROLES: UserRole[] = ["director", "deputy"];
+const dashboardLink: NavLink = { to: "/", icon: LayoutDashboard, label: "Dashboard" };
+const clientsLink: NavLink = { to: "/clients", icon: Users, label: "Clients" };
+const companyLink: NavLink = { to: "/company", icon: Building2, label: "Company" };
+const manageLink: NavLink = { to: "/management", icon: UserCog, label: "Manage" };
+const archiveLink: NavLink = { to: "/archive", icon: Archive, label: "Archive" };
+const settingsLink: NavLink = { to: "/settings", icon: Settings, label: "Settings" };
 
 export const getNavLinks = (role: UserRole): NavLink[] => {
-  const canManage = MANAGEMENT_ROLES.includes(role);
-  return canManage ? [...mainLinks, ...managementLinks] : mainLinks;
+  if (role === "salesperson" || role === "advisor") {
+    return [dashboardLink, clientsLink, companyLink, settingsLink];
+  }
+
+  if (role === "deputy") {
+    return [dashboardLink, clientsLink, companyLink, manageLink, settingsLink];
+  }
+
+  if (role === "director") {
+    return [dashboardLink, clientsLink, companyLink, archiveLink, manageLink, settingsLink];
+  }
+
+  return [dashboardLink];
 };

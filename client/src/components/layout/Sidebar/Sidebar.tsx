@@ -1,12 +1,13 @@
+// client/src/components/layout/Sidebar/Sidebar.tsx
+
 import { X, LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui";
 import { SidebarLink } from "./SidebarLink";
-import { mainLinks, MANAGEMENT_ROLES, managementLinks } from "@/components/shared/navLinks";
+import { getNavLinks } from "@/components/shared/navLinks";
 import { AppLogo } from "@/components/shared/AppLogo";
-
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { user, logout } = useAuthStore();
 
-  const canManage = user ? MANAGEMENT_ROLES.includes(user.role) : false;
+  const navLinks = user ? getNavLinks(user.role) : [];
 
   useEffect(() => {
     if (isOpen) {
@@ -33,7 +34,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     <AnimatePresence>
       {isOpen ? (
         <>
-          {/* overlay */}
+          {/* Overlay */}
           <motion.div
             key="overlay"
             initial={{ opacity: 0 }}
@@ -44,7 +45,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             onClick={onClose}
           />
 
-          {/* drawer */}
+          {/* Drawer */}
           <div className="fixed inset-y-0 left-0 z-50 lg:hidden overflow-hidden w-72">
             <motion.aside
               key="drawer"
@@ -56,7 +57,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-4 border-b border-celery-700">
-<AppLogo onClick={onClose}/>
+                <AppLogo onClick={onClose} />
                 <Button
                   variant="ghost"
                   size="sm"
@@ -80,20 +81,9 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
               {/* Navigation */}
               <nav className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1">
-                {mainLinks.map((link) => (
+                {navLinks.map((link) => (
                   <SidebarLink key={link.to} {...link} onClick={onClose} />
                 ))}
-
-                {canManage ? (
-                  <div className="mt-4">
-                    <p className="px-3 mb-2 text-xs font-semibold text-celery-600 uppercase tracking-wider">
-                      Zarządzanie
-                    </p>
-                    {managementLinks.map((link) => (
-                      <SidebarLink key={link.to} {...link} onClick={onClose} />
-                    ))}
-                  </div>
-                ) : null}
               </nav>
 
               {/* Logout */}
@@ -103,7 +93,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-celery-500 hover:bg-celery-800 hover:text-error"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>Wyloguj</span>
+                  <span>Log out</span>
                 </button>
               </div>
             </motion.aside>
