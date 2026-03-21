@@ -7,6 +7,7 @@ const router = Router();
 // ── Clients ───────────────────────────────────────────────────────────────────
 router.get("/", clientController.getClients);
 router.get("/check-nip/:nip", clientController.checkNip);
+router.get("/archived", requireRole("director"), clientController.getArchivedClients);
 router.get("/:id", clientController.getClientById);
 router.post("/", clientController.createClient);
 

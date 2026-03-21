@@ -85,3 +85,6 @@ export const updateClientById = async (
 
 export const findArchivedClientByNip = async (nip: string): Promise<IClient | null> =>
   Client.findOne({ nip, status: "archived" });
+
+export const findArchivedClients = async (): Promise<IClient[]> =>
+  (await deepPopulate(Client.find({ status: "archived" }).sort({ companyName: 1 }))) as IClient[];

@@ -146,4 +146,6 @@ export const clientsApi = {
 
   rejectUnarchive: (id: string, reason: string) =>
     api.patch<{ message: string }>(`/clients/${id}/unarchive-reject`, { reason }),
+
+  getArchived: () => api.get<GetClientsResponse>("/clients/archived"),
 };

@@ -331,3 +331,8 @@ export const rejectArchive = wrapAsync(async (req: Request, res: Response): Prom
   const client = await clientService.rejectArchive(id, reason, req.userId!, req.userRole!);
   res.status(200).json({ client });
 });
+
+export const getArchivedClients = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const clients = await clientService.getArchivedClients(req.userRole!);
+  res.status(200).json({ clients });
+});

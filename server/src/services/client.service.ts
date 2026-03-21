@@ -707,3 +707,8 @@ export const checkNipInArchive = async (
     companyName: client.companyName,
   };
 };
+
+export const getArchivedClients = async (requesterRole: UserRole): Promise<IClient[]> => {
+  if (requesterRole !== "director") throw new ForbiddenError();
+  return clientRepository.findArchivedClients();
+};
