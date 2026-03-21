@@ -646,6 +646,7 @@ export const directArchive = async (
 
 export const unarchiveClient = async (
   clientId: string,
+  reason: string,
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IClient> => {
@@ -653,7 +654,6 @@ export const unarchiveClient = async (
 
   const client = await clientRepository.findClientById(clientId);
   if (!client) throw new NotFoundError("Client not found");
-
   if (client.status !== "archived") throw new BadRequestError("Client is not archived");
 
   const updated = await clientRepository.updateClientById(clientId, {
@@ -663,13 +663,36 @@ export const unarchiveClient = async (
   });
   if (!updated) throw new NotFoundError("Client not found");
 
+  await notificationService.deleteUnarchiveRequestNotifications(clientId);
   await notificationService.notifyClientUnarchived(
     clientId,
     client.companyName,
     client.assignedTo.toString(),
+    reason,
   );
 
   return updated;
+};
+
+export const rejectUnarchive = async (
+  clientId: string,
+  reason: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<void> => {
+  if (requesterRole !== "director") throw new ForbiddenError();
+
+  const client = await clientRepository.findClientById(clientId);
+  if (!client) throw new NotFoundError("Client not found");
+  if (client.status !== "archived") throw new BadRequestError("Client is not archived");
+
+  await notificationService.deleteUnarchiveRequestNotifications(clientId);
+  await notificationService.notifyUnarchiveRejected(
+    clientId,
+    client.companyName,
+    client.assignedTo.toString(),
+    reason,
+  );
 };
 
 export const checkNipInArchive = async (

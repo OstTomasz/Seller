@@ -86,8 +86,6 @@ export const clientsApi = {
 
   approveArchive: (id: string) => api.patch<{ client: Client }>(`/clients/${id}/archive-approve`),
 
-  unarchive: (id: string) => api.patch<{ client: Client }>(`/clients/${id}/unarchive`),
-
   updateSalesperson: (id: string, salespersonPositionId: string) =>
     api.patch<{ client: Client }>(`/clients/${id}/salesperson`, { salespersonPositionId }),
 
@@ -142,4 +140,10 @@ export const clientsApi = {
 
   rejectArchive: (id: string, reason: string) =>
     api.patch<{ client: Client }>(`/clients/${id}/archive-reject`, { reason }),
+
+  unarchive: (id: string, reason: string) =>
+    api.patch<{ client: Client }>(`/clients/${id}/unarchive`, { reason }),
+
+  rejectUnarchive: (id: string, reason: string) =>
+    api.patch<{ message: string }>(`/clients/${id}/unarchive-reject`, { reason }),
 };

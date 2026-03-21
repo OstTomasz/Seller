@@ -38,7 +38,8 @@ export const useDirectArchive = () =>
 
 /** Director only — unarchives client */
 export const useUnarchiveClient = () =>
-  useClientMutation<string>((clientId) => clientsApi.unarchive(clientId), "Client unarchived", [
-    ["clients"],
-    ["archive"],
-  ]);
+  useClientMutation<{ clientId: string; reason: string }>(
+    ({ clientId, reason }) => clientsApi.unarchive(clientId, reason),
+    "Client unarchived",
+    [["clients"]],
+  );

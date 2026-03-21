@@ -10,6 +10,8 @@ const TYPE_CONFIG: Record<NotificationType, { label: string; variant: BadgeVaria
   archive_approved: { label: "Archived", variant: "muted" },
   archive_rejected: { label: "Archive rejected", variant: "error" },
   unarchive_request: { label: "Unarchive request", variant: "gold" },
+  unarchive_approved: { label: "Unarchived", variant: "active" },
+  unarchive_rejected: { label: "Unarchive rejected", variant: "error" },
   client_unarchived: { label: "Unarchived", variant: "active" },
 };
 
@@ -88,7 +90,7 @@ export const NotificationItem = ({
             <MailOpen className="h-4 w-4" />
           </button>
         )}
-        {notification.type !== "archive_request" && (
+        {notification.type !== "archive_request" && notification.type !== "unarchive_request" && (
           <button
             onClick={() => onRemove(notification._id)}
             disabled={isLoading}

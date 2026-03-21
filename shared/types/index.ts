@@ -121,6 +121,8 @@ export const notificationTypeSchema = z.enum([
   "archive_approved",
   "archive_rejected",
   "unarchive_request",
+  "unarchive_approved",
+  "unarchive_rejected",
   "client_unarchived",
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;

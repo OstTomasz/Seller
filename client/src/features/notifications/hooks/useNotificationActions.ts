@@ -1,9 +1,7 @@
-// client/src/features/notifications/hooks/useNotificationActions.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/api/clients";
 import { NOTIFICATIONS_KEY } from "./useNotifications";
 
-/** Mutations for approve/reject archive from notification modal. */
 export const useNotificationActions = (onSuccess: () => void) => {
   const queryClient = useQueryClient();
 
@@ -12,7 +10,7 @@ export const useNotificationActions = (onSuccess: () => void) => {
     queryClient.invalidateQueries({ queryKey: ["clients"] });
   };
 
-  const approve = useMutation({
+  const approveArchive = useMutation({
     mutationFn: (clientId: string) => clientsApi.approveArchive(clientId),
     onSuccess: () => {
       invalidate();
@@ -20,7 +18,7 @@ export const useNotificationActions = (onSuccess: () => void) => {
     },
   });
 
-  const reject = useMutation({
+  const rejectArchive = useMutation({
     mutationFn: ({ clientId, reason }: { clientId: string; reason: string }) =>
       clientsApi.rejectArchive(clientId, reason),
     onSuccess: () => {
@@ -29,5 +27,23 @@ export const useNotificationActions = (onSuccess: () => void) => {
     },
   });
 
-  return { approve, reject };
+  const approveUnarchive = useMutation({
+    mutationFn: ({ clientId, reason }: { clientId: string; reason: string }) =>
+      clientsApi.unarchive(clientId, reason),
+    onSuccess: () => {
+      invalidate();
+      onSuccess();
+    },
+  });
+
+  const rejectUnarchive = useMutation({
+    mutationFn: ({ clientId, reason }: { clientId: string; reason: string }) =>
+      clientsApi.rejectUnarchive(clientId, reason),
+    onSuccess: () => {
+      invalidate();
+      onSuccess();
+    },
+  });
+
+  return { approveArchive, rejectArchive, approveUnarchive, rejectUnarchive };
 };

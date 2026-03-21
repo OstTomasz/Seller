@@ -22,7 +22,8 @@ router.patch(
 router.patch("/:id/archive-approve", requireRole("director"), clientController.approveArchive);
 router.patch("/:id/archive-reject", requireRole("director"), clientController.rejectArchive);
 router.patch("/:id/direct-archive", requireRole("director"), clientController.directArchive);
-router.patch("/:id/unarchive", clientController.unarchiveClient);
+router.patch("/:id/unarchive", requireRole("director"), clientController.unarchiveClient);
+router.patch("/:id/unarchive-reject", requireRole("director"), clientController.rejectUnarchive);
 
 // ── Notes ─────────────────────────────────────────────────────────────────────
 router.post("/:id/notes", clientController.addNote);

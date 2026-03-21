@@ -71,3 +71,7 @@ export const markNotificationAsUnread = async (
 export const deleteArchiveRequestByClientId = async (clientId: string): Promise<void> => {
   await Notification.deleteMany({ clientId, type: "archive_request" });
 };
+
+export const deleteUnarchiveRequestByClientId = async (clientId: string): Promise<void> => {
+  await Notification.deleteMany({ clientId, type: "unarchive_request" });
+};

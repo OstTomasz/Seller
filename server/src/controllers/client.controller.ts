@@ -108,15 +108,23 @@ export const approveArchive = wrapAsync(
   },
 );
 
-export const unarchiveClient = wrapAsync(
-  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-    const { id } = req.params as { id: string };
+export const unarchiveClient = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const { reason } = req.body as { reason: string };
+  if (!reason?.trim()) throw new BadRequestError("Reason is required");
 
-    const client = await clientService.unarchiveClient(id, req.userId!, req.userRole as UserRole);
+  const client = await clientService.unarchiveClient(id, reason, req.userId!, req.userRole!);
+  res.status(200).json({ client });
+});
 
-    res.status(200).json({ client });
-  },
-);
+export const rejectUnarchive = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const { reason } = req.body as { reason: string };
+  if (!reason?.trim()) throw new BadRequestError("Rejection reason is required");
+
+  await clientService.rejectUnarchive(id, reason, req.userId!, req.userRole!);
+  res.status(200).json({ message: "Unarchive request rejected" });
+});
 export const updateClientSalesperson = wrapAsync(
   async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };

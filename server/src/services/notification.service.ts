@@ -176,6 +176,7 @@ export const notifyClientUnarchived = async (
   clientId: string,
   clientName: string,
   assignedToPositionId: string,
+  reason: string,
 ): Promise<void> => {
   const position = await positionRepository.findPositionById(assignedToPositionId);
   if (!position) return;
@@ -211,7 +212,7 @@ export const notifyClientUnarchived = async (
       type: "client_unarchived" as NotificationType,
       clientId,
       message: `Client ${clientName} has been unarchived`,
-      metadata: { companyName: clientName },
+      metadata: { companyName: clientName, reason },
     })),
   );
 };
@@ -303,4 +304,58 @@ export const markAsUnread = async (
   );
   if (!notification) throw new NotFoundError("Notification not found");
   return notification;
+};
+
+export const deleteUnarchiveRequestNotifications = async (clientId: string): Promise<void> => {
+  await notificationRepository.deleteUnarchiveRequestByClientId(clientId);
+};
+
+export const notifyUnarchiveRejected = async (
+  clientId: string,
+  clientName: string,
+  assignedToPositionId: string,
+  reason: string,
+): Promise<void> => {
+  const position = await positionRepository.findPositionById(assignedToPositionId);
+  if (!position) return;
+
+  const recipients: string[] = [];
+
+  if (position.currentHolder) {
+    recipients.push(position.currentHolder.toString());
+  }
+
+  if (position.region) {
+    const regionId = position.region.toString();
+
+    const advisorPosition = await positionRepository.findAdvisorPositionByRegionId(regionId);
+    if (advisorPosition?.currentHolder) {
+      recipients.push(advisorPosition.currentHolder.toString());
+    }
+
+    const region = await regionRepository.findRegionById(regionId);
+    if (region?.parentRegion) {
+      const superregion = await regionRepository.findRegionById(region.parentRegion.toString());
+      if (superregion?.deputy) {
+        const deputyPosition = await positionRepository.findPositionById(
+          superregion.deputy.toString(),
+        );
+        if (deputyPosition?.currentHolder) {
+          recipients.push(deputyPosition.currentHolder.toString());
+        }
+      }
+    }
+  }
+
+  if (recipients.length === 0) return;
+
+  await notificationRepository.createNotifications(
+    [...new Set(recipients)].map((userId) => ({
+      userId,
+      type: "unarchive_rejected" as NotificationType,
+      clientId,
+      message: `Unarchive request rejected for client ${clientName}: ${reason}`,
+      metadata: { companyName: clientName, rejectionReason: reason },
+    })),
+  );
 };

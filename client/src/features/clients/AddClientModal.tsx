@@ -162,13 +162,14 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     if (!archivedClient) return;
     try {
       await clientsApi.requestUnarchive(archivedClient.clientId);
-      setUnarchiveRequestSent(true);
+      setArchivedClient(null);
+      setUnarchiveRequestSent(false);
+      onClose();
       toast.success("Unarchive request sent to director");
     } catch {
       toast.error("Failed to send request");
     }
   };
-
   return (
     <>
       {/* proper client modal */}

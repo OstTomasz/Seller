@@ -12,6 +12,8 @@ const notificationSchema = new Schema<INotification>(
         "archive_approved",
         "archive_rejected",
         "unarchive_request",
+        "unarchive_approved",
+        "unarchive_rejected",
         "client_unarchived",
       ],
       required: true,
