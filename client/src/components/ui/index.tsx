@@ -11,5 +11,6 @@ export { Breadcrumbs } from "./Breadcrumbs";
 export { Loader } from "./Loader";
 export { FetchError } from "./FetchError";
 export { ConfirmDialog } from "./ConfirmDialog";
+export { Dropdown } from "./Dropdown";
 
 export type { BreadcrumbItem } from "./Breadcrumbs";

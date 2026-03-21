@@ -115,3 +115,30 @@ export const tokenPayloadSchema = z.object({
   mustChangePassword: z.boolean(),
 });
 export type TokenPayload = z.infer<typeof tokenPayloadSchema>;
+
+export const notificationTypeSchema = z.enum([
+  "archive_request",
+  "archive_approved",
+  "unarchive_request",
+  "client_unarchived",
+]);
+export type NotificationType = z.infer<typeof notificationTypeSchema>;
+
+export const notificationClientSchema = z.object({
+  _id: z.string(),
+  companyName: z.string(),
+  numericId: z.number(),
+});
+export type INotificationClient = z.infer<typeof notificationClientSchema>;
+
+export const notificationSchema = z.object({
+  _id: z.string(),
+  userId: z.string(),
+  type: notificationTypeSchema,
+  clientId: z.union([z.string(), notificationClientSchema]),
+  message: z.string(),
+  read: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type INotification = z.infer<typeof notificationSchema>;

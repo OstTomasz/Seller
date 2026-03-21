@@ -31,21 +31,27 @@ export const findClientByIdPopulated = async (clientId: string): Promise<IClient
   (await deepPopulate(Client.findById(clientId))) as IClient | null;
 
 export const findClientsForDirector = async (): Promise<IClient[]> =>
-  (await deepPopulate(Client.find().sort({ companyName: 1 }))) as IClient[];
+  (await deepPopulate(
+    Client.find({ status: { $ne: "archived" } }).sort({ companyName: 1 }),
+  )) as IClient[];
 
 export const findClientsForSalesperson = async (positionId: string): Promise<IClient[]> =>
   (await deepPopulate(
-    Client.find({ assignedTo: positionId }).sort({ companyName: 1 }),
+    Client.find({ assignedTo: positionId, status: { $ne: "archived" } }).sort({ companyName: 1 }),
   )) as IClient[];
 
 export const findClientsForAdvisor = async (positionId: string): Promise<IClient[]> =>
   (await deepPopulate(
-    Client.find({ assignedAdvisor: positionId }).sort({ companyName: 1 }),
+    Client.find({ assignedAdvisor: positionId, status: { $ne: "archived" } }).sort({
+      companyName: 1,
+    }),
   )) as IClient[];
 
 export const findClientsForDeputy = async (positionIds: string[]): Promise<IClient[]> =>
   (await deepPopulate(
-    Client.find({ assignedTo: { $in: positionIds } }).sort({ companyName: 1 }),
+    Client.find({ assignedTo: { $in: positionIds }, status: { $ne: "archived" } }).sort({
+      companyName: 1,
+    }),
   )) as IClient[];
 
 export const createClient = async (data: {
@@ -76,3 +82,6 @@ export const updateClientById = async (
       runValidators: true,
     }),
   )) as IClient | null;
+
+export const findArchivedClientByNip = async (nip: string): Promise<IClient | null> =>
+  Client.findOne({ nip, status: "archived" });

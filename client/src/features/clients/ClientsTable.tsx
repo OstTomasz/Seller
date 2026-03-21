@@ -4,13 +4,15 @@ import { Client, UserRole } from "@/types";
 import { cn } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { Dropdown } from "@/components/ui";
 
 type SortField = "companyName" | "lastActivityAt" | "_id";
 type SortDirection = "asc" | "desc";
 
 interface ClientsTableProps {
   clients: Client[];
-  onActionsClick: (client: Client, anchor: HTMLElement) => void;
+  onRequestArchive: (client: Client) => void;
+  onDirectArchive: (client: Client) => void;
 }
 //v2
 // const STATUS_LABELS: Record<string, string> = {
@@ -48,7 +50,7 @@ const SortIcon = ({
 
 const ROWS_PER_PAGE_OPTIONS = [10, 20] as const;
 
-export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => {
+export const ClientsTable = ({ clients, onRequestArchive, onDirectArchive }: ClientsTableProps) => {
   const { user } = useAuthStore();
   const role = user?.role as UserRole;
   const navigate = useNavigate();
@@ -97,6 +99,46 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
       next.set("page", "1");
       return next;
     });
+  };
+
+  const getActionItems = (
+    client: Client,
+    role: UserRole,
+    onRequestArchive: (client: Client) => void,
+    onDirectArchive: (client: Client) => void,
+  ): {
+    label: string;
+    onClick: () => void;
+    variant?: "default" | "danger";
+    disabled?: boolean;
+  }[] => {
+    if (role === "salesperson") {
+      return [
+        {
+          label: "Request archive",
+          onClick: () => onRequestArchive(client),
+          variant: "danger",
+          disabled: client.status === "archived" || !!client.archiveRequest?.requestedAt,
+        },
+      ];
+    }
+
+    if (role === "advisor") {
+      return [{ label: "No actions available", onClick: () => {}, disabled: true }];
+    }
+
+    if (role === "deputy" || role === "director") {
+      return [
+        {
+          label: "Archive",
+          onClick: () => onDirectArchive(client),
+          variant: "danger",
+          disabled: client.status === "archived",
+        },
+      ];
+    }
+
+    return [];
   };
 
   const handleSort = (field: SortField) => {
@@ -303,7 +345,6 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
         <table className="w-full text-sm text-celery-300">
           <thead className="bg-celery-800 text-celery-500 uppercase text-xs tracking-wider">
             <tr>
-              <th className="px-4 py-3 text-left">Actions</th>
               <th
                 className="px-4 py-3 text-left cursor-pointer select-none"
                 onClick={() => handleSort("_id")}
@@ -317,7 +358,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                 onClick={() => handleSort("companyName")}
               >
                 <span className="flex items-center gap-1">
-                  Company{" "}
+                  Company
                   <SortIcon
                     field="companyName"
                     sortField={sortField}
@@ -330,7 +371,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                 onClick={() => handleSort("lastActivityAt")}
               >
                 <span className="flex items-center gap-1">
-                  Last activity{" "}
+                  Last activity
                   <SortIcon
                     field="lastActivityAt"
                     sortField={sortField}
@@ -342,6 +383,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
               {showSalesperson ? <th className="px-4 py-3 text-left">Salesperson</th> : null}
               {showRegion ? <th className="px-4 py-3 text-left">Region</th> : null}
               {showSuperregion ? <th className="px-4 py-3 text-left">Superregion</th> : null}
+              <th className="px-4 py-3 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -370,14 +412,6 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                     key={client._id}
                     className="border-t border-celery-800 hover:bg-celery-800/50"
                   >
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={(e) => onActionsClick(client, e.currentTarget)}
-                        className="px-3 py-1 rounded-md text-xs font-medium bg-celery-800 hover:bg-celery-700 text-celery-300 border border-celery-600"
-                      >
-                        Actions
-                      </button>
-                    </td>
                     <td className="px-4 py-3 text-celery-600 font-mono text-xs">
                       {client.numericId}
                     </td>
@@ -400,6 +434,19 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
                     {showSalesperson ? <td className="px-4 py-3">{salesperson}</td> : null}
                     {showRegion ? <td className="px-4 py-3">{region}</td> : null}
                     {showSuperregion ? <td className="px-4 py-3">{superregion}</td> : null}
+                    <td className="px-4 py-3">
+                      <Dropdown
+                        trigger={
+                          <button
+                            type="button"
+                            className="px-3 py-1 rounded-md text-xs font-medium bg-celery-800 hover:bg-celery-700 text-celery-300 border border-celery-600"
+                          >
+                            Actions
+                          </button>
+                        }
+                        items={getActionItems(client, role, onRequestArchive, onDirectArchive)}
+                      />
+                    </td>
                   </tr>
                 );
               })
@@ -432,7 +479,7 @@ export const ClientsTable = ({ clients, onActionsClick }: ClientsTableProps) => 
           <span className="text-xs mr-2">
             {sorted.length === 0
               ? "0"
-              : `${(page - 1) * rowsPerPage + 1}–${Math.min(page * rowsPerPage, sorted.length)}`}{" "}
+              : `${(page - 1) * rowsPerPage + 1}–${Math.min(page * rowsPerPage, sorted.length)}`}
             of {sorted.length}
           </span>
           <button

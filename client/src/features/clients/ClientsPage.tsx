@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { useClients } from "./hooks/useClients";
 import { ClientsTable } from "./ClientsTable";
-// import { Client } from "@/types";
+import { Client, UserRole } from "@/types";
 import { Button, FetchError, Loader } from "@/components/ui";
 import { Plus } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { AddClientModal } from "./AddClientModal";
+import { DirectArchiveModal } from "./DirectArchiveModal";
+import { RequestArchiveModal } from "./RequestArchiveModal";
 
 export const ClientsPage = () => {
   const { data: clients = [], isLoading, isError } = useClients();
   const { user } = useAuthStore();
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [requestArchiveClient, setRequestArchiveClient] = useState<Client | null>(null);
+  const [directArchiveClient, setDirectArchiveClient] = useState<Client | null>(null);
+
   // const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   // const [actionsClient, setActionsClient] = useState<{
   //   client: Client;
@@ -33,7 +38,11 @@ export const ClientsPage = () => {
       </div>
 
       {/* Table */}
-      <ClientsTable clients={clients} onActionsClick={(_client, _anchor) => {}} />
+      <ClientsTable
+        clients={clients}
+        onRequestArchive={(client) => setRequestArchiveClient(client)}
+        onDirectArchive={(client) => setDirectArchiveClient(client)}
+      />
 
       <AddClientModal
         isOpen={addModalOpen}
@@ -41,8 +50,15 @@ export const ClientsPage = () => {
         userRole={user?.role as import("@/types").UserRole}
       />
 
-      {/* Modals — coming next */}
-      {/* <ActionsMenu client={actionsClient?.client} anchor={actionsClient?.anchor} onClose={() => setActionsClient(null)} /> */}
+      <RequestArchiveModal
+        client={requestArchiveClient}
+        onClose={() => setRequestArchiveClient(null)}
+      />
+      <DirectArchiveModal
+        client={directArchiveClient}
+        onClose={() => setDirectArchiveClient(null)}
+        userRole={user?.role as UserRole}
+      />
     </div>
   );
 };

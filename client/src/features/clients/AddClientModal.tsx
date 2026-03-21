@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Modal, Input, Button, ConfirmDialog } from "@/components/ui";
@@ -10,6 +11,8 @@ import { useCreateClient } from "./hooks/useCreateClient";
 import { useSalespersons } from "@/hooks/useSalespersons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useDiscardConfirm } from "@/hooks/useDiscardConfirm";
+import { clientsApi } from "@/api/clients";
+import { toast } from "sonner";
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -69,6 +72,11 @@ interface AddClientModalProps {
   userRole: UserRole;
 }
 
+interface ArchivedClientInfo {
+  clientId: string;
+  companyName: string;
+}
+
 // ── Default values ────────────────────────────────────────────────────────────
 
 const defaultValues: FormValues = {
@@ -87,6 +95,8 @@ const defaultValues: FormValues = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProps) => {
+  const [archivedClient, setArchivedClient] = useState<ArchivedClientInfo | null>(null);
+  const [unarchiveRequestSent, setUnarchiveRequestSent] = useState(false);
   const createClient = useCreateClient();
   const { data: salespersons = [], isLoading: salespersonsLoading } = useSalespersons(userRole);
 
@@ -119,6 +129,12 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     userRole === "deputy" || userRole === "director" || userRole === "advisor";
 
   const onSubmit = async (values: FormValues) => {
+    const { data: nipCheck } = await clientsApi.checkNip(values.nip);
+    if (nipCheck.archived && nipCheck.clientId && nipCheck.companyName) {
+      setArchivedClient({ clientId: nipCheck.clientId, companyName: nipCheck.companyName });
+      return;
+    }
+
     await createClient.mutateAsync({
       companyName: values.companyName,
       nip: values.nip,
@@ -142,8 +158,20 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     onClose();
   };
 
+  const handleRequestUnarchive = async () => {
+    if (!archivedClient) return;
+    try {
+      await clientsApi.requestUnarchive(archivedClient.clientId);
+      setUnarchiveRequestSent(true);
+      toast.success("Unarchive request sent to director");
+    } catch {
+      toast.error("Failed to send request");
+    }
+  };
+
   return (
     <>
+      {/* proper client modal */}
       <Modal
         isOpen={isOpen}
         onClose={discard.tryClose}
@@ -323,6 +351,53 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* archived client modal */}
+      <Modal
+        isOpen={archivedClient !== null}
+        onClose={() => {
+          setArchivedClient(null);
+          setUnarchiveRequestSent(false);
+        }}
+        title="Client is archived"
+        size="sm"
+        disableOutsideClick
+      >
+        <div className="flex flex-col gap-6">
+          {unarchiveRequestSent ? (
+            <p className="text-sm text-celery-300">
+              Your request has been sent to the director. You will be notified when the client is
+              unarchived.
+            </p>
+          ) : (
+            <>
+              <p className="text-sm text-celery-400">
+                A client with this NIP already exists in the archive:
+                <span className="block mt-1 text-celery-200 font-medium">
+                  {archivedClient?.companyName}
+                </span>
+              </p>
+              <p className="text-sm text-celery-500">
+                Would you like to send an unarchive request to the director?
+              </p>
+            </>
+          )}
+          <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setArchivedClient(null);
+                setUnarchiveRequestSent(false);
+              }}
+            >
+              {unarchiveRequestSent ? "Close" : "Cancel"}
+            </Button>
+            {unarchiveRequestSent ? null : (
+              <Button onClick={handleRequestUnarchive}>Send unarchive request</Button>
+            )}
+          </div>
+        </div>
       </Modal>
 
       <ConfirmDialog

@@ -289,3 +289,28 @@ export const deleteContact = wrapAsync(
     res.status(200).json({ client });
   },
 );
+
+export const directArchive = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    const { id } = req.params as { id: string };
+    const { reason } = req.body;
+
+    if (!reason) throw new BadRequestError("reason is required");
+
+    const client = await clientService.directArchive(
+      id,
+      reason,
+      req.userId!,
+      req.userRole as UserRole,
+    );
+    res.status(200).json({ client });
+  },
+);
+
+export const checkNip = wrapAsync(
+  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+    const { nip } = req.params as { nip: string };
+    const result = await clientService.checkNipInArchive(nip);
+    res.status(200).json(result);
+  },
+);

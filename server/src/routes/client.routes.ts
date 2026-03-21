@@ -6,6 +6,7 @@ const router = Router();
 
 // ── Clients ───────────────────────────────────────────────────────────────────
 router.get("/", clientController.getClients);
+router.get("/check-nip/:nip", clientController.checkNip);
 router.get("/:id", clientController.getClientById);
 router.post("/", clientController.createClient);
 
@@ -18,6 +19,11 @@ router.patch(
   "/:id/archive-approve",
   requireRole("deputy", "director"),
   clientController.approveArchive,
+);
+router.patch(
+  "/:id/direct-archive",
+  requireRole("deputy", "director"),
+  clientController.directArchive,
 );
 router.patch("/:id/unarchive", clientController.unarchiveClient);
 

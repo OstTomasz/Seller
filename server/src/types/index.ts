@@ -1,10 +1,20 @@
 import { Document, Types } from "mongoose";
 
+import type {
+  UserRole,
+  UserGrade,
+  INotification as INotificationBase,
+  NotificationType,
+} from "@seller/shared/types";
 // re-export shared types so rest of server can import from "../types"
-export type { UserRole, UserGrade, ClientStatus, INote, TokenPayload } from "@seller/shared/types";
-
-import type { UserRole, UserGrade } from "@seller/shared/types";
-
+export type {
+  UserRole,
+  UserGrade,
+  ClientStatus,
+  INote,
+  TokenPayload,
+  NotificationType,
+} from "@seller/shared/types";
 // ── Mongoose documents ────────────────────────────────────────────────────────
 
 export interface IRegion extends Document {
@@ -87,6 +97,18 @@ export interface IClient extends Document {
   notes: IMongoNote[];
   addresses: IMongoAddress[];
   contacts: IMongoContact[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface INotification
+  extends
+    Omit<INotificationBase, "_id" | "userId" | "clientId" | "createdAt" | "updatedAt">,
+    Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  clientId: Types.ObjectId | { _id: string; companyName: string; numericId: number };
+  read: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

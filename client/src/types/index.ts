@@ -11,6 +11,9 @@ export type {
   ApiError,
   TokenPayload,
   INoteAuthor,
+  INotification,
+  INotificationClient,
+  NotificationType,
 } from "@seller/shared/types";
 
 import type { IUserBase, IClientBase, UserRole, INote } from "@seller/shared/types";

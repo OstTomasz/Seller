@@ -105,3 +105,9 @@ export const updateUserRoleAndGradeById = async (
   User.findByIdAndUpdate(userId, { role, grade }, { returnDocument: "after", runValidators: true })
     .populate("position")
     .select("-password");
+
+/**
+ * Returns all active users with a specific role.
+ */
+export const findUsersByRole = async (role: UserRole): Promise<IUser[]> =>
+  User.find({ role, isActive: true }).select("-password");

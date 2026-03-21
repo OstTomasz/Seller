@@ -84,9 +84,6 @@ export const clientsApi = {
   updateStatus: (id: string, payload: UpdateClientStatusPayload) =>
     api.patch<{ client: Client }>(`/clients/${id}/status`, payload),
 
-  requestArchive: (id: string, payload: RequestArchivePayload) =>
-    api.patch<{ client: Client }>(`/clients/${id}/archive-request`, payload),
-
   approveArchive: (id: string) => api.patch<{ client: Client }>(`/clients/${id}/archive-approve`),
 
   unarchive: (id: string) => api.patch<{ client: Client }>(`/clients/${id}/unarchive`),
@@ -128,4 +125,18 @@ export const clientsApi = {
 
   deleteNote: (id: string, noteId: string) =>
     api.delete<{ client: Client }>(`/clients/${id}/notes/${noteId}`),
+
+  checkNip: (nip: string) =>
+    api.get<{ archived: boolean; clientId: string | null; companyName: string | null }>(
+      `/clients/check-nip/${nip}`,
+    ),
+
+  requestUnarchive: (clientId: string) =>
+    api.post<{ message: string }>(`/notifications/unarchive-request`, { clientId }),
+
+  requestArchive: (id: string, payload: RequestArchivePayload) =>
+    api.patch<{ client: Client }>(`/clients/${id}/archive-request`, payload),
+
+  directArchive: (id: string, reason: string) =>
+    api.patch<{ client: Client }>(`/clients/${id}/direct-archive`, { reason }),
 };
