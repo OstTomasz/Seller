@@ -585,3 +585,45 @@ describe("PATCH /api/clients/:id/unarchive-reject", () => {
     expect(recipientIds).toContain(ctx.deputyId);
   });
 });
+
+// ─── GET /api/clients/archived ─────────────────────────────────
+
+describe("GET /api/clients/archived", () => {
+  it("director should get archived clients", async () => {
+    await createTestClient(ctx, { status: "archived" });
+    await createTestClient(ctx, { status: "archived", companyName: "Another Co" });
+    await createTestClient(ctx); // active — should not appear
+
+    const res = await request(app)
+      .get("/api/clients/archived")
+      .set("Authorization", `Bearer ${ctx.directorToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.clients).toHaveLength(2);
+    expect(res.body.clients.every((c: { status: string }) => c.status === "archived")).toBe(true);
+  });
+
+  it("salesperson should NOT get archived clients", async () => {
+    const res = await request(app)
+      .get("/api/clients/archived")
+      .set("Authorization", `Bearer ${ctx.salespersonToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("deputy should NOT get archived clients", async () => {
+    const res = await request(app)
+      .get("/api/clients/archived")
+      .set("Authorization", `Bearer ${ctx.deputyToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("advisor should NOT get archived clients", async () => {
+    const res = await request(app)
+      .get("/api/clients/archived")
+      .set("Authorization", `Bearer ${ctx.advisorToken}`);
+
+    expect(res.status).toBe(403);
+  });
+});
