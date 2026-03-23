@@ -14,12 +14,15 @@ import regionRoutes from "./routes/region.routes";
 import userRoutes from "./routes/user.routes";
 import clientRoutes from "./routes/client.routes";
 import notificationRoutes from "./routes/notification.routes";
+import eventRoutes from "./routes/event.routes";
 
 import "./models/Region";
 import "./models/User";
 import "./models/Position";
 import "./models/Client";
 import "./models/Notification";
+import "./models/Event";
+import "./models/Invitation";
 
 import { authenticate } from "./middleware/auth.middleware";
 import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";
@@ -62,6 +65,7 @@ app.use("/api/regions", regionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/notifications", authenticate, notificationRoutes);
+app.use("/api/events", eventRoutes);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });

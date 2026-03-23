@@ -111,3 +111,9 @@ export const updateUserRoleAndGradeById = async (
  */
 export const findUsersByRole = async (role: UserRole): Promise<IUser[]> =>
   User.find({ role, isActive: true }).select("-password");
+
+/**
+ * Returns users by array of IDs.
+ */
+export const findUsersByIds = async (userIds: string[]): Promise<IUser[]> =>
+  User.find({ _id: { $in: userIds }, isActive: true }).select("-password");

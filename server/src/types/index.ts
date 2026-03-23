@@ -5,7 +5,10 @@ import type {
   UserGrade,
   INotification as INotificationBase,
   NotificationType,
+  InvitationStatus,
+  EventType,
 } from "@seller/shared/types";
+
 // re-export shared types so rest of server can import from "../types"
 export type {
   UserRole,
@@ -13,7 +16,10 @@ export type {
   ClientStatus,
   INote,
   TokenPayload,
+  EventType,
+  InvitationStatus,
   NotificationType,
+  INotificationMetadata,
 } from "@seller/shared/types";
 // ── Mongoose documents ────────────────────────────────────────────────────────
 
@@ -109,6 +115,29 @@ export interface INotification
   userId: Types.ObjectId;
   clientId: Types.ObjectId | { _id: string; companyName: string; numericId: number };
   read: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IEvent extends Document {
+  title: string;
+  startDate: Date;
+  duration: number | null;
+  allDay: boolean;
+  location: string | null;
+  description: string | null;
+  type: EventType;
+  clientId: Types.ObjectId | null;
+  createdBy: Types.ObjectId;
+  mandatory: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IInvitation extends Document {
+  eventId: Types.ObjectId;
+  inviteeId: Types.ObjectId;
+  status: InvitationStatus;
   createdAt: Date;
   updatedAt: Date;
 }

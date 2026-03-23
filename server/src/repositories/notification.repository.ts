@@ -1,6 +1,5 @@
-// server/src/repositories/notification.repository.ts
 import Notification from "../models/Notification";
-import { NotificationType, INotification } from "../types";
+import { NotificationType, INotification, INotificationMetadata } from "../types";
 
 /**
  * Creates a notification for a single user.
@@ -10,7 +9,7 @@ export const createNotification = async (data: {
   type: NotificationType;
   clientId: string;
   message: string;
-  metadata?: { reason?: string; rejectionReason?: string; companyName?: string };
+  metadata?: INotificationMetadata;
 }): Promise<INotification> => {
   const notification = new Notification(data);
   return notification.save() as Promise<INotification>;
@@ -25,7 +24,7 @@ export const createNotifications = async (
     type: NotificationType;
     clientId: string;
     message: string;
-    metadata?: { reason?: string; rejectionReason?: string; companyName?: string };
+    metadata?: INotificationMetadata;
   }[],
 ): Promise<void> => {
   await Notification.insertMany(data);

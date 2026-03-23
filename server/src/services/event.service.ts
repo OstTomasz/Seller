@@ -1,0 +1,284 @@
+import {
+  IEvent,
+  IInvitation,
+  EventType,
+  InvitationStatus,
+  UserRole,
+  NotificationType,
+} from "../types";
+import { NotFoundError, ForbiddenError, BadRequestError } from "../utils/errors";
+import * as eventRepository from "../repositories/event.repository";
+import * as invitationRepository from "../repositories/invitation.repository";
+import * as notificationRepository from "../repositories/notification.repository";
+import * as userRepository from "../repositories/user.repository";
+import * as regionRepository from "../repositories/region.repository";
+import {
+  getSubordinateUserIdsForDeputy,
+  getSubordinateUserIdsForDirector,
+  getUserIdsByRegionId,
+  getUserIdsBySuperregionId,
+} from "../utils/rbac";
+
+/** Checks overlap between two events. */
+const eventsOverlap = (
+  aStart: Date,
+  aDuration: number | null,
+  aAllDay: boolean,
+  bStart: Date,
+  bDuration: number | null,
+  bAllDay: boolean,
+): boolean => {
+  if (aAllDay || bAllDay) return aStart.toDateString() === bStart.toDateString();
+  const aEnd = new Date(aStart.getTime() + (aDuration ?? 60) * 60_000);
+  const bEnd = new Date(bStart.getTime() + (bDuration ?? 60) * 60_000);
+  return aStart < bEnd && bStart < aEnd;
+};
+
+/** Returns conflicting events for a user on a given date range. */
+const getConflicts = async (
+  userId: string,
+  startDate: Date,
+  duration: number | null,
+  allDay: boolean,
+  excludeEventId?: string,
+): Promise<IEvent[]> => {
+  const dayStart = new Date(startDate);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(startDate);
+  dayEnd.setHours(23, 59, 59, 999);
+
+  const events = await eventRepository.findEventsByUserIdAndDateRange(userId, dayStart, dayEnd);
+  return events.filter((e) => {
+    if (excludeEventId && e._id.toString() === excludeEventId) return false;
+    return eventsOverlap(startDate, duration, allDay, e.startDate, e.duration, e.allDay);
+  });
+};
+
+const getCreatorId = (createdBy: unknown): string => {
+  if (typeof createdBy === "string") return createdBy;
+  if (createdBy && typeof createdBy === "object" && "_id" in createdBy) {
+    return (createdBy as { _id: { toString(): string } })._id.toString();
+  }
+  return String(createdBy);
+};
+
+export const getEvents = async (userId: string): Promise<IEvent[]> =>
+  eventRepository.findEventsByUserId(userId);
+
+export const getPendingInvitations = async (userId: string): Promise<IInvitation[]> =>
+  invitationRepository.findPendingInvitationsByUserId(userId);
+
+export const getEventById = async (eventId: string, userId: string): Promise<IEvent> => {
+  const event = await eventRepository.findEventById(eventId);
+  if (!event) throw new NotFoundError("Event not found");
+
+  const isOwner = getCreatorId(event.createdBy) === userId;
+  const invitation = await invitationRepository.findInvitationByEventAndUser(eventId, userId);
+  if (!isOwner && !invitation) throw new ForbiddenError();
+
+  return event;
+};
+
+export const createEvent = async (
+  data: {
+    title: string;
+    startDate: string;
+    duration?: number | null;
+    allDay: boolean;
+    location?: string | null;
+    description?: string | null;
+    type: EventType;
+    clientId?: string | null;
+    mandatory?: boolean;
+    inviteeIds?: string[];
+    regionId?: string;
+    superregionId?: string;
+  },
+  creatorId: string,
+  creatorRole: UserRole,
+): Promise<{ event: IEvent; conflicts: IEvent[] }> => {
+  if (!data.title?.trim()) throw new BadRequestError("Title is required");
+  if (!data.startDate) throw new BadRequestError("Start date is required");
+  if (!data.allDay && (!data.duration || data.duration < 1)) {
+    throw new BadRequestError("Duration is required for non all-day events");
+  }
+
+  const startDate = new Date(data.startDate);
+  const mandatory = data.mandatory ?? false;
+
+  if (mandatory && creatorRole !== "director" && creatorRole !== "deputy") {
+    throw new ForbiddenError();
+  }
+
+  // resolve invitee IDs
+  let resolvedInviteeIds: string[] = [...(data.inviteeIds ?? [])];
+
+  if (mandatory) {
+    if (data.superregionId) {
+      const ids = await getUserIdsBySuperregionId(data.superregionId);
+      resolvedInviteeIds = [...new Set([...resolvedInviteeIds, ...ids])];
+    } else if (data.regionId) {
+      const ids = await getUserIdsByRegionId(data.regionId);
+      resolvedInviteeIds = [...new Set([...resolvedInviteeIds, ...ids])];
+    } else if (resolvedInviteeIds.length === 0) {
+      const ids =
+        creatorRole === "director"
+          ? await getSubordinateUserIdsForDirector()
+          : await getSubordinateUserIdsForDeputy(creatorId);
+      resolvedInviteeIds = ids;
+    }
+  }
+
+  // remove creator from invitees
+  resolvedInviteeIds = resolvedInviteeIds.filter((id) => id !== creatorId);
+
+  // check conflicts for creator only
+  const conflicts = await getConflicts(creatorId, startDate, data.duration ?? null, data.allDay);
+
+  const event = await eventRepository.createEvent({
+    title: data.title.trim(),
+    startDate,
+    duration: data.allDay ? null : (data.duration ?? null),
+    allDay: data.allDay,
+    location: data.location ?? null,
+    description: data.description ?? null,
+    type: data.type,
+    clientId: data.clientId ?? null,
+    createdBy: creatorId,
+    mandatory,
+  });
+
+  const eventId = event._id.toString();
+
+  if (resolvedInviteeIds.length > 0) {
+    const invitationStatus: InvitationStatus = mandatory ? "accepted" : "pending";
+
+    await invitationRepository.createInvitations(
+      resolvedInviteeIds.map((inviteeId) => ({ eventId, inviteeId, status: invitationStatus })),
+    );
+
+    const notifType = (mandatory ? "event_mandatory" : "event_invitation") as NotificationType;
+
+    await notificationRepository.createNotifications(
+      resolvedInviteeIds.map((userId) => ({
+        userId,
+        type: notifType,
+        clientId: event._id.toString(),
+        message: mandatory
+          ? `Mandatory event added to your calendar: ${data.title}`
+          : `You have been invited to: ${data.title}`,
+        metadata: { eventId, eventTitle: data.title },
+      })),
+    );
+
+    // check conflicts for each invitee in mandatory events
+    if (mandatory) {
+      for (const inviteeId of resolvedInviteeIds) {
+        const inviteeConflicts = await getConflicts(
+          inviteeId,
+          startDate,
+          data.duration ?? null,
+          data.allDay,
+        );
+        if (inviteeConflicts.length > 0) {
+          await notificationRepository.createNotification({
+            userId: inviteeId,
+            type: "event_conflict" as NotificationType,
+            clientId: event._id.toString(),
+            message: `Mandatory event conflicts with: ${inviteeConflicts[0].title}`,
+            metadata: {
+              eventId,
+              eventTitle: data.title,
+              conflictingEventId: inviteeConflicts[0]._id.toString(),
+              conflictingEventTitle: inviteeConflicts[0].title,
+            },
+          });
+        }
+      }
+    }
+  }
+
+  return { event, conflicts };
+};
+
+export const updateEvent = async (
+  eventId: string,
+  data: {
+    title?: string;
+    startDate?: string;
+    duration?: number | null;
+    allDay?: boolean;
+    location?: string | null;
+    description?: string | null;
+    type?: EventType;
+    clientId?: string | null;
+  },
+  userId: string,
+): Promise<{ event: IEvent; conflicts: IEvent[] }> => {
+  const event = await eventRepository.findEventById(eventId);
+  if (!event) throw new NotFoundError("Event not found");
+  if (getCreatorId(event.createdBy) !== userId) throw new ForbiddenError();
+
+  const startDate = data.startDate ? new Date(data.startDate) : event.startDate;
+  const allDay = data.allDay ?? event.allDay;
+  const duration = allDay ? null : (data.duration ?? event.duration);
+
+  const conflicts = await getConflicts(userId, startDate, duration, allDay, eventId);
+
+  const updated = await eventRepository.updateEventById(eventId, {
+    ...data,
+    startDate,
+    duration,
+    allDay,
+  });
+  if (!updated) throw new NotFoundError("Event not found");
+
+  return { event: updated, conflicts };
+};
+
+export const deleteEvent = async (eventId: string, userId: string): Promise<void> => {
+  const event = await eventRepository.findEventById(eventId);
+  if (!event) throw new NotFoundError("Event not found");
+  if (getCreatorId(event.createdBy) !== userId) throw new ForbiddenError();
+
+  await invitationRepository.deleteInvitationsByEventId(eventId);
+  const deleted = await eventRepository.deleteEventById(eventId);
+  if (!deleted) throw new NotFoundError("Event not found");
+};
+
+export const respondToInvitation = async (
+  eventId: string,
+  userId: string,
+  status: "accepted" | "rejected",
+): Promise<IInvitation> => {
+  const event = await eventRepository.findEventById(eventId);
+  if (!event) throw new NotFoundError("Event not found");
+  if (event.mandatory) throw new ForbiddenError();
+
+  const invitation = await invitationRepository.findInvitationByEventAndUser(eventId, userId);
+  if (!invitation) throw new NotFoundError("Invitation not found");
+  if (invitation.status !== "pending") throw new BadRequestError("Invitation already responded");
+
+  const updated = await invitationRepository.updateInvitationStatus(eventId, userId, status);
+  if (!updated) throw new NotFoundError("Invitation not found");
+
+  // notify event creator about response
+  const responder = await userRepository.findUserById(userId);
+  const responderName = responder ? `${responder.firstName} ${responder.lastName}` : "Someone";
+
+  await notificationRepository.createNotification({
+    userId: getCreatorId(event.createdBy),
+    type: "event_response" as NotificationType,
+    clientId: event._id.toString(),
+    message: `${responderName} ${status === "accepted" ? "accepted" : "rejected"} your invitation to: ${event.title}`,
+    metadata: {
+      eventId,
+      eventTitle: event.title,
+    },
+  });
+
+  return updated;
+};
+
+export const getAllUsersForInvite = async (): Promise<IEvent[]> =>
+  userRepository.findAllUsers() as never;

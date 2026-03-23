@@ -7,6 +7,7 @@ import Position from "../src/models/Position";
 import Client from "../src/models/Client";
 import Notification from "../src/models/Notification";
 import { INotification } from "src/types";
+import EventModel from "../src/models/Event";
 
 interface ClientTestBase {
   salespersonPositionId: string;
@@ -226,3 +227,18 @@ export const createTestNotification = async (
   });
   return doc as unknown as INotification;
 };
+
+export const createTestEvent = async (createdBy: string, overrides: Record<string, unknown> = {}) =>
+  EventModel.create({
+    title: "Test Meeting",
+    startDate: new Date("2026-06-15T10:00:00Z"),
+    duration: 60,
+    allDay: false,
+    location: "Office",
+    description: null,
+    type: "team_meeting",
+    clientId: null,
+    createdBy,
+    mandatory: false,
+    ...overrides,
+  });

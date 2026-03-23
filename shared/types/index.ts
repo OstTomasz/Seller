@@ -124,6 +124,10 @@ export const notificationTypeSchema = z.enum([
   "unarchive_approved",
   "unarchive_rejected",
   "client_unarchived",
+  "event_invitation",
+  "event_mandatory",
+  "event_conflict",
+  "event_response",
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
@@ -139,6 +143,10 @@ export const notificationMetadataSchema = z
     reason: z.string().optional(),
     rejectionReason: z.string().optional(),
     companyName: z.string().optional(),
+    eventId: z.string().optional(),
+    eventTitle: z.string().optional(),
+    conflictingEventId: z.string().optional(),
+    conflictingEventTitle: z.string().optional(),
   })
   .optional();
 export type INotificationMetadata = z.infer<typeof notificationMetadataSchema>;
@@ -155,3 +163,36 @@ export const notificationSchema = z.object({
   updatedAt: z.string(),
 });
 export type INotification = z.infer<typeof notificationSchema>;
+
+export const eventTypeSchema = z.enum(["client_meeting", "team_meeting", "personal"]);
+export type EventType = z.infer<typeof eventTypeSchema>;
+
+export const invitationStatusSchema = z.enum(["pending", "accepted", "rejected"]);
+export type InvitationStatus = z.infer<typeof invitationStatusSchema>;
+
+export const eventSchema = z.object({
+  _id: z.string(),
+  title: z.string(),
+  startDate: z.string(),
+  duration: z.number().nullable(),
+  allDay: z.boolean(),
+  location: z.string().nullable(),
+  description: z.string().nullable(),
+  type: eventTypeSchema,
+  clientId: z.union([z.string(), notificationClientSchema]).nullable(),
+  createdBy: z.union([z.string(), userBaseSchema]),
+  mandatory: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type IEvent = z.infer<typeof eventSchema>;
+
+export const invitationSchema = z.object({
+  _id: z.string(),
+  eventId: z.union([z.string(), eventSchema]),
+  inviteeId: z.union([z.string(), userBaseSchema]),
+  status: invitationStatusSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type IInvitation = z.infer<typeof invitationSchema>;
