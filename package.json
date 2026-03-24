@@ -12,6 +12,11 @@
     "dev": "npm run dev -w server & npm run dev -w client"
   },
   "devDependencies": {
+    "@types/react-big-calendar": "^1.16.3",
     "prettier": "^3.8.1"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.20",
+    "react-big-calendar": "^1.19.4"
   }
 }

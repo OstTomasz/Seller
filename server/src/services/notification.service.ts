@@ -1,4 +1,3 @@
-// server/src/services/notification.service.ts
 import { INotification, NotificationType, UserRole } from "../types";
 import { NotFoundError, ForbiddenError, BadRequestError } from "../utils/errors";
 import * as notificationRepository from "../repositories/notification.repository";
@@ -6,7 +5,6 @@ import * as userRepository from "../repositories/user.repository";
 import * as positionRepository from "../repositories/position.repository";
 import * as regionRepository from "../repositories/region.repository";
 import * as clientRepository from "../repositories/client.repository";
-import { getPositionIdsInSuperregion } from "../utils/rbac";
 
 /**
  * Returns all notifications for the requesting user.

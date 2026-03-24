@@ -1,0 +1,166 @@
+/* client/src/features/calendar/styles/calendar-overrides.css */
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+.rbc-calendar {
+  font-family: var(--font-body);
+  background-color: transparent;
+  color: var(--color-celery-200);
+}
+
+/* ── Borders ──────────────────────────────────────────────────────────────── */
+.rbc-calendar .rbc-month-view,
+.rbc-calendar .rbc-time-view {
+  border-color: var(--color-celery-700);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.rbc-calendar .rbc-header,
+.rbc-calendar .rbc-month-row + .rbc-month-row,
+.rbc-calendar .rbc-day-bg + .rbc-day-bg,
+.rbc-calendar .rbc-time-content,
+.rbc-calendar .rbc-time-header-content,
+.rbc-calendar .rbc-timeslot-group,
+.rbc-calendar .rbc-time-content > * + * > *,
+.rbc-calendar .rbc-time-header-content {
+  border-color: var(--color-celery-700);
+}
+
+/* ── Day headers ──────────────────────────────────────────────────────────── */
+.rbc-calendar .rbc-header {
+  background-color: var(--color-celery-900);
+  padding: 0.5rem 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-celery-500);
+}
+
+/* ── Month view cells ─────────────────────────────────────────────────────── */
+.rbc-calendar .rbc-day-bg {
+  background-color: var(--color-bg-surface);
+}
+
+.rbc-calendar .rbc-off-range-bg {
+  background-color: var(--color-celery-900);
+  opacity: 0.6;
+}
+
+.rbc-calendar .rbc-today {
+  background-color: var(--color-celery-800);
+  box-shadow: inset 0 0 0 1.5px var(--color-gold-500);
+}
+
+/* ── Date numbers ─────────────────────────────────────────────────────────── */
+.rbc-calendar .rbc-date-cell {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-celery-400);
+  cursor: pointer;
+}
+
+.rbc-calendar .rbc-date-cell.rbc-now {
+  color: var(--color-gold-400);
+  font-weight: 700;
+}
+
+.rbc-calendar .rbc-off-range .rbc-date-cell,
+.rbc-calendar .rbc-off-range {
+  color: var(--color-celery-400);
+  opacity: 0.5;
+}
+
+/* ── Cursors — month view ─────────────────────────────────────────────────── */
+
+/* Past day cells and all children */
+.rbc-calendar [data-past="true"],
+.rbc-calendar [data-past="true"] * {
+  cursor: not-allowed;
+}
+
+/* Row content sits above day-bg — pass through clicks except events */
+.rbc-calendar .rbc-row-content {
+  pointer-events: none;
+}
+
+.rbc-calendar .rbc-row-content .rbc-event,
+.rbc-calendar .rbc-row-content .rbc-show-more {
+  pointer-events: auto;
+}
+
+/* ── Cursors — week view ──────────────────────────────────────────────────── */
+.rbc-calendar .rbc-time-slot {
+  cursor: pointer;
+  border-top-color: var(--color-celery-900);
+}
+
+.rbc-calendar [data-past-col="true"] .rbc-time-slot {
+  cursor: not-allowed;
+}
+
+/* ── Week view time gutter ────────────────────────────────────────────────── */
+.rbc-calendar .rbc-timeslot-group {
+  border-bottom-color: var(--color-celery-700);
+  min-height: 40px;
+}
+
+.rbc-calendar .rbc-current-time-indicator {
+  background-color: var(--color-gold-400);
+  height: 2px;
+}
+
+/* ── Slot selection highlight ─────────────────────────────────────────────── */
+.rbc-calendar .rbc-slot-selection,
+.rbc-calendar .rbc-selected-cell {
+  background-color: color-mix(in srgb, var(--color-celery-600) 25%, transparent);
+}
+
+/* ── DnD ──────────────────────────────────────────────────────────────────── */
+.rbc-calendar .rbc-addons-dnd-drag-preview {
+  opacity: 0.6;
+}
+
+.rbc-calendar .rbc-addons-dnd-over {
+  background-color: color-mix(in srgb, var(--color-celery-600) 15%, transparent);
+}
+
+/* ── Agenda view ──────────────────────────────────────────────────────────── */
+.rbc-calendar .rbc-agenda-view table {
+  border-color: var(--color-celery-700);
+  color: var(--color-celery-200);
+}
+
+.rbc-calendar .rbc-agenda-view table thead th {
+  background-color: var(--color-celery-900);
+  color: var(--color-celery-500);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-color: var(--color-celery-700);
+}
+
+.rbc-calendar .rbc-agenda-view table tbody tr {
+  border-color: var(--color-celery-700);
+}
+
+.rbc-calendar .rbc-agenda-view table tbody tr:nth-child(even) {
+  background-color: var(--color-celery-900);
+}
+
+.rbc-calendar .rbc-agenda-empty {
+  color: var(--color-celery-600);
+  padding: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+/* Resetujemy Twoją poprzednią czerwoną ramkę jeśli została */
+.rbc-calendar .rbc-row-content {
+  border: none !important;
+}
+
+/* Pionowe linie między kolumnami w widoku miesiąca */
+.rbc-calendar .rbc-month-view .rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--color-celery-700);
+}

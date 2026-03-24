@@ -1,4 +1,3 @@
-// client/src/features/notifications/hooks/useNotifications.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { INotification } from "@/types";
 import { notificationsApi } from "@/api/notifications";

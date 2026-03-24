@@ -1,5 +1,3 @@
-// client/src/components/shared/navLinks.ts
-
 import { LayoutDashboard, Users, Building2, Settings, UserCog, Archive } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { UserRole } from "@/types";

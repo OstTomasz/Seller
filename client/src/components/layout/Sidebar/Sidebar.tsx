@@ -1,5 +1,3 @@
-// client/src/components/layout/Sidebar/Sidebar.tsx
-
 import { X, LogOut } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react";

@@ -1,4 +1,3 @@
-// server/src/models/Client.ts
 import { Schema, model } from "mongoose";
 import { IAddress, IClient } from "../types";
 import { getNextSequence } from "./Counter";

@@ -1,4 +1,3 @@
-// client/src/features/notifications/NotificationList.tsx
 import { useState } from "react";
 import { INotification } from "@/types";
 import { NotificationDetailModal } from "./NotificationDetailModal";

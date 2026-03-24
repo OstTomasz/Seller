@@ -1,5 +1,3 @@
-// client/src/features/notifications/NotificationDetailModal.tsx
-
 import { useState } from "react";
 import { INotification } from "@/types";
 import { Modal, Badge, Button } from "@/components/ui";
@@ -18,6 +16,10 @@ const TYPE_LABELS: Record<INotification["type"], string> = {
   unarchive_approved: "Client unarchived",
   unarchive_rejected: "Unarchive rejected",
   client_unarchived: "Client unarchived",
+  event_invitation: "Event invitation",
+  event_mandatory: "Mendatory event",
+  event_conflict: "Event conflict",
+  event_response: "Event response",
 };
 
 const TYPE_BADGE: Record<INotification["type"], "warning" | "muted" | "gold" | "active" | "error"> =
@@ -29,6 +31,10 @@ const TYPE_BADGE: Record<INotification["type"], "warning" | "muted" | "gold" | "
     unarchive_approved: "active",
     unarchive_rejected: "error",
     client_unarchived: "active",
+    event_invitation: "gold",
+    event_mandatory: "warning",
+    event_conflict: "error",
+    event_response: "active",
   };
 
 const REASON_LABEL: Partial<Record<INotification["type"], string>> = {

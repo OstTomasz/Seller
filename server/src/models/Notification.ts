@@ -1,4 +1,3 @@
-// server/src/models/Notification.ts
 import { Schema, model } from "mongoose";
 import { INotification } from "../types";
 

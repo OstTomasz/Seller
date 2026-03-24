@@ -16,7 +16,16 @@ export type {
   NotificationType,
 } from "@seller/shared/types";
 
-import type { IUserBase, IClientBase, UserRole, INote } from "@seller/shared/types";
+import type {
+  IUserBase,
+  IClientBase,
+  UserRole,
+  INote,
+  IEvent,
+  IInvitation,
+} from "@seller/shared/types";
+import { stringOrDate } from "react-big-calendar";
+import z from "zod";
 
 // ── Frontend-specific types (with populated relations) ────────────────────────
 
@@ -53,3 +62,71 @@ export interface Client extends Omit<IClientBase, "notes"> {
   assignedAdvisor: Position | null;
   notes: INote[];
 }
+
+// ── Calendar types ────────────────────────────────────────────────────────────
+
+export type EventVariant = "own" | "invited_pending" | "invited_accepted" | "mandatory" | "team";
+
+export type CalendarView = "month" | "week" | "agenda";
+
+export interface CalendarEventResource {
+  raw: IEvent;
+  invitation?: IInvitation;
+  /** Visual variant for color-coding */
+  variant: EventVariant;
+  /** Whether current user is the author (can edit) */
+  canEdit: boolean;
+  /** Whether current user can drag & drop this event */
+  canDrag: boolean;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay: boolean;
+  resource: CalendarEventResource;
+}
+
+/** Typed args for DnD drop/resize handlers */
+export interface DragDropEventArgs {
+  event: CalendarEvent;
+  start: stringOrDate;
+  end: stringOrDate;
+  allDay?: boolean;
+}
+
+export const eventFormSchema = z
+  .object({
+    title: z.string().min(1, "Required"),
+    type: z.enum(["client_meeting", "team_meeting", "personal"]),
+    allDay: z.boolean(),
+    startDate: z.string().min(1, "Required"),
+    startTime: z.string().optional(),
+    duration: z.number().min(15, "Min 15 min").optional(),
+    location: z.string().optional(),
+    description: z.string().optional(),
+    inviteeIds: z.array(z.string()).optional(),
+    mandatory: z.boolean().optional(),
+  })
+  .refine((val) => val.allDay || !!val.startTime, {
+    message: "Required for timed events",
+    path: ["startTime"],
+  })
+  .refine((val) => val.allDay || !!val.duration, {
+    message: "Required for timed events",
+    path: ["duration"],
+  });
+
+export type EventFormValues = z.infer<typeof eventFormSchema>;
+
+/** Builds ISO startDate string from form values */
+export const buildStartDate = (values: EventFormValues): string =>
+  values.allDay
+    ? new Date(`${values.startDate}T00:00:00`).toISOString()
+    : new Date(`${values.startDate}T${values.startTime}`).toISOString();
+
+/** Builds duration in minutes from form values */
+export const buildDuration = (values: EventFormValues): number | null =>
+  values.allDay ? null : values.duration !== undefined ? Number(values.duration) : null;

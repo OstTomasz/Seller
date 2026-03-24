@@ -18,7 +18,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
 
       setAuth: (token, user) => {
-        queryClient.clear(); // ← czyści cache przy każdym nowym logowaniu
+        queryClient.clear();
         set({ token, user });
       },
       updateAuth: (token, updates) =>
