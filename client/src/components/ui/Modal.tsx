@@ -37,8 +37,16 @@ export const Modal = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+
+      const openPanels = document.querySelectorAll("[data-modal-panel]");
+      const lastPanel = openPanels[openPanels.length - 1];
+
+      if (panelRef.current && lastPanel === panelRef.current) {
+        onClose();
+      }
     };
+
     if (isOpen) document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
@@ -72,6 +80,7 @@ export const Modal = ({
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             ref={panelRef}
+            data-modal-panel
             tabIndex={-1}
             className={cn(
               "w-full my-auto bg-bg-elevated border border-gold-500 rounded-xl shadow-2xl outline-none",

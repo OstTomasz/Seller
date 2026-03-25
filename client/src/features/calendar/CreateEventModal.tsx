@@ -11,20 +11,39 @@ import { useMemo } from "react";
 const buildDefaultValues = (
   prefillStart?: Date,
   prefillValues?: Partial<EventFormValues>,
-): EventFormValues => ({
-  title: prefillValues?.title ?? "",
-  type: prefillValues?.type ?? "personal",
-  allDay: prefillValues?.allDay ?? false,
-  startDate: prefillStart
-    ? prefillStart.toISOString().slice(0, 10)
-    : new Date().toISOString().slice(0, 10),
-  startTime: prefillStart
-    ? prefillStart.toTimeString().slice(0, 5)
-    : (prefillValues?.startTime ?? "09:00"),
-  duration: prefillValues?.duration ?? 60,
-  location: prefillValues?.location ?? "",
-  description: prefillValues?.description ?? "",
-});
+): EventFormValues => {
+  // Format date in LOCAL timezone, not UTC
+  const formatLocalDate = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
+  const formatLocalTime = (date: Date): string => {
+    const h = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    return `${h}:${min}`;
+  };
+
+  // In month view RBC gives midnight — default to 08:00
+  const isMonthMidnight = (date: Date) => date.getHours() === 0 && date.getMinutes() === 0;
+
+  return {
+    title: prefillValues?.title ?? "",
+    type: prefillValues?.type ?? "personal",
+    allDay: prefillValues?.allDay ?? false,
+    startDate: prefillStart ? formatLocalDate(prefillStart) : formatLocalDate(new Date()),
+    startTime: prefillStart
+      ? isMonthMidnight(prefillStart)
+        ? "08:00"
+        : formatLocalTime(prefillStart)
+      : (prefillValues?.startTime ?? "08:00"),
+    duration: prefillValues?.duration ?? 60,
+    location: prefillValues?.location ?? "",
+    description: prefillValues?.description ?? "",
+  };
+};
 
 interface CreateEventModalProps {
   isOpen: boolean;

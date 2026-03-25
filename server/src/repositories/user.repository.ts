@@ -7,6 +7,15 @@ import type { IUser, UserGrade, UserRole } from "../types";
 export const findAllUsers = async (): Promise<IUser[]> =>
   User.find().populate("position").select("-password").sort({ lastName: 1, firstName: 1 });
 
+export const findAllUsersForInvite = async () =>
+  User.find()
+    .populate({
+      path: "position",
+      populate: { path: "region" },
+    })
+    .select("-password")
+    .sort({ lastName: 1, firstName: 1 });
+
 /**
  * Returns a populated user without password, or null if not found.
  */

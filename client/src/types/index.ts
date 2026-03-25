@@ -130,3 +130,24 @@ export const buildStartDate = (values: EventFormValues): string =>
 /** Builds duration in minutes from form values */
 export const buildDuration = (values: EventFormValues): number | null =>
   values.allDay ? null : values.duration !== undefined ? Number(values.duration) : null;
+
+export interface UserForInviteRegion {
+  _id: string;
+  name: string;
+  prefix: string;
+  parentRegion: string | null;
+}
+
+export interface UserForInvite {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  numericId: number;
+  position: {
+    _id: string;
+    code: string;
+    type: string;
+    region: UserForInviteRegion | null;
+  } | null;
+}

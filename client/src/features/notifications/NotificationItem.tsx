@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils";
 
 type BadgeVariant = "active" | "warning" | "error" | "muted" | "gold";
 
+const EVENT_TYPES: NotificationType[] = [
+  "event_invitation",
+  "event_mandatory",
+  "event_conflict",
+  "event_response",
+];
+
 const TYPE_CONFIG: Record<NotificationType, { label: string; variant: BadgeVariant }> = {
   archive_request: { label: "Archive request", variant: "warning" },
   archive_approved: { label: "Archived", variant: "muted" },
@@ -13,6 +20,10 @@ const TYPE_CONFIG: Record<NotificationType, { label: string; variant: BadgeVaria
   unarchive_approved: { label: "Unarchived", variant: "active" },
   unarchive_rejected: { label: "Unarchive rejected", variant: "error" },
   client_unarchived: { label: "Unarchived", variant: "active" },
+  event_invitation: { label: "Event invitation", variant: "warning" },
+  event_mandatory: { label: "Mandatory event invitation", variant: "warning" },
+  event_conflict: { label: "Event conflict", variant: "warning" },
+  event_response: { label: "Event response", variant: "gold" },
 };
 
 interface NotificationItemProps {
@@ -34,8 +45,16 @@ export const NotificationItem = ({
 }: NotificationItemProps) => {
   const config = TYPE_CONFIG[notification.type];
 
+  const isEventNotification = EVENT_TYPES.includes(notification.type);
+
   const clientName =
-    typeof notification.clientId === "object" ? notification.clientId.companyName : null;
+    !isEventNotification && typeof notification.clientId === "object"
+      ? notification.clientId.companyName
+      : null;
+
+  const displayText = isEventNotification
+    ? (notification.metadata?.eventTitle ?? notification.message)
+    : (clientName ?? notification.message);
 
   const formattedDate = new Intl.DateTimeFormat("pl-PL", {
     day: "2-digit",
@@ -60,11 +79,14 @@ export const NotificationItem = ({
           <Badge variant={config.variant}>{config.label}</Badge>
           {!notification.read && <span className="h-2 w-2 rounded-full bg-celery-400 shrink-0" />}
         </div>
-        {clientName !== null ? (
-          <p className="text-sm text-celery-100 font-medium truncate">{clientName}</p>
-        ) : (
-          <p className="text-sm text-celery-400 truncate">{notification.message}</p>
-        )}
+        <p
+          className={cn(
+            "text-sm truncate",
+            isEventNotification || clientName ? "text-celery-100 font-medium" : "text-celery-400",
+          )}
+        >
+          {displayText}
+        </p>
         <span className="text-xs text-celery-600">{formattedDate}</span>
       </button>
 

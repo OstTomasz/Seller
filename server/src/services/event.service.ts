@@ -280,5 +280,4 @@ export const respondToInvitation = async (
   return updated;
 };
 
-export const getAllUsersForInvite = async (): Promise<IEvent[]> =>
-  userRepository.findAllUsers() as never;
+export const getAllUsersForInvite = async () => userRepository.findAllUsersForInvite();

@@ -1,6 +1,6 @@
 import { api } from "@/lib/axios";
 import type { IEvent, IInvitation } from "@seller/shared/types";
-import type { User } from "@/types";
+import type { UserForInvite } from "@/types";
 
 export interface EventsQueryParams {
   from: string;
@@ -45,8 +45,8 @@ export const fetchPendingInvitations = async (): Promise<IInvitation[]> => {
   return data.invitations;
 };
 
-export const fetchAllUsersForInvite = async (): Promise<User[]> => {
-  const { data } = await api.get<{ users: User[] }>("/events/users");
+export const fetchAllUsersForInvite = async (): Promise<UserForInvite[]> => {
+  const { data } = await api.get<{ users: UserForInvite[] }>("/events/users");
   return data.users;
 };
 

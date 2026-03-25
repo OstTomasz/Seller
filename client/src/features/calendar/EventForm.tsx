@@ -1,9 +1,13 @@
 import { Controller } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
-import { EventFormValues, User } from "@/types";
+import { EventFormValues } from "@/types";
 import { Input, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useUsersForInvite } from "./hooks/useUsersForInvite";
+import { useState } from "react";
+import { InviteUsersModal } from "./InviteUsersModal";
+import { UserPlus, X } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -41,9 +45,9 @@ export const EventForm = ({
   showInvitees,
   canSetMandatory,
 }: EventFormProps) => {
-  console.log("EventForm rendered, showInvitees:", showInvitees);
-  const { data: users = [], isLoading, error } = useUsersForInvite();
-  console.log("useUsersForInvite:", { users: users.length, isLoading, error });
+  const { user: currentUser } = useAuthStore();
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const { data: allUsers = [] } = useUsersForInvite();
   const {
     register,
     control,
@@ -55,11 +59,9 @@ export const EventForm = ({
 
   const allDay = watch("allDay");
 
-  const toggleInvitee = (userId: string) => {
-    const updated = inviteeIds.includes(userId)
-      ? inviteeIds.filter((id) => id !== userId)
-      : [...inviteeIds, userId];
-    setValue("inviteeIds", updated, { shouldDirty: true });
+  const getuserName = (id: string) => {
+    const u = allUsers.find((u) => u._id === id);
+    return u ? `${u.firstName} ${u.lastName}` : id;
   };
 
   return (
@@ -216,37 +218,56 @@ export const EventForm = ({
 
       {showInvitees ? (
         <section>
-          <SectionTitle>Invite participants</SectionTitle>
-          {users.length === 0 ? (
-            <p className="text-xs text-celery-600">No users available.</p>
-          ) : (
-            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
-              {users.map((user: User) => {
-                const isSelected = inviteeIds.includes(user._id);
-                return (
-                  <button
-                    key={user._id}
-                    type="button"
-                    onClick={() => toggleInvitee(user._id)}
-                    className={cn(
-                      "flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors text-left",
-                      isSelected
-                        ? "bg-celery-700 text-celery-100"
-                        : "bg-bg-elevated text-celery-300 hover:bg-celery-800",
-                    )}
+          <SectionTitle>Participants</SectionTitle>
+          <div className="flex flex-col gap-2">
+            {/* Selected participants chips */}
+            {inviteeIds.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {inviteeIds.map((id) => (
+                  <span
+                    key={id}
+                    className="inline-flex items-center gap-1 rounded-full
+                         bg-celery-700 text-celery-100 px-2.5 py-0.5 text-xs"
                   >
-                    <span>
-                      {user.firstName} {user.lastName}
-                    </span>
-                    {user.position ? (
-                      <span className="text-xs text-celery-500">{user.position.code}</span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                    {getuserName(id)}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setValue(
+                          "inviteeIds",
+                          inviteeIds.filter((i) => i !== id),
+                          { shouldDirty: true },
+                        )
+                      }
+                      className="hover:text-red-300 transition-colors"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            {/* Open modal button */}
+            <Button
+              type="button"
+              variant="ghost"
+              className="self-start text-celery-500 hover:text-celery-300 text-xs"
+              onClick={() => setInviteModalOpen(true)}
+            >
+              <UserPlus className="size-3.5 mr-1.5" />
+              {inviteeIds.length > 0 ? "Edit participants" : "Invite participants"}
+            </Button>
+          </div>
           <FieldError message={form.formState.errors.inviteeIds?.message} />
+
+          <InviteUsersModal
+            isOpen={inviteModalOpen}
+            onClose={() => setInviteModalOpen(false)}
+            selectedIds={inviteeIds}
+            onConfirm={(ids) => setValue("inviteeIds", ids, { shouldDirty: true })}
+            excludeUserId={currentUser?._id}
+          />
         </section>
       ) : null}
 
