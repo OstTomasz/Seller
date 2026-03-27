@@ -10,8 +10,15 @@ import { isPastDate } from "./utils/calendarUtils";
 import type { CalendarEvent, EventFormValues } from "@/types";
 import { useCalendarData } from "./hooks/useCalendarData";
 
+// Importy dla UI (takie same jak w powiadomieniach)
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
+
 export const CalendarPage = () => {
   const { events } = useCalendarData();
+
+  // Stan zwijania kalendarza (domyślnie rozwinięty)
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
@@ -19,7 +26,6 @@ export const CalendarPage = () => {
   const [slotStart, setSlotStart] = useState<Date | null>(null);
   const [copyValues, setCopyValues] = useState<Partial<EventFormValues> | null>(null);
 
-  // Events for the selected day — filter from cache
   const dayEvents = selectedDay
     ? events.filter(
         (e) =>
@@ -44,12 +50,40 @@ export const CalendarPage = () => {
 
   return (
     <>
-      <AppCalendar
-        onEventClick={setSelectedEvent}
-        onDayClick={setSelectedDay} // ← nowy prop
-        onSlotClick={({ start }) => setSlotStart(new Date(start))}
-      />
+      <div className="rounded-lg border border-celery-600 bg-bg-surface overflow-hidden transition-all duration-300">
+        {/* Header - Identyczny styl jak w powiadomieniach */}
+        <button
+          onClick={() => setIsExpanded((prev) => !prev)}
+          aria-expanded={isExpanded}
+          className={cn(
+            "w-full flex items-center justify-between px-4 py-3 transition-colors hover:bg-celery-900/40",
+            isExpanded ? "bg-celery-900/20" : "",
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-celery-500" />
+            <span className="text-sm font-medium text-celery-200 tracking-wider">Calendar</span>
+          </div>
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4 text-celery-500" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-celery-500" />
+          )}
+        </button>
 
+        {/* Zawartość kalendarza */}
+        {isExpanded && (
+          <div className="border-t border-celery-800 p-4 animate-in fade-in zoom-in-95 duration-200">
+            <AppCalendar
+              onEventClick={setSelectedEvent}
+              onDayClick={setSelectedDay}
+              onSlotClick={({ start }) => setSlotStart(new Date(start))}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Modale zostają poza kontenerem zwijania */}
       <DayViewModal
         date={selectedDay}
         events={dayEvents}

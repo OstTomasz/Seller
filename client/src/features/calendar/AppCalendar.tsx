@@ -1,4 +1,3 @@
-// client/src/features/calendar/AppCalendar.tsx
 import React, { useCallback } from "react";
 import { Calendar, type View } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
