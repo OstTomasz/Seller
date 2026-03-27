@@ -56,13 +56,21 @@ export const markNotificationAsRead = async (
   notificationId: string,
   userId: string,
 ): Promise<INotification | null> =>
-  Notification.findOneAndUpdate({ _id: notificationId, userId }, { read: true }, { new: true });
+  Notification.findOneAndUpdate(
+    { _id: notificationId, userId },
+    { read: true },
+    { returnDocument: "after" },
+  );
 
 export const markNotificationAsUnread = async (
   notificationId: string,
   userId: string,
 ): Promise<INotification | null> =>
-  Notification.findOneAndUpdate({ _id: notificationId, userId }, { read: false }, { new: true });
+  Notification.findOneAndUpdate(
+    { _id: notificationId, userId },
+    { read: false },
+    { returnDocument: "after" },
+  );
 
 /**
  * Deletes archive_request notification for a given clientId.

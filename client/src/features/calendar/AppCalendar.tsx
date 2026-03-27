@@ -21,9 +21,10 @@ const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
 interface AppCalendarProps {
   onEventClick: (event: CalendarEvent) => void;
   onSlotClick: (slotInfo: { start: Date; end: Date; action: string }) => void;
+  onDayClick: (date: Date) => void;
 }
 
-export const AppCalendar = ({ onEventClick, onSlotClick }: AppCalendarProps) => {
+export const AppCalendar = ({ onEventClick, onSlotClick, onDayClick }: AppCalendarProps) => {
   const {
     events,
     isLoading,
@@ -63,9 +64,9 @@ export const AppCalendar = ({ onEventClick, onSlotClick }: AppCalendarProps) => 
       <div
         className={cn(
           "transition-opacity duration-200",
+          "h-[400px] md:h-[750px]",
           isLoading && "pointer-events-none opacity-50",
         )}
-        style={{ height: 480 }}
       >
         <DnDCalendar
           localizer={localizer}
@@ -74,9 +75,15 @@ export const AppCalendar = ({ onEventClick, onSlotClick }: AppCalendarProps) => 
           date={currentDate}
           onView={(v) => onViewChange(v as CalendarView)}
           onNavigate={onNavigate}
+          drilldownView={null}
+          onDrillDown={onDayClick}
           onSelectEvent={onEventClick}
           onSelectSlot={(slotInfo) => {
             if (isPastDate(new Date(slotInfo.start))) return;
+            if (slotInfo.action === "click") {
+              onDayClick(new Date(slotInfo.start));
+              return;
+            }
             onSlotClick(slotInfo);
           }}
           onEventDrop={onEventDrop}
@@ -85,12 +92,15 @@ export const AppCalendar = ({ onEventClick, onSlotClick }: AppCalendarProps) => 
           dayPropGetter={dayPropGetter}
           slotPropGetter={slotPropGetter}
           eventPropGetter={(event: CalendarEvent) => ({
-            style: {
-              cursor: isPastDate(new Date(event.start)) ? "default" : "pointer",
-            },
+            className: currentView === "month" ? "rbc-event-dot-mode" : undefined,
+            style:
+              currentView !== "month"
+                ? { cursor: isPastDate(new Date(event.start)) ? "default" : "pointer" }
+                : undefined,
           })}
           selectable
-          popup
+          popup={false}
+          onShowMore={(_events, date) => onDayClick(date)}
           components={{
             event: CalendarEventTile,
             toolbar: CalendarToolbar,
@@ -128,8 +138,7 @@ export const AppCalendar = ({ onEventClick, onSlotClick }: AppCalendarProps) => 
             agendaTimeRangeFormat: ({ start, end }) =>
               `${dayjs(start).format("HH:mm")} – ${dayjs(end).format("HH:mm")}`,
           }}
-          min={new Date(0, 0, 0, 8, 0)}
-          max={new Date(0, 0, 0, 20, 0)}
+          scrollToTime={new Date(0, 0, 0, 8, 0)}
           style={{ height: "100%" }}
         />
       </div>

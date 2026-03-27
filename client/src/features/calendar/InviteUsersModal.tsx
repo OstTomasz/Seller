@@ -221,10 +221,30 @@ export const InviteUsersModal = ({
   }, [isOpen, selectedIds]);
 
   const hierarchy = useMemo(() => {
+    return buildHierarchy(users, excludeUserId);
+  }, [users, excludeUserId]);
+
+  // Filter hierarchy nodes for display based on search
+  const visibleHierarchy = useMemo(() => {
     const q = search.toLowerCase().trim();
-    const source = q ? users.filter((u) => matchesSearch(u, q)) : users;
-    return buildHierarchy(source, excludeUserId);
-  }, [users, search, excludeUserId]);
+    if (!q) return hierarchy;
+
+    return {
+      directors: hierarchy.directors.filter((u) => matchesSearch(u, q)),
+      superRegions: hierarchy.superRegions
+        .map((sr) => ({
+          ...sr,
+          users: sr.users.filter((u) => matchesSearch(u, q)),
+          subRegions: sr.subRegions
+            .map((sub) => ({
+              ...sub,
+              users: sub.users.filter((u) => matchesSearch(u, q)),
+            }))
+            .filter((sub) => sub.users.length > 0),
+        }))
+        .filter((sr) => sr.users.length > 0 || sr.subRegions.length > 0),
+    };
+  }, [hierarchy, search]);
 
   const toggle = (userId: string) =>
     setLocalSelected((prev) =>
@@ -288,7 +308,7 @@ export const InviteUsersModal = ({
           ) : (
             <>
               {/* Directors */}
-              {hierarchy.directors.map((user) => (
+              {visibleHierarchy.directors.map((user) => (
                 <div key={user._id} className="flex items-center gap-2 px-2">
                   <Crown className="size-3 text-gold-400 shrink-0" />
                   <UserRow
@@ -300,7 +320,7 @@ export const InviteUsersModal = ({
               ))}
 
               {/* SuperRegions */}
-              {hierarchy.superRegions.map((sr) => {
+              {visibleHierarchy.superRegions.map((sr) => {
                 const srIds = superRegionIds(sr);
                 const allSrSelected = srIds.every((id) => localSelected.includes(id));
                 const someSrSelected =
@@ -376,7 +396,8 @@ export const InviteUsersModal = ({
                 );
               })}
 
-              {hierarchy.directors.length === 0 && hierarchy.superRegions.length === 0 ? (
+              {visibleHierarchy.directors.length === 0 &&
+              visibleHierarchy.superRegions.length === 0 ? (
                 <p className="text-xs text-celery-600 text-center py-4">No users found.</p>
               ) : null}
             </>

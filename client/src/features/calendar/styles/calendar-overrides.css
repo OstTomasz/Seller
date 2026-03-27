@@ -17,13 +17,16 @@
 
 .rbc-calendar .rbc-header,
 .rbc-calendar .rbc-month-row + .rbc-month-row,
-.rbc-calendar .rbc-day-bg + .rbc-day-bg,
 .rbc-calendar .rbc-time-content,
 .rbc-calendar .rbc-time-header-content,
 .rbc-calendar .rbc-timeslot-group,
 .rbc-calendar .rbc-time-content > * + * > *,
 .rbc-calendar .rbc-time-header-content {
   border-color: var(--color-celery-700);
+}
+
+.rbc-calendar .rbc-month-view .rbc-day-bg + .rbc-day-bg {
+  border-left: 1px solid var(--color-celery-700);
 }
 
 /* ── Day headers ──────────────────────────────────────────────────────────── */
@@ -35,6 +38,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-celery-500);
+  border-color: var(--color-celery-700);
 }
 
 /* ── Month view cells ─────────────────────────────────────────────────────── */
@@ -71,15 +75,58 @@
   opacity: 0.5;
 }
 
-/* ── Cursors — month view ─────────────────────────────────────────────────── */
+/* ── Month row — fixed height with scroll ────────────────────────────────── */
+.rbc-calendar .rbc-month-view .rbc-month-row {
+  min-height: 5rem;
+  flex: 1 0 5rem;
+  overflow: hidden;
+}
 
-/* Past day cells and all children */
+.rbc-calendar .rbc-month-view .rbc-month-row:last-child {
+  min-height: 5rem;
+  flex: 1 0 5rem;
+}
+
+/* Row bg — sits behind, no scroll */
+.rbc-calendar .rbc-month-view .rbc-row-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Row content — scrollable when events overflow */
+.rbc-calendar .rbc-month-view .rbc-row-content {
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.rbc-calendar .rbc-month-view .rbc-row-content::-webkit-scrollbar {
+  width: 3px;
+}
+
+.rbc-calendar .rbc-month-view .rbc-row-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rbc-calendar .rbc-month-view .rbc-row-content::-webkit-scrollbar-thumb {
+  background: var(--color-celery-700);
+  border-radius: 999px;
+}
+
+/* Each event row takes full width */
+.rbc-calendar .rbc-month-view .rbc-row-segment {
+  padding: 1px 2px;
+}
+
+/* ── Cursors — month view ─────────────────────────────────────────────────── */
 .rbc-calendar [data-past="true"],
 .rbc-calendar [data-past="true"] * {
   cursor: not-allowed;
 }
 
-/* Row content sits above day-bg — pass through clicks except events */
+/* Row content passes through clicks except events */
 .rbc-calendar .rbc-row-content {
   pointer-events: none;
 }
@@ -89,14 +136,26 @@
   pointer-events: auto;
 }
 
+/* ── Event tiles — month view ────────────────────────────────────────────── */
+.rbc-calendar .rbc-month-view .rbc-event {
+  border-radius: 0.25rem;
+  padding: 1px 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: none;
+  box-shadow: none;
+}
+
+/* Remove default RBC blue */
+.rbc-calendar .rbc-event,
+.rbc-calendar .rbc-day-slot .rbc-background-event {
+  background-color: transparent;
+}
+
 /* ── Cursors — week view ──────────────────────────────────────────────────── */
 .rbc-calendar .rbc-time-slot {
   cursor: pointer;
   border-top-color: var(--color-celery-900);
-}
-
-.rbc-calendar [data-past-col="true"] .rbc-time-slot {
-  cursor: not-allowed;
 }
 
 /* ── Week view time gutter ────────────────────────────────────────────────── */
@@ -155,12 +214,14 @@
   font-size: 0.875rem;
 }
 
-/* Resetujemy Twoją poprzednią czerwoną ramkę jeśli została */
-.rbc-calendar .rbc-row-content {
-  border: none !important;
+.rbc-calendar .rbc-month-view .rbc-show-more {
+  background: transparent;
+  color: var(--color-celery-500);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 4px;
+  pointer-events: auto;
 }
-
-/* Pionowe linie między kolumnami w widoku miesiąca */
-.rbc-calendar .rbc-month-view .rbc-day-bg + .rbc-day-bg {
-  border-left: 1px solid var(--color-celery-700);
+.rbc-calendar .rbc-month-view .rbc-show-more:hover {
+  color: var(--color-celery-300);
 }

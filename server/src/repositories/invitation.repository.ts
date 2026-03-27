@@ -25,7 +25,7 @@ export const updateInvitationStatus = async (
   inviteeId: string,
   status: InvitationStatus,
 ): Promise<IInvitation | null> =>
-  Invitation.findOneAndUpdate({ eventId, inviteeId }, { status }, { new: true });
+  Invitation.findOneAndUpdate({ eventId, inviteeId }, { status }, { returnDocument: "after" });
 
 export const deleteInvitationsByEventId = async (eventId: string): Promise<void> => {
   await Invitation.deleteMany({ eventId });

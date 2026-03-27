@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import dayjs from "dayjs";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -31,6 +31,19 @@ export const useCalendarData = (): UseCalendarDataReturn => {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState<CalendarView>("month");
+
+  useEffect(() => {
+    const getView = (): CalendarView => {
+      if (window.innerWidth < 768) return "agenda";
+      return "month";
+    };
+
+    setCurrentView(getView());
+
+    const handleResize = () => setCurrentView(getView());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const getRange = useCallback(() => {
     // +/- 7 day buffer so events near month boundaries are not cut off

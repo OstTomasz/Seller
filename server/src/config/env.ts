@@ -11,7 +11,7 @@ const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
   console.error("❌ Invalid environment variables:");
-  parsed.error.issues.forEach((issue) => {
+  parsed.error.issues.forEach((issue: z.core.$ZodIssue) => {
     console.error(`  ${issue.path.join(".")}: ${issue.message}`);
   });
   process.exit(1);
