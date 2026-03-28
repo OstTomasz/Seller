@@ -712,3 +712,40 @@ export const getArchivedClients = async (requesterRole: UserRole): Promise<IClie
   if (requesterRole !== "director") throw new ForbiddenError();
   return clientRepository.findArchivedClients();
 };
+
+/**
+ * Returns clients visible to the requesting user for event assignment.
+ * Reuses existing RBAC repository functions.
+ */
+export const getClientsForEvent = async (userId: string, role: UserRole): Promise<IClient[]> => {
+  if (role === "director") {
+    return clientRepository.findClientsForDirector();
+  }
+
+  const position = await positionRepository.findPositionByUserId(userId);
+  if (!position) return [];
+
+  if (role === "advisor") {
+    return clientRepository.findClientsForAdvisor(position._id.toString());
+  }
+
+  if (role === "salesperson") {
+    return clientRepository.findClientsForSalesperson(position._id.toString());
+  }
+
+  if (role === "deputy") {
+    const region = position.region;
+    if (!region) return [];
+
+    // ✅ cast przez unknown — region jest spopulowanym obiektem po populate
+    const regionId = (region as unknown as { _id: { toString(): string } })._id.toString();
+
+    const subRegions = await regionRepository.findSubregionsByParentId(regionId);
+    const allRegionIds = [regionId, ...subRegions.map((r) => r._id.toString())];
+    const positions = await positionRepository.findPositionsByRegionIds(allRegionIds);
+    const positionIds = positions.map((p) => p._id.toString());
+    return clientRepository.findClientsForDeputy(positionIds);
+  }
+
+  return [];
+};

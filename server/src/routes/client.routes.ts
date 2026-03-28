@@ -8,6 +8,7 @@ const router = Router();
 router.get("/", clientController.getClients);
 router.get("/check-nip/:nip", clientController.checkNip);
 router.get("/archived", requireRole("director"), clientController.getArchivedClients);
+router.get("/for-event", clientController.getClientsForEvent);
 router.get("/:id", clientController.getClientById);
 router.post("/", clientController.createClient);
 

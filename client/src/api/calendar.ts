@@ -7,20 +7,18 @@ export interface EventsQueryParams {
   to: string;
 }
 
-export interface CreateEventPayload {
+export type CreateEventPayload = {
   title: string;
-  startDate: string;
-  duration: number | null;
+  type: EventType;
   allDay: boolean;
-  location?: string;
-  description?: string;
-  type: "client_meeting" | "team_meeting" | "personal";
-  clientId?: string;
-  mandatory?: boolean;
+  startDate: string;
+  duration?: number | null;
+  location?: string | null;
+  description?: string | null;
   inviteeIds?: string[];
-  regionId?: string;
-  superregionId?: string;
-}
+  mandatory?: boolean;
+  clientId?: string | null;
+};
 
 export interface UpdateEventPayload {
   title?: string;

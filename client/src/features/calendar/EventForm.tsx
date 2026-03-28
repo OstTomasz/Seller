@@ -1,12 +1,13 @@
 import { Controller } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
-import { EventFormValues, IInvitationWithInvitee } from "@/types";
+import { Client, EventFormValues, IInvitationWithInvitee, UserForInvite } from "@/types";
 import { Input, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useUsersForInvite } from "./hooks/useUsersForInvite";
-import { useState } from "react";
+import { useClientsForEvent } from "./hooks/useClientsForEvent";
+import { useEffect, useMemo, useState } from "react";
 import { InviteUsersModal } from "./InviteUsersModal";
-import { CheckCircle2, Clock, XCircle, UserPlus, X } from "lucide-react";
+import { CheckCircle2, Clock, XCircle, UserPlus, X, Search } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -23,6 +24,53 @@ export const SectionTitle = ({ children }: { children: React.ReactNode }) => (
     {children}
   </h3>
 );
+
+interface PopulatedPosition {
+  _id: string;
+  currentHolder?: { _id: string };
+  region?: {
+    _id: string;
+    parentRegion?: { _id: string; name?: string } | null;
+  };
+}
+
+const getRelevantUserIds = (
+  client: Client,
+  allUsers: UserForInvite[],
+  excludeUserId?: string,
+): string[] => {
+  const ids = new Set<string>();
+
+  const assignedTo = client.assignedTo as unknown as PopulatedPosition;
+  const assignedAdvisor = client.assignedAdvisor as unknown as PopulatedPosition | null;
+
+  if (assignedTo?.currentHolder?._id) ids.add(assignedTo.currentHolder._id);
+  if (assignedAdvisor?.currentHolder?._id) ids.add(assignedAdvisor.currentHolder._id);
+
+  const parentRegion = assignedTo?.region?.parentRegion;
+  const superRegionId =
+    parentRegion != null && typeof parentRegion === "object" ? parentRegion._id : undefined;
+
+  // deputy
+  if (superRegionId) {
+    allUsers
+      .filter((u) => {
+        const region = u.position?.region;
+        if (!region) return false;
+        const match = region.parentRegion === null && region._id.toString() === superRegionId;
+        return match;
+      })
+      .forEach((u) => ids.add(u._id));
+  }
+
+  // directors
+
+  allUsers.filter((u) => !u.position?.region).forEach((u) => ids.add(u._id));
+
+  if (excludeUserId) ids.delete(excludeUserId);
+
+  return [...ids];
+};
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -49,6 +97,9 @@ export const EventForm = ({
   const { user: currentUser } = useAuthStore();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const { data: allUsers = [] } = useUsersForInvite();
+  const { data: clientsForEvent = [] } = useClientsForEvent();
+  const [clientSearch, setClientSearch] = useState("");
+
   const {
     register,
     control,
@@ -57,6 +108,8 @@ export const EventForm = ({
     formState: { errors },
   } = form;
   const eventType = form.watch("type");
+
+  const showClientPicker = eventType === "client_meeting";
 
   const showInvitees = eventType === "team_meeting" || eventType === "client_meeting";
 
@@ -73,12 +126,42 @@ export const EventForm = ({
 
   const allChipIds = [...inviteeIds, ...rejectedIds];
 
+  const selectedClientId = watch("clientId");
+
+  const selectedClient = useMemo(
+    () => clientsForEvent.find((c) => c._id === selectedClientId),
+    [clientsForEvent, selectedClientId],
+  );
+
+  const relevantUserIds = useMemo(() => {
+    if (eventType !== "client_meeting" || !selectedClient) return null;
+    return getRelevantUserIds(selectedClient, allUsers, currentUser?._id);
+  }, [eventType, selectedClient, allUsers, currentUser?._id]);
+
   const allDay = watch("allDay");
 
   const getuserName = (id: string) => {
     const u = allUsers.find((u) => u._id === id);
     return u ? `${u.firstName} ${u.lastName}` : id;
   };
+
+  useEffect(() => {
+    if (eventType !== "client_meeting" || !relevantUserIds) return;
+    const currentIds = watch("inviteeIds") ?? [];
+    const validIds = currentIds.filter(
+      (id) =>
+        relevantUserIds.includes(id) ||
+        existingInvitations?.some(
+          (inv) =>
+            typeof inv.inviteeId === "object" &&
+            inv.inviteeId._id === id &&
+            (inv.status === "accepted" || inv.status === "pending"),
+        ),
+    );
+    if (validIds.length !== currentIds.length) {
+      setValue("inviteeIds", validIds, { shouldDirty: true });
+    }
+  }, [selectedClientId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col gap-6">
@@ -248,6 +331,84 @@ export const EventForm = ({
         </section>
       </div>
 
+      {showClientPicker && (
+        <section>
+          <SectionTitle>Client</SectionTitle>
+          <Controller
+            name="clientId"
+            control={control}
+            render={({ field }) => {
+              const selected = clientsForEvent.find((c) => c._id === field.value);
+              const filtered = clientsForEvent.filter((c) =>
+                c.companyName.toLowerCase().includes(clientSearch.toLowerCase()),
+              );
+
+              return (
+                <div className="flex flex-col gap-2">
+                  {/* Selected client chip */}
+                  {selected ? (
+                    <div className="flex items-center justify-between rounded-lg border border-celery-700 bg-celery-900/30 px-3 py-2">
+                      <div>
+                        <p className="text-sm text-celery-100">{selected.companyName}</p>
+                        <p className="text-xs text-celery-500">#{selected.numericId}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => field.onChange(null)}
+                        className="text-celery-600 hover:text-red-400 transition-colors"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    // Search + dropdown
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-celery-500" />
+                      <input
+                        type="text"
+                        value={clientSearch}
+                        onChange={(e) => setClientSearch(e.target.value)}
+                        placeholder="Search client..."
+                        className="w-full rounded-lg border border-celery-700 bg-bg-elevated
+                             pl-8 pr-3 py-2 text-sm text-celery-200
+                             focus:outline-none focus:border-celery-500"
+                      />
+                      {clientSearch && (
+                        <div
+                          className="absolute z-10 mt-1 w-full rounded-lg border border-celery-700
+                                  bg-bg-elevated shadow-lg max-h-48 overflow-y-auto"
+                        >
+                          {filtered.length === 0 ? (
+                            <p className="px-3 py-2 text-xs text-celery-600">No clients found</p>
+                          ) : (
+                            filtered.map((c) => (
+                              <button
+                                key={c._id}
+                                type="button"
+                                onClick={() => {
+                                  field.onChange(c._id);
+                                  setClientSearch("");
+                                }}
+                                className="flex items-center justify-between w-full px-3 py-2
+                                     text-sm text-celery-200 hover:bg-celery-800 transition-colors"
+                              >
+                                <span>{c.companyName}</span>
+                                <span className="text-xs text-celery-500">#{c.numericId}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            }}
+          />
+          <FieldError message={errors.clientId?.message} />
+        </section>
+      )}
+
       {showInvitees ? (
         <section>
           <SectionTitle>Participants</SectionTitle>
@@ -259,7 +420,6 @@ export const EventForm = ({
                     (inv) => typeof inv.inviteeId === "object" && inv.inviteeId._id === id,
                   );
 
-                  // ✅ Jeśli rejected ale już dodany do inviteeIds — traktuj jako nowy (pending re-invite)
                   const isPendingReInvite =
                     existing?.status === "rejected" && inviteeIds.includes(id);
 
@@ -371,6 +531,7 @@ export const EventForm = ({
                   typeof inv.inviteeId === "object" ? inv.inviteeId._id : inv.inviteeId,
                 ) ?? []
             }
+            allowedIds={relevantUserIds ?? undefined}
           />
         </section>
       ) : null}

@@ -113,9 +113,9 @@ export const eventFormSchema = z
     description: z.string().optional(),
     inviteeIds: z.array(z.string()).optional(),
     mandatory: z.boolean().optional(),
+    clientId: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
-    // ✅ superRefine zachowuje typy pól
     if (data.type === "team_meeting" && (data.inviteeIds?.length ?? 0) < 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

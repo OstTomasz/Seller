@@ -7,6 +7,7 @@ import { buildDuration, buildStartDate, eventFormSchema, EventFormValues } from 
 import { EventForm } from "./EventForm";
 import { useAuthStore } from "@/store/authStore";
 import { useMemo } from "react";
+import { EventType } from "@seller/shared/types";
 
 const buildDefaultValues = (
   prefillStart?: Date,
@@ -42,6 +43,7 @@ const buildDefaultValues = (
     duration: prefillValues?.duration ?? 60,
     location: prefillValues?.location ?? "",
     description: prefillValues?.description ?? "",
+    clientId: null,
   };
 };
 
@@ -83,14 +85,15 @@ export const CreateEventModal = ({
     createEvent.mutate(
       {
         title: values.title,
-        type: values.type,
+        type: values.type as EventType,
         allDay: values.allDay,
         startDate: buildStartDate(values),
         duration: buildDuration(values),
-        location: values.location || undefined,
-        description: values.description || undefined,
+        location: values.location || null,
+        description: values.description || null,
         inviteeIds: values.inviteeIds?.length ? values.inviteeIds : undefined,
         mandatory: canSetMandatory ? (values.mandatory ?? false) : undefined,
+        clientId: values.clientId ?? null,
       },
       {
         onSuccess: () => {
@@ -116,7 +119,6 @@ export const CreateEventModal = ({
             isPending={createEvent.isPending}
             onCancel={discard.tryClose}
             submitLabel="Create event"
-            showInvitees
             canSetMandatory={canSetMandatory}
           />
         </form>

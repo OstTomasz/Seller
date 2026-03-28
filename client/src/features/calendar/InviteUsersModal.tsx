@@ -38,7 +38,6 @@ const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNo
   const superRegionMap = new Map<string, SuperRegionNode>();
   const subRegionMap = new Map<string, SubRegionNode>();
 
-  // ✅ Buduj superregiony ze WSZYSTKICH userów — żeby mapa istniała nawet gdy deputy jest wykluczony
   users
     .filter((u) => u.position?.region && u.position.region.parentRegion === null)
     .forEach((u) => {
@@ -52,13 +51,12 @@ const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNo
           subRegions: [],
         });
       }
-      // ✅ Dodaj usera do listy tylko jeśli nie jest wykluczony
+
       if (!excludeId || u._id !== excludeId) {
         superRegionMap.get(region._id)!.users.push(u);
       }
     });
 
-  // Subregiony — tylko z filtered (wykluczeni nie są pokazywani)
   filtered
     .filter((u) => u.position?.region && u.position.region.parentRegion !== null)
     .forEach((u) => {
@@ -74,7 +72,6 @@ const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNo
       subRegionMap.get(region._id)!.users.push(u);
     });
 
-  // Attach subregions — superRegionMap teraz zawsze ma wpis dla każdego superregionu
   subRegionMap.forEach((subRegion) => {
     const sampleUser = users.find((u) => u.position?.region?._id === subRegion.id);
     const parentRegion = sampleUser?.position?.region?.parentRegion;
@@ -209,6 +206,8 @@ interface InviteUsersModalProps {
   onConfirm: (ids: string[]) => void;
   excludeUserId?: string;
   lockedIds?: string[];
+  allowedIds?: string[];
+  allUsersForHierarchy?: UserForInvite[];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -220,6 +219,7 @@ export const InviteUsersModal = ({
   onConfirm,
   excludeUserId,
   lockedIds = [],
+  allowedIds,
 }: InviteUsersModalProps) => {
   const { data: users = [], isLoading } = useUsersForInvite();
   const [search, setSearch] = useState("");
@@ -247,24 +247,29 @@ export const InviteUsersModal = ({
   // Filter hierarchy nodes for display based on search
   const visibleHierarchy = useMemo(() => {
     const q = search.toLowerCase().trim();
-    if (!q) return hierarchy;
+
+    // ✅ Filtruj po allowedIds I po search
+    const isAllowed = (u: UserForInvite) => !allowedIds || allowedIds.includes(u._id);
+
+    const filterUsers = (list: UserForInvite[]) =>
+      list.filter((u) => isAllowed(u) && (!q || matchesSearch(u, q)));
 
     return {
-      directors: hierarchy.directors.filter((u) => matchesSearch(u, q)),
+      directors: filterUsers(hierarchy.directors),
       superRegions: hierarchy.superRegions
         .map((sr) => ({
           ...sr,
-          users: sr.users.filter((u) => matchesSearch(u, q)),
+          users: filterUsers(sr.users),
           subRegions: sr.subRegions
             .map((sub) => ({
               ...sub,
-              users: sub.users.filter((u) => matchesSearch(u, q)),
+              users: filterUsers(sub.users),
             }))
             .filter((sub) => sub.users.length > 0),
         }))
         .filter((sr) => sr.users.length > 0 || sr.subRegions.length > 0),
     };
-  }, [hierarchy, search]);
+  }, [hierarchy, search, allowedIds]);
 
   const toggle = (userId: string) => {
     if (lockedIds.includes(userId)) return; // ✅ guard

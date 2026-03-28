@@ -31,3 +31,6 @@ export const clearPositionCurrentHolder = async (positionId: string) =>
 
 export const deletePositionsByRegionId = async (regionId: string) =>
   Position.deleteMany({ region: regionId });
+
+export const findPositionByUserId = async (userId: string) =>
+  Position.findOne({ currentHolder: userId }).populate("region");

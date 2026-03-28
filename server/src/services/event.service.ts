@@ -11,7 +11,8 @@ import * as eventRepository from "../repositories/event.repository";
 import * as invitationRepository from "../repositories/invitation.repository";
 import * as notificationRepository from "../repositories/notification.repository";
 import * as userRepository from "../repositories/user.repository";
-import * as regionRepository from "../repositories/region.repository";
+import * as clientRepository from "../repositories/client.repository";
+
 import {
   getSubordinateUserIdsForDeputy,
   getSubordinateUserIdsForDirector,
@@ -153,6 +154,10 @@ export const createEvent = async (
 
   const eventId = event._id.toString();
 
+  if (data.clientId && data.type === "client_meeting") {
+    await addMeetingNoteToClient(data.clientId, event, resolvedInviteeIds, creatorId);
+  }
+
   if (resolvedInviteeIds.length > 0) {
     const invitationStatus: InvitationStatus = mandatory ? "accepted" : "pending";
 
@@ -201,6 +206,10 @@ export const createEvent = async (
         }
       }
     }
+  }
+
+  if (data.clientId && data.type === "client_meeting") {
+    await addMeetingNoteToClient(data.clientId, event, resolvedInviteeIds, creatorId);
   }
 
   return { event, conflicts };
@@ -363,4 +372,55 @@ export const getEventInvitations = async (
   if (!isOwner && !invitation) throw new ForbiddenError();
 
   return invitationRepository.findInvitationsByEventId(eventId);
+};
+
+/**
+ * Adds a meeting note to the client's notes array.
+ */
+const addMeetingNoteToClient = async (
+  clientId: string,
+  event: IEvent,
+  inviteeIds: string[],
+  creatorId: string,
+): Promise<void> => {
+  const client = await clientRepository.findClientById(clientId);
+  if (!client) return;
+
+  const start = new Date(event.startDate);
+  const dateStr = new Intl.DateTimeFormat("pl-PL", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(start);
+  const timeStr = event.allDay
+    ? "All day"
+    : new Intl.DateTimeFormat("pl-PL", { hour: "2-digit", minute: "2-digit" }).format(start);
+
+  const lines: string[] = [
+    `📅 Client meeting: ${event.title}`,
+    `Date: ${dateStr}`,
+    `Time: ${timeStr}`,
+  ];
+
+  if (event.duration && !event.allDay) {
+    lines.push(`Duration: ${event.duration} min`);
+  }
+  if (event.location) {
+    lines.push(`Location: ${event.location}`);
+  }
+  if (event.description) {
+    lines.push(`Notes: ${event.description}`);
+  }
+  if (inviteeIds.length > 0) {
+    const users = await userRepository.findUsersByIds(inviteeIds);
+    const names = users.map((u) => `${u.firstName} ${u.lastName}`).join(", ");
+    lines.push(`Participants: ${names}`);
+  }
+
+  const content = lines.join("\n");
+
+  await clientRepository.updateClientById(client._id.toString(), {
+    $push: { notes: { content, createdBy: creatorId } },
+    lastActivityAt: new Date(),
+  });
 };

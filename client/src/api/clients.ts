@@ -148,4 +148,6 @@ export const clientsApi = {
     api.patch<{ message: string }>(`/clients/${id}/unarchive-reject`, { reason }),
 
   getArchived: () => api.get<GetClientsResponse>("/clients/archived"),
+
+  getForEvent: () => api.get<GetClientsResponse>("/clients/for-event"),
 };

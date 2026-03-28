@@ -31,6 +31,8 @@ const buildDefaultValues = (event: CalendarEvent): EventFormValues => {
     location: raw.location ?? "",
     description: raw.description ?? "",
     inviteeIds: [],
+    clientId:
+      typeof raw.clientId === "object" ? (raw.clientId?._id ?? null) : (raw.clientId ?? null),
   };
 };
 
@@ -82,6 +84,7 @@ export const EditEventModal = ({ event, onClose }: EditEventModalProps) => {
           location: values.location || null,
           description: values.description || null,
           inviteeIds: values.inviteeIds,
+          clientId: values.clientId ?? null,
         },
       },
       { onSuccess: onClose },

@@ -336,3 +336,8 @@ export const getArchivedClients = wrapAsync(async (req: Request, res: Response):
   const clients = await clientService.getArchivedClients(req.userRole!);
   res.status(200).json({ clients });
 });
+
+export const getClientsForEvent = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const clients = await clientService.getClientsForEvent(req.userId!, req.userRole!);
+  res.status(200).json({ clients });
+});
