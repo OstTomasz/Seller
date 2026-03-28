@@ -13,7 +13,9 @@ import { Button, Card, Input } from "@/components/ui";
 import { Footer } from "@/components/layout/Footer/Footer";
 
 const loginSchema = z.object({
-  email: z.email("Invalid email address").endsWith("@seller.com", "Email domain must be @seller.com"),
+  email: z
+    .email("Invalid email address")
+    .endsWith("@seller.com", "Email domain must be @seller.com"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
@@ -23,27 +25,23 @@ type TestUser = { email: string; password: string; note: string };
 type TestLabel = { label: string };
 
 const TEST_USERS: (TestUser | TestLabel)[] = [
-  { email: "director@seller.com",    password: "password123", note: "" },
+  { email: "director@seller.com", password: "password123", note: "" },
   { label: "--- Poland North ---" },
-  { email: "deputy1@seller.com",     password: "password123", note: "" },
-  { email: "advisor.pom@seller.com", password: "Password123", note: "" },
-  { email: "sp1.pom@seller.com",     password: "Password123", note: "(5 clients)" },
-  { email: "sp2.pom@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.pom@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "advisor.war@seller.com", password: "password123", note: "" },
-  { email: "sp1.war@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp2.war@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.war@seller.com",     password: "password123", note: "(5 clients)" },
+  { email: "deputy1@seller.com", password: "password123", note: "" },
+  { email: "adv.pom@seller.com", password: "Password123", note: "POM advisor" },
+  { email: "sp1.pom@seller.com", password: "Password123", note: "3 active + 1 archived" },
+  { email: "sp2.pom@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "adv.war@seller.com", password: "password123", note: "WAR advisor" },
+  { email: "sp1.war@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "sp2.war@seller.com", password: "password123", note: "3 active + 1 archived" },
   { label: "--- Poland South ---" },
-  { email: "deputy2@seller.com",     password: "password123", note: "" },
-  { email: "advisor.mal@seller.com", password: "password123", note: "" },
-  { email: "sp1.mal@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp2.mal@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.mal@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "advisor.sla@seller.com", password: "password123", note: "" },
-  { email: "sp1.sla@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp2.sla@seller.com",     password: "password123", note: "(5 clients)" },
-  { email: "sp3.sla@seller.com",     password: "password123", note: "(5 clients)" },
+  { email: "deputy2@seller.com", password: "password123", note: "" },
+  { email: "adv.mal@seller.com", password: "password123", note: "MAL advisor" },
+  { email: "sp1.mal@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "sp2.mal@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "adv.sla@seller.com", password: "password123", note: "SLA advisor" },
+  { email: "sp1.sla@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "sp2.sla@seller.com", password: "password123", note: "3 active + 1 archived" },
 ];
 
 const LoginHeader = () => (
@@ -53,9 +51,7 @@ const LoginHeader = () => (
       alt="Seller CRM logo"
       className="object-contain w-fluid-logo"
     />
-    <h1 className="font-bold text-celery-300 tracking-wide text-fluid-hero">
-      Seller CRM
-    </h1>
+    <h1 className="font-bold text-celery-300 tracking-wide text-fluid-hero">Seller CRM</h1>
     <p className="text-sm text-celery-500">Sign in to your account</p>
   </div>
 );
@@ -133,7 +129,9 @@ export const LoginPage = () => {
             <div className="mt-4 border-t border-celery-800 pt-4 font-mono text-sm flex flex-col gap-0.5">
               {TEST_USERS.map((row, i) =>
                 "label" in row ? (
-                  <span key={i} className="text-celery-600 mt-2">{row.label}</span>
+                  <span key={i} className="text-celery-600 mt-2">
+                    {row.label}
+                  </span>
                 ) : (
                   <button
                     key={i}
@@ -144,14 +142,11 @@ export const LoginPage = () => {
                     <span className="text-celery-300">{row.email}</span>
                     <span className="text-celery-700">/</span>
                     <span className="text-celery-500">{row.password}</span>
-                    {row.note ? (
-                      <span className="text-celery-700 text-xs">{row.note}</span>
-                    ) : null}
+                    {row.note ? <span className="text-celery-700 text-xs">{row.note}</span> : null}
                   </button>
-                )
+                ),
               )}
             </div>
-
           </Card>
         </div>
       </div>
