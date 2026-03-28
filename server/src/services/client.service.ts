@@ -737,7 +737,6 @@ export const getClientsForEvent = async (userId: string, role: UserRole): Promis
     const region = position.region;
     if (!region) return [];
 
-    // ✅ cast przez unknown — region jest spopulowanym obiektem po populate
     const regionId = (region as unknown as { _id: { toString(): string } })._id.toString();
 
     const subRegions = await regionRepository.findSubregionsByParentId(regionId);

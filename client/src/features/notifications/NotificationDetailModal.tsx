@@ -208,11 +208,9 @@ export const NotificationDetailModal = ({
   const { approveArchive, rejectArchive, approveUnarchive, rejectUnarchive } =
     useNotificationActions(onClose);
 
-  // ✅ All hooks above — early return below
   if (!notification) return null;
 
   const clientId = resolveClientId(notification.clientId);
-  // ✅ isClientType now drives conditional rendering
   const isClientType = isClientNotification(notification.type);
   const metadata = notification.metadata;
 
@@ -292,7 +290,6 @@ export const NotificationDetailModal = ({
             <span className="text-xs text-celery-600">{formattedDate}</span>
           </div>
 
-          {/* ✅ Conditional content based on notification category */}
           {isClientType ? (
             <ClientNotificationContent notification={notification} />
           ) : (

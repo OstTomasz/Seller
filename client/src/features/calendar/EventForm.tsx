@@ -437,7 +437,7 @@ export const EventForm = ({
                           : existing?.status === "pending"
                             ? "bg-amber-950 text-amber-300 border border-amber-800"
                             : isPendingReInvite
-                              ? "bg-celery-800 text-celery-300 border border-celery-600" // ✅ "będzie ponownie zaproszony"
+                              ? "bg-celery-800 text-celery-300 border border-celery-600"
                               : isRejected
                                 ? "bg-red-950 text-red-300 border border-red-800"
                                 : "bg-celery-700 text-celery-100",

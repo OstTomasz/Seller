@@ -46,12 +46,27 @@ export const useCalendarData = (): UseCalendarDataReturn => {
   }, []);
 
   const getRange = useCallback(() => {
-    // +/- 7 day buffer so events near month boundaries are not cut off
     const base = dayjs(currentDate);
-    const unit = currentView === "week" ? "week" : "month";
+
+    if (currentView === "week") {
+      return {
+        from: base.startOf("week").subtract(1, "day").toISOString(),
+        to: base.endOf("week").add(1, "day").toISOString(),
+      };
+    }
+
+    if (currentView === "agenda") {
+      const base = dayjs(currentDate).startOf("month");
+      return {
+        from: base.toISOString(),
+        to: base.endOf("month").toISOString(),
+      };
+    }
+
+    // month
     return {
-      from: base.startOf(unit).subtract(7, "day").toISOString(),
-      to: base.endOf(unit).add(7, "day").toISOString(),
+      from: base.startOf("month").subtract(7, "day").toISOString(),
+      to: base.endOf("month").add(7, "day").toISOString(),
     };
   }, [currentDate, currentView]);
 
@@ -118,14 +133,43 @@ export const useCalendarData = (): UseCalendarDataReturn => {
     [dropEvent],
   );
 
+  const onViewChange = useCallback(
+    (view: CalendarView) => {
+      setCurrentView(view);
+
+      if (view === "agenda") {
+        setCurrentDate(dayjs(currentDate).startOf("month").toDate());
+      }
+    },
+    [currentDate],
+  );
+
+  const onNavigate = useCallback(
+    (date: Date) => {
+      if (currentView === "agenda") {
+        const incoming = dayjs(date);
+        const current = dayjs(currentDate).startOf("month");
+
+        if (incoming.startOf("month").isSame(current)) {
+          setCurrentDate(current.add(1, "month").toDate());
+        } else {
+          setCurrentDate(incoming.startOf("month").toDate());
+        }
+      } else {
+        setCurrentDate(date);
+      }
+    },
+    [currentView, currentDate],
+  );
+
   return {
     events,
     isLoading,
     error: isError ? "Failed to fetch events." : null,
     currentView,
     currentDate,
-    onNavigate: setCurrentDate,
-    onViewChange: setCurrentView,
+    onNavigate,
+    onViewChange,
     onEventDrop,
   };
 };

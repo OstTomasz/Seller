@@ -282,7 +282,6 @@ export const updateEvent = async (
       );
     }
 
-    // ✅ Reset odrzuconych — update status z rejected → pending
     if (resetInviteeIds.length > 0) {
       await invitationRepository.resetRejectedInvitations(eventId, resetInviteeIds);
     }

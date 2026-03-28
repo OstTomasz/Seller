@@ -21,7 +21,6 @@ const notificationSchema = new Schema<INotification>(
       ],
       required: true,
     },
-    // ✅ Osobne pola — clientId tylko dla client_*, eventId tylko dla event_*
     clientId: { type: Schema.Types.ObjectId, ref: "Client", default: null },
     eventId: { type: Schema.Types.ObjectId, ref: "Event", default: null },
     message: { type: String, required: true, trim: true },

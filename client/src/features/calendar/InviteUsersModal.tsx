@@ -135,7 +135,7 @@ const UserRow = ({
     <span className="flex items-center gap-2 shrink-0">
       {user.position ? <span className="text-xs text-celery-500">{user.position.code}</span> : null}
       {isLocked ? (
-        <Lock className="size-3 text-celery-600" /> // ✅ ikona kłódki
+        <Lock className="size-3 text-celery-600" />
       ) : isSelected ? (
         <Check className="size-3 text-celery-300" />
       ) : null}
@@ -248,7 +248,6 @@ export const InviteUsersModal = ({
   const visibleHierarchy = useMemo(() => {
     const q = search.toLowerCase().trim();
 
-    // ✅ Filtruj po allowedIds I po search
     const isAllowed = (u: UserForInvite) => !allowedIds || allowedIds.includes(u._id);
 
     const filterUsers = (list: UserForInvite[]) =>
@@ -272,7 +271,7 @@ export const InviteUsersModal = ({
   }, [hierarchy, search, allowedIds]);
 
   const toggle = (userId: string) => {
-    if (lockedIds.includes(userId)) return; // ✅ guard
+    if (lockedIds.includes(userId)) return;
     setLocalSelected((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
     );
