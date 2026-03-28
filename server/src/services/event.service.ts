@@ -163,11 +163,12 @@ export const createEvent = async (
       resolvedInviteeIds.map((userId) => ({
         userId,
         type: notifType,
-        clientId: event._id.toString(),
+        clientId: null,
+        eventId: eventId,
         message: mandatory
           ? `Mandatory event added to your calendar: ${data.title}`
           : `You have been invited to: ${data.title}`,
-        metadata: { eventId, eventTitle: data.title },
+        metadata: { eventTitle: data.title },
       })),
     );
 
@@ -179,15 +180,16 @@ export const createEvent = async (
           startDate,
           data.duration ?? null,
           data.allDay,
+          eventId,
         );
         if (inviteeConflicts.length > 0) {
           await notificationRepository.createNotification({
             userId: inviteeId,
             type: "event_conflict" as NotificationType,
-            clientId: event._id.toString(),
+            clientId: null,
+            eventId: eventId,
             message: `Mandatory event conflicts with: ${inviteeConflicts[0].title}`,
             metadata: {
-              eventId,
               eventTitle: data.title,
               conflictingEventId: inviteeConflicts[0]._id.toString(),
               conflictingEventTitle: inviteeConflicts[0].title,
@@ -269,11 +271,13 @@ export const respondToInvitation = async (
   await notificationRepository.createNotification({
     userId: getCreatorId(event.createdBy),
     type: "event_response" as NotificationType,
-    clientId: event._id.toString(),
+    clientId: null,
+    eventId: eventId,
     message: `${responderName} ${status === "accepted" ? "accepted" : "rejected"} your invitation to: ${event.title}`,
     metadata: {
-      eventId,
       eventTitle: event.title,
+      responderName,
+      responderStatus: status,
     },
   });
 

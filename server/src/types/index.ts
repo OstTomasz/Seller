@@ -19,7 +19,6 @@ export type {
   EventType,
   InvitationStatus,
   NotificationType,
-  INotificationMetadata,
 } from "@seller/shared/types";
 // ── Mongoose documents ────────────────────────────────────────────────────────
 
@@ -107,16 +106,28 @@ export interface IClient extends Document {
   updatedAt: Date;
 }
 
-export interface INotification
-  extends
-    Omit<INotificationBase, "_id" | "userId" | "clientId" | "createdAt" | "updatedAt">,
-    Document {
+export interface INotification {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  clientId: Types.ObjectId | { _id: string; companyName: string; numericId: number };
+  type: NotificationType;
+  clientId?: Types.ObjectId | null;
+  eventId?: Types.ObjectId | null;
+  message: string;
   read: boolean;
+  metadata?: INotificationMetadata;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface INotificationMetadata {
+  reason?: string | null;
+  rejectionReason?: string | null;
+  companyName?: string | null;
+  eventTitle?: string | null;
+  conflictingEventId?: string | null;
+  conflictingEventTitle?: string | null;
+  responderName?: string | null;
+  responderStatus?: "accepted" | "rejected" | null;
 }
 
 export interface IEvent extends Document {

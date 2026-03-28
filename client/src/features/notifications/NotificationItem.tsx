@@ -22,7 +22,7 @@ const TYPE_CONFIG: Record<NotificationType, { label: string; variant: BadgeVaria
   client_unarchived: { label: "Unarchived", variant: "active" },
   event_invitation: { label: "Event invitation", variant: "warning" },
   event_mandatory: { label: "Mandatory event invitation", variant: "warning" },
-  event_conflict: { label: "Event conflict", variant: "warning" },
+  event_conflict: { label: "Event conflict", variant: "error" },
   event_response: { label: "Event response", variant: "gold" },
 };
 
@@ -48,7 +48,10 @@ export const NotificationItem = ({
   const isEventNotification = EVENT_TYPES.includes(notification.type);
 
   const clientName =
-    !isEventNotification && typeof notification.clientId === "object"
+    !isEventNotification &&
+    notification.clientId !== null &&
+    notification.clientId !== undefined &&
+    typeof notification.clientId === "object"
       ? notification.clientId.companyName
       : null;
 

@@ -14,6 +14,8 @@ export type {
   INotification,
   INotificationClient,
   NotificationType,
+  IRegionForInviteSchema,
+  UserForInvite,
 } from "@seller/shared/types";
 
 import type {
@@ -136,18 +138,4 @@ export interface UserForInviteRegion {
   name: string;
   prefix: string;
   parentRegion: string | null;
-}
-
-export interface UserForInvite {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  numericId: number;
-  position: {
-    _id: string;
-    code: string;
-    type: string;
-    region: UserForInviteRegion | null;
-  } | null;
 }

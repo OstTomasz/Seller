@@ -116,6 +116,8 @@ export const tokenPayloadSchema = z.object({
 });
 export type TokenPayload = z.infer<typeof tokenPayloadSchema>;
 
+//── Notification ─────────────────────────────────────────────────────────────────────
+
 export const notificationTypeSchema = z.enum([
   "archive_request",
   "archive_approved",
@@ -140,22 +142,50 @@ export type INotificationClient = z.infer<typeof notificationClientSchema>;
 
 export const notificationMetadataSchema = z
   .object({
-    reason: z.string().optional(),
-    rejectionReason: z.string().optional(),
-    companyName: z.string().optional(),
-    eventId: z.string().optional(),
-    eventTitle: z.string().optional(),
-    conflictingEventId: z.string().optional(),
-    conflictingEventTitle: z.string().optional(),
+    // client notifications
+    reason: z.string().nullable().optional(),
+    rejectionReason: z.string().nullable().optional(),
+    companyName: z.string().nullable().optional(),
+    // event notifications
+    eventTitle: z.string().nullable().optional(),
+    conflictingEventId: z.string().nullable().optional(),
+    conflictingEventTitle: z.string().nullable().optional(),
+    responderName: z.string().nullable().optional(),
+    responderStatus: z.enum(["accepted", "rejected"]).nullable().optional(),
   })
   .optional();
 export type INotificationMetadata = z.infer<typeof notificationMetadataSchema>;
+
+export const eventTypeSchema = z.enum(["client_meeting", "team_meeting", "personal"]);
+export type EventType = z.infer<typeof eventTypeSchema>;
 
 export const notificationSchema = z.object({
   _id: z.string(),
   userId: z.string(),
   type: notificationTypeSchema,
-  clientId: z.union([z.string(), notificationClientSchema]),
+  clientId: z
+    .union([
+      z.string(),
+      z.object({
+        _id: z.string(),
+        companyName: z.string(),
+        numericId: z.number(),
+      }),
+    ])
+    .nullable()
+    .optional(),
+  eventId: z
+    .union([
+      z.string(),
+      z.object({
+        _id: z.string(),
+        title: z.string(),
+        startDate: z.string(),
+        type: eventTypeSchema,
+      }),
+    ])
+    .nullable()
+    .optional(),
   message: z.string(),
   read: z.boolean(),
   metadata: notificationMetadataSchema,
@@ -164,8 +194,7 @@ export const notificationSchema = z.object({
 });
 export type INotification = z.infer<typeof notificationSchema>;
 
-export const eventTypeSchema = z.enum(["client_meeting", "team_meeting", "personal"]);
-export type EventType = z.infer<typeof eventTypeSchema>;
+//── Event ─────────────────────────────────────────────────────────────────────
 
 export const invitationStatusSchema = z.enum(["pending", "accepted", "rejected"]);
 export type InvitationStatus = z.infer<typeof invitationStatusSchema>;
@@ -196,3 +225,31 @@ export const invitationSchema = z.object({
   updatedAt: z.string(),
 });
 export type IInvitation = z.infer<typeof invitationSchema>;
+
+export const regionForInviteSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  prefix: z.string(),
+  parentRegion: z.union([
+    z.object({ _id: z.string(), name: z.string(), prefix: z.string() }),
+    z.string(),
+    z.null(),
+  ]),
+});
+export type IRegionForInviteSchema = z.infer<typeof regionForInviteSchema>;
+
+export const userForInviteSchema = z.object({
+  _id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  numericId: z.number(),
+  position: z
+    .object({
+      _id: z.string(),
+      code: z.string(),
+      region: regionForInviteSchema.nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+});
+export type UserForInvite = z.infer<typeof userForInviteSchema>;

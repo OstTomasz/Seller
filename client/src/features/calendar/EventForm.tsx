@@ -263,7 +263,10 @@ export const EventForm = ({
 
           <InviteUsersModal
             isOpen={inviteModalOpen}
-            onClose={() => setInviteModalOpen(false)}
+            onClose={(e?: React.MouseEvent) => {
+              e?.stopPropagation();
+              setInviteModalOpen(false);
+            }}
             selectedIds={inviteeIds}
             onConfirm={(ids) => setValue("inviteeIds", ids, { shouldDirty: true })}
             excludeUserId={currentUser?._id}

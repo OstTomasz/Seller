@@ -11,7 +11,10 @@ export const findAllUsersForInvite = async () =>
   User.find()
     .populate({
       path: "position",
-      populate: { path: "region" },
+      populate: {
+        path: "region",
+        populate: { path: "parentRegion" },
+      },
     })
     .select("-password")
     .sort({ lastName: 1, firstName: 1 });

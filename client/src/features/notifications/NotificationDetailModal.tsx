@@ -2,8 +2,9 @@ import { useState } from "react";
 import { INotification } from "@/types";
 import { Modal, Badge, Button } from "@/components/ui";
 import { useNotificationActions } from "./hooks/useNotificationActions";
+import { resolveClientId, isClientNotification } from "./utils/resolveClientId";
 import { useAuthStore } from "@/store/authStore";
-import { CheckCheck, X } from "lucide-react";
+import { AlertTriangle, Calendar, CheckCheck, User, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ActionType = "reject-archive" | "approve-unarchive" | "reject-unarchive";
@@ -37,17 +38,157 @@ const TYPE_BADGE: Record<INotification["type"], "warning" | "muted" | "gold" | "
     event_response: "active",
   };
 
-const REASON_LABEL: Partial<Record<INotification["type"], string>> = {
-  archive_request: "Archive reason",
-  archive_approved: "Archive reason",
-  unarchive_approved: "Unarchive reason",
-  client_unarchived: "Unarchive reason",
+// --- Sub-components ---
+
+interface InfoRowProps {
+  label: string;
+  value: string;
+  labelClassName?: string;
+  valueClassName?: string;
+  borderClassName?: string;
+  bgClassName?: string;
+}
+
+/** Reusable labeled info row used in both client and event sections */
+const InfoRow = ({
+  label,
+  value,
+  labelClassName = "text-celery-500",
+  valueClassName = "text-celery-100",
+  borderClassName = "border-celery-800",
+  bgClassName = "bg-celery-900/30",
+}: InfoRowProps) => (
+  <div className={cn("rounded-lg border px-4 py-3", borderClassName, bgClassName)}>
+    <p className={cn("text-xs mb-0.5", labelClassName)}>{label}</p>
+    <p className={cn("text-sm font-medium", valueClassName)}>{value}</p>
+  </div>
+);
+
+interface ClientNotificationContentProps {
+  notification: INotification;
+}
+
+/** Content section for client-related notifications (archive/unarchive) */
+const ClientNotificationContent = ({ notification }: ClientNotificationContentProps) => {
+  const metadata = notification.metadata;
+
+  const REASON_LABEL: Partial<Record<INotification["type"], string>> = {
+    archive_request: "Archive reason",
+    archive_approved: "Archive reason",
+    unarchive_approved: "Unarchive reason",
+    client_unarchived: "Unarchive reason",
+  };
+
+  const REJECTION_LABEL: Partial<Record<INotification["type"], string>> = {
+    archive_rejected: "Rejection reason",
+    unarchive_rejected: "Rejection reason",
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <InfoRow label="Client" value={metadata?.companyName ?? "—"} />
+
+      {REASON_LABEL[notification.type] && metadata?.reason && (
+        <InfoRow
+          label={REASON_LABEL[notification.type]!}
+          value={metadata.reason}
+          labelClassName="text-amber-600"
+          valueClassName="text-amber-300"
+          borderClassName="border-amber-900"
+          bgClassName="bg-amber-950/40"
+        />
+      )}
+
+      {REJECTION_LABEL[notification.type] && metadata?.rejectionReason && (
+        <InfoRow
+          label={REJECTION_LABEL[notification.type]!}
+          value={metadata.rejectionReason}
+          labelClassName="text-red-500"
+          valueClassName="text-red-300"
+          borderClassName="border-red-900"
+          bgClassName="bg-red-950/40"
+        />
+      )}
+    </div>
+  );
 };
 
-const REJECTION_LABEL: Partial<Record<INotification["type"], string>> = {
-  archive_rejected: "Rejection reason",
-  unarchive_rejected: "Rejection reason",
+interface EventNotificationContentProps {
+  notification: INotification;
+}
+
+/** Content section for event-related notifications (invitation, response, conflict) */
+const EventNotificationContent = ({ notification }: EventNotificationContentProps) => {
+  const metadata = notification.metadata;
+
+  // eventId may be populated object or plain string
+  const eventData =
+    notification.eventId !== null &&
+    notification.eventId !== undefined &&
+    typeof notification.eventId === "object"
+      ? notification.eventId
+      : null;
+
+  const eventTitle = eventData?.title ?? metadata?.eventTitle ?? "—";
+
+  const formattedEventDate = eventData?.startDate
+    ? new Intl.DateTimeFormat("pl-PL", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(eventData.startDate))
+    : null;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Event title */}
+      <div className="rounded-lg border border-celery-800 bg-celery-900/30 px-4 py-3">
+        <p className="text-xs text-celery-500 mb-0.5 flex items-center gap-1.5">
+          <Calendar className="h-3 w-3" />
+          Event
+        </p>
+        <p className="text-sm font-medium text-celery-100">{eventTitle}</p>
+        {formattedEventDate && <p className="text-xs text-celery-500 mt-1">{formattedEventDate}</p>}
+      </div>
+
+      {/* event_response — who responded */}
+      {notification.type === "event_response" && metadata?.responderName && (
+        <div className="rounded-lg border border-celery-800 bg-celery-900/30 px-4 py-3">
+          <p className="text-xs text-celery-500 mb-0.5 flex items-center gap-1.5">
+            <User className="h-3 w-3" />
+            Response
+          </p>
+          <p className="text-sm text-celery-100">
+            <span className="font-medium">{metadata.responderName}</span>{" "}
+            <span
+              className={cn(
+                metadata.responderStatus === "accepted" ? "text-green-400" : "text-red-400",
+              )}
+            >
+              {metadata.responderStatus === "accepted" ? "accepted" : "rejected"}
+            </span>{" "}
+            the invitation
+          </p>
+        </div>
+      )}
+
+      {/* event_conflict — conflicting event */}
+      {notification.type === "event_conflict" && metadata?.conflictingEventTitle && (
+        <div className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3">
+          <p className="text-xs text-red-500 mb-0.5 flex items-center gap-1.5">
+            <AlertTriangle className="h-3 w-3" />
+            Conflicts with
+          </p>
+          <p className="text-sm text-red-300">{metadata.conflictingEventTitle}</p>
+        </div>
+      )}
+    </div>
+  );
 };
+
+// --- Main component ---
 
 interface NotificationDetailModalProps {
   notification: INotification | null;
@@ -64,20 +205,21 @@ export const NotificationDetailModal = ({
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState("");
 
-  const clientId = notification
-    ? typeof notification.clientId === "object"
-      ? notification.clientId._id
-      : notification.clientId
-    : null;
-
   const { approveArchive, rejectArchive, approveUnarchive, rejectUnarchive } =
     useNotificationActions(onClose);
 
+  // ✅ All hooks above — early return below
   if (!notification) return null;
 
+  const clientId = resolveClientId(notification.clientId);
+  // ✅ isClientType now drives conditional rendering
+  const isClientType = isClientNotification(notification.type);
   const metadata = notification.metadata;
-  const canActArchive = notification.type === "archive_request" && user?.role === "director";
-  const canActUnarchive = notification.type === "unarchive_request" && user?.role === "director";
+
+  const canActArchive =
+    notification.type === "archive_request" && user?.role === "director" && !!clientId;
+  const canActUnarchive =
+    notification.type === "unarchive_request" && user?.role === "director" && !!clientId;
   const canAct = canActArchive || canActUnarchive;
 
   const isActing =
@@ -120,7 +262,6 @@ export const NotificationDetailModal = ({
       return;
     }
     if (!clientId) return;
-
     if (actionType === "reject-archive") {
       rejectArchive.mutate({ clientId, reason: reason.trim() });
     } else if (actionType === "approve-unarchive") {
@@ -145,37 +286,20 @@ export const NotificationDetailModal = ({
     <>
       <Modal isOpen={!!notification && !reasonOpen} onClose={onClose} title="Notification details">
         <div className="flex flex-col gap-4">
-          {/* Type + date */}
+          {/* Header: type badge + creation date */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Badge variant={TYPE_BADGE[notification.type]}>{TYPE_LABELS[notification.type]}</Badge>
             <span className="text-xs text-celery-600">{formattedDate}</span>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {/* Client name */}
-            <div className="rounded-lg border border-celery-800 bg-celery-900/30 px-4 py-3">
-              <p className="text-xs text-celery-500 mb-0.5">Client</p>
-              <p className="text-sm font-medium text-celery-100">{metadata?.companyName ?? "—"}</p>
-            </div>
+          {/* ✅ Conditional content based on notification category */}
+          {isClientType ? (
+            <ClientNotificationContent notification={notification} />
+          ) : (
+            <EventNotificationContent notification={notification} />
+          )}
 
-            {/* Reason (archive/unarchive) */}
-            {REASON_LABEL[notification.type] && metadata?.reason && (
-              <div className="rounded-lg border border-amber-900 bg-amber-950/40 px-4 py-3">
-                <p className="text-xs text-amber-600 mb-0.5">{REASON_LABEL[notification.type]}</p>
-                <p className="text-sm text-amber-300">{metadata.reason}</p>
-              </div>
-            )}
-
-            {/* Rejection reason */}
-            {REJECTION_LABEL[notification.type] && metadata?.rejectionReason && (
-              <div className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3">
-                <p className="text-xs text-red-500 mb-0.5">{REJECTION_LABEL[notification.type]}</p>
-                <p className="text-sm text-red-300">{metadata.rejectionReason}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Approve / Reject actions */}
+          {/* Actions — only for director on archive/unarchive requests */}
           {canAct && (
             <div className="flex gap-2 pt-1">
               <Button
@@ -196,7 +320,6 @@ export const NotificationDetailModal = ({
         </div>
       </Modal>
 
-      {/* Reason modal — reject archive / approve unarchive / reject unarchive */}
       <Modal
         isOpen={reasonOpen}
         onClose={() => setReasonOpen(false)}

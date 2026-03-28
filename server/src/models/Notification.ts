@@ -21,13 +21,22 @@ const notificationSchema = new Schema<INotification>(
       ],
       required: true,
     },
-    clientId: { type: Schema.Types.ObjectId, ref: "Client", required: true },
+    // ✅ Osobne pola — clientId tylko dla client_*, eventId tylko dla event_*
+    clientId: { type: Schema.Types.ObjectId, ref: "Client", default: null },
+    eventId: { type: Schema.Types.ObjectId, ref: "Event", default: null },
     message: { type: String, required: true, trim: true },
     read: { type: Boolean, default: false },
     metadata: {
+      // client notifications
       reason: { type: String, default: null },
       rejectionReason: { type: String, default: null },
       companyName: { type: String, default: null },
+      // event notifications
+      eventTitle: { type: String, default: null },
+      conflictingEventId: { type: String, default: null },
+      conflictingEventTitle: { type: String, default: null },
+      responderName: { type: String, default: null },
+      responderStatus: { type: String, default: null },
     },
   },
   { timestamps: true },

@@ -1,7 +1,7 @@
 // client/src/features/calendar/InviteUsersModal.tsx
 import { useState, useMemo, useEffect } from "react";
 import { Search, Check, Users, ChevronDown, ChevronRight, Crown } from "lucide-react";
-import { Modal, Button, Input } from "@/components/ui";
+import { Modal, Button, Input, ConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useUsersForInvite } from "./hooks/useUsersForInvite";
 import type { UserForInvite } from "@/types";
@@ -33,12 +33,13 @@ interface HierarchyNode {
 const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNode => {
   const filtered = excludeId ? users.filter((u) => u._id !== excludeId) : users;
 
-  const directors = filtered.filter((u) => u.position?.region === null || !u.position);
+  const directors = filtered.filter((u) => !u.position?.region);
 
-  // Build superregion map: parentRegion === null means it IS a superregion
   const superRegionMap = new Map<string, SuperRegionNode>();
+  const subRegionMap = new Map<string, SubRegionNode>();
 
-  filtered
+  // ✅ Buduj superregiony ze WSZYSTKICH userów — żeby mapa istniała nawet gdy deputy jest wykluczony
+  users
     .filter((u) => u.position?.region && u.position.region.parentRegion === null)
     .forEach((u) => {
       const region = u.position!.region!;
@@ -51,12 +52,13 @@ const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNo
           subRegions: [],
         });
       }
-      superRegionMap.get(region._id)!.users.push(u);
+      // ✅ Dodaj usera do listy tylko jeśli nie jest wykluczony
+      if (!excludeId || u._id !== excludeId) {
+        superRegionMap.get(region._id)!.users.push(u);
+      }
     });
 
-  // Build subregion map: parentRegion !== null
-  const subRegionMap = new Map<string, SubRegionNode>();
-
+  // Subregiony — tylko z filtered (wykluczeni nie są pokazywani)
   filtered
     .filter((u) => u.position?.region && u.position.region.parentRegion !== null)
     .forEach((u) => {
@@ -72,17 +74,18 @@ const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNo
       subRegionMap.get(region._id)!.users.push(u);
     });
 
-  // Attach subregions to superregions
-  subRegionMap.forEach((subRegion, _subId) => {
-    // Find parent superregion via any user in this subregion
-    const sampleUser = filtered.find((u) => u.position?.region?._id === subRegion.id);
-    const parentId = sampleUser?.position?.region?.parentRegion;
+  // Attach subregions — superRegionMap teraz zawsze ma wpis dla każdego superregionu
+  subRegionMap.forEach((subRegion) => {
+    const sampleUser = users.find((u) => u.position?.region?._id === subRegion.id);
+    const parentRegion = sampleUser?.position?.region?.parentRegion;
+    const parentId =
+      parentRegion && typeof parentRegion === "object" ? parentRegion._id : parentRegion;
+
     if (parentId && superRegionMap.has(parentId)) {
       superRegionMap.get(parentId)!.subRegions.push(subRegion);
     }
   });
 
-  // Sort subregions alphabetically
   superRegionMap.forEach((sr) => {
     sr.subRegions.sort((a, b) => a.name.localeCompare(b.name));
     sr.users.sort((a, b) => a.lastName.localeCompare(b.lastName));
@@ -90,7 +93,9 @@ const buildHierarchy = (users: UserForInvite[], excludeId?: string): HierarchyNo
 
   return {
     directors,
-    superRegions: Array.from(superRegionMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
+    superRegions: Array.from(superRegionMap.values())
+      .filter((sr) => sr.users.length > 0 || sr.subRegions.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name)),
   };
 };
 
@@ -211,18 +216,24 @@ export const InviteUsersModal = ({
   const [search, setSearch] = useState("");
   const [localSelected, setLocalSelected] = useState<string[]>(selectedIds);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-
+  const [discardOpen, setDiscardOpen] = useState(false);
   // Sync selection when modal opens
   useEffect(() => {
     if (isOpen) {
       setLocalSelected(selectedIds);
       setSearch("");
+      setDiscardOpen(false);
     }
   }, [isOpen, selectedIds]);
 
   const hierarchy = useMemo(() => {
     return buildHierarchy(users, excludeUserId);
   }, [users, excludeUserId]);
+
+  const isDirty = useMemo(() => {
+    if (localSelected.length !== selectedIds.length) return true;
+    return localSelected.some((id) => !selectedIds.includes(id));
+  }, [localSelected, selectedIds]);
 
   // Filter hierarchy nodes for display based on search
   const visibleHierarchy = useMemo(() => {
@@ -271,151 +282,178 @@ export const InviteUsersModal = ({
     ...sr.subRegions.flatMap((sub) => sub.users.map((u) => u._id)),
   ];
 
-  const handleConfirm = () => {
+  const handleConfirm = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     onConfirm(localSelected);
     onClose();
   };
 
-  const handleClose = () => {
-    setLocalSelected(selectedIds);
-    onClose();
+  const handleClose = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+    if (isDirty) {
+      setDiscardOpen(true);
+    } else {
+      setLocalSelected(selectedIds);
+      onClose();
+    }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Invite participants" size="md">
-      <div className="flex flex-col gap-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-celery-500" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, ID or code…"
-            className="pl-9"
-          />
-        </div>
+    <>
+      <Modal
+        isOpen={isOpen && !discardOpen}
+        onClose={handleClose}
+        title="Invite participants"
+        size="md"
+      >
+        <div className="flex flex-col gap-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-celery-500" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, ID or code…"
+              className="pl-9"
+            />
+          </div>
 
-        {localSelected.length > 0 ? (
-          <p className="text-xs text-celery-500">
-            {localSelected.length} participant{localSelected.length > 1 ? "s" : ""} selected
-          </p>
-        ) : null}
+          {localSelected.length > 0 ? (
+            <p className="text-xs text-celery-500">
+              {localSelected.length} participant{localSelected.length > 1 ? "s" : ""} selected
+            </p>
+          ) : null}
 
-        {/* Hierarchy list */}
-        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
-          {isLoading ? (
-            <p className="text-xs text-celery-600 text-center py-4">Loading…</p>
-          ) : (
-            <>
-              {/* Directors */}
-              {visibleHierarchy.directors.map((user) => (
-                <div key={user._id} className="flex items-center gap-2 px-2">
-                  <Crown className="size-3 text-gold-400 shrink-0" />
-                  <UserRow
-                    user={user}
-                    isSelected={localSelected.includes(user._id)}
-                    onToggle={toggle}
-                  />
-                </div>
-              ))}
-
-              {/* SuperRegions */}
-              {visibleHierarchy.superRegions.map((sr) => {
-                const srIds = superRegionIds(sr);
-                const allSrSelected = srIds.every((id) => localSelected.includes(id));
-                const someSrSelected =
-                  !allSrSelected && srIds.some((id) => localSelected.includes(id));
-                const isSrCollapsed = collapsed.has(sr.prefix);
-
-                return (
-                  <div key={sr.prefix} className="flex flex-col gap-1">
-                    <GroupHeader
-                      label={`${sr.name} (${sr.prefix})`}
-                      allSelected={allSrSelected}
-                      someSelected={someSrSelected}
-                      onToggleAll={() => toggleGroup(srIds)}
-                      collapsible
-                      collapsed={isSrCollapsed}
-                      onToggleCollapse={() => toggleCollapse(sr.prefix)}
+          {/* Hierarchy list */}
+          <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1">
+            {isLoading ? (
+              <p className="text-xs text-celery-600 text-center py-4">Loading…</p>
+            ) : (
+              <>
+                {/* Directors */}
+                {visibleHierarchy.directors.map((user) => (
+                  <div key={user._id} className="flex items-center gap-2 px-2">
+                    <Crown className="size-3 text-gold-400 shrink-0" />
+                    <UserRow
+                      user={user}
+                      isSelected={localSelected.includes(user._id)}
+                      onToggle={toggle}
                     />
-
-                    {!isSrCollapsed ? (
-                      <div className="flex flex-col gap-1">
-                        {/* Deputy-level users in superregion */}
-                        {sr.users.map((user) => (
-                          <UserRow
-                            key={user._id}
-                            user={user}
-                            isSelected={localSelected.includes(user._id)}
-                            onToggle={toggle}
-                            indent
-                          />
-                        ))}
-
-                        {/* SubRegions */}
-                        {sr.subRegions.map((sub) => {
-                          const allSubSelected = sub.users
-                            .map((u) => u._id)
-                            .every((id) => localSelected.includes(id));
-                          const someSubSelected =
-                            !allSubSelected &&
-                            sub.users.map((u) => u._id).some((id) => localSelected.includes(id));
-                          const isSubCollapsed = collapsed.has(sub.prefix);
-
-                          return (
-                            <div key={sub.prefix} className="flex flex-col gap-1">
-                              <GroupHeader
-                                label={`${sub.name} (${sub.prefix})`}
-                                allSelected={allSubSelected}
-                                someSelected={someSubSelected}
-                                onToggleAll={() => toggleGroup(sub.users.map((u) => u._id))}
-                                collapsible
-                                collapsed={isSubCollapsed}
-                                onToggleCollapse={() => toggleCollapse(sub.prefix)}
-                                indent
-                              />
-
-                              {!isSubCollapsed ? (
-                                <div className="flex flex-col gap-1 ml-6">
-                                  {sub.users.map((user) => (
-                                    <UserRow
-                                      key={user._id}
-                                      user={user}
-                                      isSelected={localSelected.includes(user._id)}
-                                      onToggle={toggle}
-                                    />
-                                  ))}
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : null}
                   </div>
-                );
-              })}
+                ))}
 
-              {visibleHierarchy.directors.length === 0 &&
-              visibleHierarchy.superRegions.length === 0 ? (
-                <p className="text-xs text-celery-600 text-center py-4">No users found.</p>
-              ) : null}
-            </>
-          )}
-        </div>
+                {/* SuperRegions */}
+                {visibleHierarchy.superRegions.map((sr) => {
+                  const srIds = superRegionIds(sr);
+                  const allSrSelected = srIds.every((id) => localSelected.includes(id));
+                  const someSrSelected =
+                    !allSrSelected && srIds.some((id) => localSelected.includes(id));
+                  const isSrCollapsed = collapsed.has(sr.prefix);
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
-          <Button variant="ghost" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleConfirm}>
-            {localSelected.length > 0
-              ? `Invite ${localSelected.length} participant${localSelected.length > 1 ? "s" : ""}`
-              : "Confirm"}
-          </Button>
+                  return (
+                    <div key={sr.prefix} className="flex flex-col gap-1">
+                      <GroupHeader
+                        label={`${sr.name} (${sr.prefix})`}
+                        allSelected={allSrSelected}
+                        someSelected={someSrSelected}
+                        onToggleAll={() => toggleGroup(srIds)}
+                        collapsible
+                        collapsed={isSrCollapsed}
+                        onToggleCollapse={() => toggleCollapse(sr.prefix)}
+                      />
+
+                      {!isSrCollapsed ? (
+                        <div className="flex flex-col gap-1">
+                          {/* Deputy-level users in superregion */}
+                          {sr.users.map((user) => (
+                            <UserRow
+                              key={user._id}
+                              user={user}
+                              isSelected={localSelected.includes(user._id)}
+                              onToggle={toggle}
+                              indent
+                            />
+                          ))}
+
+                          {/* SubRegions */}
+                          {sr.subRegions.map((sub) => {
+                            const allSubSelected = sub.users
+                              .map((u) => u._id)
+                              .every((id) => localSelected.includes(id));
+                            const someSubSelected =
+                              !allSubSelected &&
+                              sub.users.map((u) => u._id).some((id) => localSelected.includes(id));
+                            const isSubCollapsed = collapsed.has(sub.prefix);
+
+                            return (
+                              <div key={sub.prefix} className="flex flex-col gap-1">
+                                <GroupHeader
+                                  label={`${sub.name} (${sub.prefix})`}
+                                  allSelected={allSubSelected}
+                                  someSelected={someSubSelected}
+                                  onToggleAll={() => toggleGroup(sub.users.map((u) => u._id))}
+                                  collapsible
+                                  collapsed={isSubCollapsed}
+                                  onToggleCollapse={() => toggleCollapse(sub.prefix)}
+                                  indent
+                                />
+
+                                {!isSubCollapsed ? (
+                                  <div className="flex flex-col gap-1 ml-6">
+                                    {sub.users.map((user) => (
+                                      <UserRow
+                                        key={user._id}
+                                        user={user}
+                                        isSelected={localSelected.includes(user._id)}
+                                        onToggle={toggle}
+                                      />
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+
+                {visibleHierarchy.directors.length === 0 &&
+                visibleHierarchy.superRegions.length === 0 ? (
+                  <p className="text-xs text-celery-600 text-center py-4">No users found.</p>
+                ) : null}
+              </>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
+            <Button variant="ghost" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirm} disabled={localSelected.length === 0}>
+              {localSelected.length > 0
+                ? `Invite ${localSelected.length} participant${localSelected.length > 1 ? "s" : ""}`
+                : "Confirm"}
+            </Button>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      <ConfirmDialog
+        isOpen={discardOpen}
+        onClose={() => setDiscardOpen(false)}
+        onConfirm={() => {
+          setDiscardOpen(false);
+          setLocalSelected(selectedIds);
+          onClose();
+        }}
+        title="Discard selection?"
+        description="You have unsaved participant changes. Discard them?"
+        confirmLabel="Discard"
+      />
+    </>
   );
 };

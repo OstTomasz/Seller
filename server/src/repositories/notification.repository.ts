@@ -1,16 +1,19 @@
 import Notification from "../models/Notification";
 import { NotificationType, INotification, INotificationMetadata } from "../types";
 
+type CreateNotificationInput = {
+  userId: string;
+  type: NotificationType;
+  clientId?: string | null;
+  eventId?: string | null;
+  message: string;
+  metadata?: INotificationMetadata;
+};
+
 /**
  * Creates a notification for a single user.
  */
-export const createNotification = async (data: {
-  userId: string;
-  type: NotificationType;
-  clientId: string;
-  message: string;
-  metadata?: INotificationMetadata;
-}): Promise<INotification> => {
+export const createNotification = async (data: CreateNotificationInput): Promise<INotification> => {
   const notification = new Notification(data);
   return notification.save() as Promise<INotification>;
 };
@@ -18,15 +21,7 @@ export const createNotification = async (data: {
 /**
  * Creates notifications for multiple users at once.
  */
-export const createNotifications = async (
-  data: {
-    userId: string;
-    type: NotificationType;
-    clientId: string;
-    message: string;
-    metadata?: INotificationMetadata;
-  }[],
-): Promise<void> => {
+export const createNotifications = async (data: CreateNotificationInput[]): Promise<void> => {
   await Notification.insertMany(data);
 };
 
@@ -36,6 +31,7 @@ export const createNotifications = async (
 export const findNotificationsByUserId = async (userId: string): Promise<INotification[]> =>
   Notification.find({ userId })
     .populate("clientId", "companyName numericId")
+    .populate("eventId", "title startDate type")
     .sort({ createdAt: -1 });
 
 /**
