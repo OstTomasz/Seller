@@ -1,13 +1,45 @@
 import dayjs from "dayjs";
-import { Calendar, MapPin, User, Tag, AlertTriangle, Trash2, Copy } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  User,
+  Tag,
+  AlertTriangle,
+  Trash2,
+  Copy,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Users,
+} from "lucide-react";
 import { Modal, Button, ConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import type { CalendarEvent, EventVariant } from "@/types";
+import type { CalendarEvent, EventVariant, IInvitationWithInvitee } from "@/types";
 import { useRespondToInvitation } from "./hooks/useRespondToInvitation";
 import { useDeleteEvent } from "./hooks/useDeleteEvent";
 import { useConfirm } from "@/hooks/useConfirm";
 import { isPastEvent } from "./utils/calendarUtils";
+import { useEventInvitations } from "./hooks/useEventInvitations";
 
+// ── Status config ─────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG = {
+  accepted: {
+    icon: CheckCircle2,
+    className: "text-celery-400",
+    label: "Accepted",
+  },
+  pending: {
+    icon: Clock,
+    className: "text-amber-400",
+    label: "Pending",
+  },
+  rejected: {
+    icon: XCircle,
+    className: "text-red-400",
+    label: "Declined",
+  },
+} as const;
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
@@ -57,6 +89,95 @@ const typeLabel: Record<string, string> = {
   client_meeting: "Client meeting",
   team_meeting: "Team meeting",
   personal: "Personal",
+};
+
+const ParticipantRow = ({ invitation }: { invitation: IInvitationWithInvitee }) => {
+  const invitee = typeof invitation.inviteeId === "object" ? invitation.inviteeId : null;
+
+  if (!invitee) return null;
+
+  const config = STATUS_CONFIG[invitation.status];
+  const Icon = config.icon;
+
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-celery-200">
+          {invitee.firstName} {invitee.lastName}
+        </span>
+        <span className="text-xs text-celery-600">#{invitee.numericId}</span>
+      </div>
+      <div className={cn("flex items-center gap-1 text-xs", config.className)}>
+        <Icon size={12} />
+        {config.label}
+      </div>
+    </div>
+  );
+};
+
+const ParticipantsSection = ({ eventId }: { eventId: string }) => {
+  const { data: invitations = [], isLoading } = useEventInvitations(eventId);
+
+  if (isLoading) {
+    return (
+      <section>
+        <SectionTitle>Participants</SectionTitle>
+        <p className="text-xs text-celery-600">Loading...</p>
+      </section>
+    );
+  }
+
+  if (invitations.length === 0) return null;
+
+  const accepted = invitations.filter((i) => i.status === "accepted");
+  const pending = invitations.filter((i) => i.status === "pending");
+  const rejected = invitations.filter((i) => i.status === "rejected");
+
+  return (
+    <section>
+      <SectionTitle>
+        <span className="flex items-center gap-1.5">
+          <Users size={12} />
+          Participants ({invitations.length})
+        </span>
+      </SectionTitle>
+
+      <div className="rounded-lg border border-celery-800 bg-celery-900/20 px-4 divide-y divide-celery-800/50">
+        {/* Accepted first */}
+        {accepted.map((inv) => (
+          <ParticipantRow key={inv._id} invitation={inv} />
+        ))}
+        {pending.map((inv) => (
+          <ParticipantRow key={inv._id} invitation={inv} />
+        ))}
+        {rejected.map((inv) => (
+          <ParticipantRow key={inv._id} invitation={inv} />
+        ))}
+      </div>
+
+      {/* Summary pills */}
+      <div className="flex gap-2 mt-2">
+        {accepted.length > 0 && (
+          <span className="text-xs text-celery-400">
+            <CheckCircle2 size={10} className="inline mr-0.5" />
+            {accepted.length} accepted
+          </span>
+        )}
+        {pending.length > 0 && (
+          <span className="text-xs text-amber-500">
+            <Clock size={10} className="inline mr-0.5" />
+            {pending.length} pending
+          </span>
+        )}
+        {rejected.length > 0 && (
+          <span className="text-xs text-red-500">
+            <XCircle size={10} className="inline mr-0.5" />
+            {rejected.length} declined
+          </span>
+        )}
+      </div>
+    </section>
+  );
 };
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -140,6 +261,9 @@ export const EventDetailModal = ({ event, onClose, onEdit, onCopy }: EventDetail
               </div>
             ) : null}
           </section>
+
+          {/* ── Participants ───────────────────────────────────────────────── */}
+          <ParticipantsSection eventId={raw._id} />
 
           {/* ── Actions ──────────────────────────────────────────────── */}
           <div className="flex items-center justify-between pt-2 border-t border-celery-700">

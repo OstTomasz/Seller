@@ -16,15 +16,17 @@ export type {
   NotificationType,
   IRegionForInviteSchema,
   UserForInvite,
+  IInvitationWithInvitee,
 } from "@seller/shared/types";
 
-import type {
-  IUserBase,
-  IClientBase,
-  UserRole,
-  INote,
-  IEvent,
-  IInvitation,
+import {
+  type IUserBase,
+  type IClientBase,
+  type UserRole,
+  type INote,
+  type IEvent,
+  type IInvitation,
+  eventTypeSchema,
 } from "@seller/shared/types";
 import { stringOrDate } from "react-big-calendar";
 import z from "zod";
@@ -101,24 +103,26 @@ export interface DragDropEventArgs {
 
 export const eventFormSchema = z
   .object({
-    title: z.string().min(1, "Required"),
-    type: z.enum(["client_meeting", "team_meeting", "personal"]),
+    title: z.string().min(1, "Title is required"),
+    type: eventTypeSchema,
     allDay: z.boolean(),
-    startDate: z.string().min(1, "Required"),
+    startDate: z.string().min(1, "Date is required"),
     startTime: z.string().optional(),
-    duration: z.number().min(15, "Min 15 min").optional(),
+    duration: z.number().min(1).optional(),
     location: z.string().optional(),
     description: z.string().optional(),
     inviteeIds: z.array(z.string()).optional(),
     mandatory: z.boolean().optional(),
   })
-  .refine((val) => val.allDay || !!val.startTime, {
-    message: "Required for timed events",
-    path: ["startTime"],
-  })
-  .refine((val) => val.allDay || !!val.duration, {
-    message: "Required for timed events",
-    path: ["duration"],
+  .superRefine((data, ctx) => {
+    // ✅ superRefine zachowuje typy pól
+    if (data.type === "team_meeting" && (data.inviteeIds?.length ?? 0) < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Team meeting requires at least one participant",
+        path: ["inviteeIds"],
+      });
+    }
   });
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;

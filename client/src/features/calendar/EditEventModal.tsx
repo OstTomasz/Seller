@@ -13,6 +13,10 @@ import {
 } from "@/types";
 import dayjs from "dayjs";
 import { EventForm } from "./EventForm";
+import { useAuthStore } from "@/store/authStore";
+import { useEventInvitations } from "./hooks/useEventInvitations";
+import { useMemo } from "react";
+import { EventType } from "@seller/shared/types";
 
 /** Converts CalendarEvent back into form values for editing */
 const buildDefaultValues = (event: CalendarEvent): EventFormValues => {
@@ -26,6 +30,7 @@ const buildDefaultValues = (event: CalendarEvent): EventFormValues => {
     duration: raw.duration ?? 60,
     location: raw.location ?? "",
     description: raw.description ?? "",
+    inviteeIds: [],
   };
 };
 
@@ -35,9 +40,20 @@ interface EditEventModalProps {
 }
 
 export const EditEventModal = ({ event, onClose }: EditEventModalProps) => {
+  const { user } = useAuthStore();
   const updateEvent = useUpdateEvent();
 
-  const defaultValues = event ? buildDefaultValues(event) : undefined;
+  const { data: existingInvitations = [] } = useEventInvitations(event?.resource.raw._id ?? null);
+
+  const defaultValues = useMemo(() => {
+    if (!event) return undefined;
+    const base = buildDefaultValues(event);
+    base.inviteeIds = existingInvitations
+      .filter((inv) => inv.status !== "rejected")
+      .map((inv) => (typeof inv.inviteeId === "object" ? inv.inviteeId._id : inv.inviteeId))
+      .filter((id) => id !== user?._id);
+    return base;
+  }, [event, existingInvitations, user?._id]);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -59,12 +75,13 @@ export const EditEventModal = ({ event, onClose }: EditEventModalProps) => {
         eventId: event.resource.raw._id,
         payload: {
           title: values.title,
-          type: values.type,
+          type: values.type as EventType,
           allDay: values.allDay,
           startDate: buildStartDate(values),
           duration: buildDuration(values),
           location: values.location || null,
           description: values.description || null,
+          inviteeIds: values.inviteeIds,
         },
       },
       { onSuccess: onClose },
@@ -86,6 +103,8 @@ export const EditEventModal = ({ event, onClose }: EditEventModalProps) => {
             isPending={updateEvent.isPending}
             onCancel={discard.tryClose}
             submitLabel="Save changes"
+            canSetMandatory={false}
+            existingInvitations={existingInvitations}
           />
         </form>
       </Modal>

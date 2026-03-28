@@ -253,3 +253,20 @@ export const userForInviteSchema = z.object({
     .optional(),
 });
 export type UserForInvite = z.infer<typeof userForInviteSchema>;
+
+export const inviteeSchema = z.object({
+  _id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  numericId: z.number(),
+});
+
+export const invitationWithInviteeSchema = z.object({
+  _id: z.string(),
+  eventId: z.string(),
+  inviteeId: z.union([z.string(), inviteeSchema]),
+  status: invitationStatusSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type IInvitationWithInvitee = z.infer<typeof invitationWithInviteeSchema>;

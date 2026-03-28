@@ -14,8 +14,9 @@ export const useUpdateEvent = (onSuccess?: () => void) => {
   return useMutation({
     mutationFn: ({ eventId, payload }: { eventId: string; payload: UpdateEventPayload }) =>
       updateEvent(eventId, payload),
-    onSuccess: ({ conflicts }) => {
+    onSuccess: ({ conflicts }, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: [CALENDAR_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["event-invitations", eventId] });
 
       if (conflicts.length > 0) {
         toast.warning(

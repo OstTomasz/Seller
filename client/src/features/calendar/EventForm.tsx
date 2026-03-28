@@ -1,12 +1,12 @@
 import { Controller } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
-import { EventFormValues } from "@/types";
+import { EventFormValues, IInvitationWithInvitee } from "@/types";
 import { Input, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useUsersForInvite } from "./hooks/useUsersForInvite";
 import { useState } from "react";
 import { InviteUsersModal } from "./InviteUsersModal";
-import { UserPlus, X } from "lucide-react";
+import { CheckCircle2, Clock, XCircle, UserPlus, X } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -31,8 +31,9 @@ interface EventFormProps {
   isPending: boolean;
   onCancel: () => void;
   submitLabel: string;
-  showInvitees?: boolean;
+
   canSetMandatory?: boolean;
+  existingInvitations?: IInvitationWithInvitee[];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -42,8 +43,8 @@ export const EventForm = ({
   isPending,
   onCancel,
   submitLabel,
-  showInvitees,
   canSetMandatory,
+  existingInvitations,
 }: EventFormProps) => {
   const { user: currentUser } = useAuthStore();
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -55,7 +56,22 @@ export const EventForm = ({
     watch,
     formState: { errors },
   } = form;
+  const eventType = form.watch("type");
+
+  const showInvitees = eventType === "team_meeting" || eventType === "client_meeting";
+
   const inviteeIds = watch("inviteeIds") ?? [];
+  const rejectedIds =
+    existingInvitations
+      ?.filter(
+        (inv) =>
+          inv.status === "rejected" &&
+          typeof inv.inviteeId === "object" &&
+          !inviteeIds.includes(inv.inviteeId._id),
+      )
+      .map((inv) => (typeof inv.inviteeId === "object" ? inv.inviteeId._id : "")) ?? [];
+
+  const allChipIds = [...inviteeIds, ...rejectedIds];
 
   const allDay = watch("allDay");
 
@@ -85,6 +101,13 @@ export const EventForm = ({
                 render={({ field }) => (
                   <select
                     {...field}
+                    value={field.value as string}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      if (e.target.value === "personal") {
+                        setValue("mandatory", false);
+                      }
+                    }}
                     className="w-full rounded-lg bg-bg-elevated border border-celery-700
                                px-3 py-2 text-sm text-celery-200
                                focus:outline-none focus:border-celery-500"
@@ -101,7 +124,12 @@ export const EventForm = ({
         </section>
 
         {canSetMandatory ? (
-          <label className="flex items-center gap-3 cursor-pointer select-none">
+          <label
+            className={cn(
+              "flex items-center gap-3 select-none",
+              eventType === "personal" ? "opacity-40 cursor-not-allowed" : "cursor-pointer", // ✅
+            )}
+          >
             <Controller
               name="mandatory"
               control={control}
@@ -109,17 +137,21 @@ export const EventForm = ({
                 <button
                   type="button"
                   role="switch"
+                  disabled={eventType === "personal"} // ✅
                   aria-checked={field.value ?? false}
-                  onClick={() => field.onChange(!(field.value ?? false))}
+                  onClick={() => {
+                    if (eventType === "personal") return;
+                    field.onChange(!(field.value ?? false));
+                  }}
                   className={cn(
                     "relative h-5 w-9 rounded-full transition-colors",
-                    field.value ? "bg-red-600" : "bg-celery-800",
+                    field.value && eventType !== "personal" ? "bg-red-600" : "bg-celery-800",
                   )}
                 >
                   <span
                     className={cn(
                       "absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform",
-                      field.value && "translate-x-4",
+                      field.value && eventType !== "personal" && "translate-x-4",
                     )}
                   />
                 </button>
@@ -220,35 +252,97 @@ export const EventForm = ({
         <section>
           <SectionTitle>Participants</SectionTitle>
           <div className="flex flex-col gap-2">
-            {/* Selected participants chips */}
-            {inviteeIds.length > 0 ? (
+            {inviteeIds.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
-                {inviteeIds.map((id) => (
-                  <span
-                    key={id}
-                    className="inline-flex items-center gap-1 rounded-full
-                         bg-celery-700 text-celery-100 px-2.5 py-0.5 text-xs"
-                  >
-                    {getuserName(id)}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setValue(
-                          "inviteeIds",
-                          inviteeIds.filter((i) => i !== id),
-                          { shouldDirty: true },
-                        )
-                      }
-                      className="hover:text-red-300 transition-colors"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            ) : null}
+                {allChipIds.map((id) => {
+                  const existing = existingInvitations?.find(
+                    (inv) => typeof inv.inviteeId === "object" && inv.inviteeId._id === id,
+                  );
 
-            {/* Open modal button */}
+                  // ✅ Jeśli rejected ale już dodany do inviteeIds — traktuj jako nowy (pending re-invite)
+                  const isPendingReInvite =
+                    existing?.status === "rejected" && inviteeIds.includes(id);
+
+                  const isLocked =
+                    existing?.status === "accepted" || existing?.status === "pending";
+                  const isRejected = existing?.status === "rejected" && !isPendingReInvite; // ✅
+
+                  return (
+                    <span
+                      key={id}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs",
+                        existing?.status === "accepted"
+                          ? "bg-celery-700 text-celery-100"
+                          : existing?.status === "pending"
+                            ? "bg-amber-950 text-amber-300 border border-amber-800"
+                            : isPendingReInvite
+                              ? "bg-celery-800 text-celery-300 border border-celery-600" // ✅ "będzie ponownie zaproszony"
+                              : isRejected
+                                ? "bg-red-950 text-red-300 border border-red-800"
+                                : "bg-celery-700 text-celery-100",
+                      )}
+                    >
+                      {getuserName(id)}
+                      {existing?.status === "accepted" && (
+                        <CheckCircle2 className="size-3 text-celery-400" />
+                      )}
+                      {existing?.status === "pending" && (
+                        <Clock className="size-3 text-amber-400" />
+                      )}
+                      {isPendingReInvite && <UserPlus className="size-3 text-celery-400" />}{" "}
+                      {isRejected && <XCircle className="size-3 text-red-400" />}
+                      {isRejected && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setValue("inviteeIds", [...inviteeIds, id], { shouldDirty: true })
+                          }
+                          className="hover:text-celery-300 transition-colors"
+                          title="Re-invite"
+                        >
+                          <UserPlus className="size-3" />
+                        </button>
+                      )}
+                      {/* Cofnij re-invite — gdy isPendingReInvite */}
+                      {isPendingReInvite && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setValue(
+                              "inviteeIds",
+                              inviteeIds.filter((i) => i !== id),
+                              { shouldDirty: true },
+                            )
+                          }
+                          className="hover:text-red-300 transition-colors"
+                          title="Cancel re-invite"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      )}
+                      {/* Nowi bez statusu — X usuwa */}
+                      {!isLocked && !isRejected && !isPendingReInvite && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setValue(
+                              "inviteeIds",
+                              inviteeIds.filter((i) => i !== id),
+                              { shouldDirty: true },
+                            )
+                          }
+                          className="hover:text-red-300 transition-colors"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
             <Button
               type="button"
               variant="ghost"
@@ -270,6 +364,13 @@ export const EventForm = ({
             selectedIds={inviteeIds}
             onConfirm={(ids) => setValue("inviteeIds", ids, { shouldDirty: true })}
             excludeUserId={currentUser?._id}
+            lockedIds={
+              existingInvitations
+                ?.filter((inv) => inv.status === "accepted" || inv.status === "pending")
+                .map((inv) =>
+                  typeof inv.inviteeId === "object" ? inv.inviteeId._id : inv.inviteeId,
+                ) ?? []
+            }
           />
         </section>
       ) : null}

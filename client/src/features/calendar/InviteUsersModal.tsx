@@ -1,6 +1,6 @@
 // client/src/features/calendar/InviteUsersModal.tsx
 import { useState, useMemo, useEffect } from "react";
-import { Search, Check, Users, ChevronDown, ChevronRight, Crown } from "lucide-react";
+import { Search, Check, Users, ChevronDown, ChevronRight, Crown, Lock } from "lucide-react";
 import { Modal, Button, Input, ConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useUsersForInvite } from "./hooks/useUsersForInvite";
@@ -111,21 +111,24 @@ const UserRow = ({
   user,
   isSelected,
   onToggle,
+  isLocked = false, // ✅
 }: {
   user: UserForInvite;
   isSelected: boolean;
   onToggle: (id: string) => void;
-  indent?: boolean;
+  isLocked?: boolean;
 }) => (
   <button
     type="button"
-    onClick={() => onToggle(user._id)}
+    onClick={() => !isLocked && onToggle(user._id)}
     className={cn(
       "flex items-center justify-between rounded-lg px-3 py-2 w-full",
       "text-sm transition-colors text-left",
-      isSelected
-        ? "bg-celery-700 text-celery-100"
-        : "bg-bg-elevated text-celery-300 hover:bg-celery-800",
+      isLocked
+        ? "bg-celery-900 text-celery-500 cursor-not-allowed opacity-70"
+        : isSelected
+          ? "bg-celery-700 text-celery-100"
+          : "bg-bg-elevated text-celery-300 hover:bg-celery-800",
     )}
   >
     <span>
@@ -134,7 +137,11 @@ const UserRow = ({
     </span>
     <span className="flex items-center gap-2 shrink-0">
       {user.position ? <span className="text-xs text-celery-500">{user.position.code}</span> : null}
-      {isSelected ? <Check className="size-3 text-celery-300" /> : null}
+      {isLocked ? (
+        <Lock className="size-3 text-celery-600" /> // ✅ ikona kłódki
+      ) : isSelected ? (
+        <Check className="size-3 text-celery-300" />
+      ) : null}
     </span>
   </button>
 );
@@ -201,6 +208,7 @@ interface InviteUsersModalProps {
   selectedIds: string[];
   onConfirm: (ids: string[]) => void;
   excludeUserId?: string;
+  lockedIds?: string[];
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -211,6 +219,7 @@ export const InviteUsersModal = ({
   selectedIds,
   onConfirm,
   excludeUserId,
+  lockedIds = [],
 }: InviteUsersModalProps) => {
   const { data: users = [], isLoading } = useUsersForInvite();
   const [search, setSearch] = useState("");
@@ -257,15 +266,20 @@ export const InviteUsersModal = ({
     };
   }, [hierarchy, search]);
 
-  const toggle = (userId: string) =>
+  const toggle = (userId: string) => {
+    if (lockedIds.includes(userId)) return; // ✅ guard
     setLocalSelected((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
     );
+  };
 
   const toggleGroup = (ids: string[]) => {
-    const allSelected = ids.every((id) => localSelected.includes(id));
+    const unlocked = ids.filter((id) => !lockedIds.includes(id));
+    const allSelected = unlocked.every((id) => localSelected.includes(id));
     setLocalSelected((prev) =>
-      allSelected ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])],
+      allSelected
+        ? prev.filter((id) => !unlocked.includes(id))
+        : [...new Set([...prev, ...unlocked])],
     );
   };
 
@@ -340,6 +354,7 @@ export const InviteUsersModal = ({
                       user={user}
                       isSelected={localSelected.includes(user._id)}
                       onToggle={toggle}
+                      isLocked={lockedIds.includes(user._id)}
                     />
                   </div>
                 ))}
@@ -373,7 +388,7 @@ export const InviteUsersModal = ({
                               user={user}
                               isSelected={localSelected.includes(user._id)}
                               onToggle={toggle}
-                              indent
+                              isLocked={lockedIds.includes(user._id)}
                             />
                           ))}
 
@@ -408,6 +423,7 @@ export const InviteUsersModal = ({
                                         user={user}
                                         isSelected={localSelected.includes(user._id)}
                                         onToggle={toggle}
+                                        isLocked={lockedIds.includes(user._id)}
                                       />
                                     ))}
                                   </div>

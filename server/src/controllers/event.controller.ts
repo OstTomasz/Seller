@@ -65,14 +65,14 @@ export const createEvent = wrapAsync(async (req: Request, res: Response): Promis
 
 export const updateEvent = wrapAsync(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };
-  const { title, startDate, duration, allDay, location, description, type, clientId } = req.body;
+  const { title, startDate, duration, allDay, location, description, type, clientId, inviteeIds } =
+    req.body;
 
   const { event, conflicts } = await eventService.updateEvent(
     id,
-    { title, startDate, duration, allDay, location, description, type, clientId },
+    { title, startDate, duration, allDay, location, description, type, clientId, inviteeIds },
     req.userId!,
   );
-
   res.status(200).json({ event, conflicts });
 });
 
@@ -100,3 +100,9 @@ export const getAllUsersForInvite = wrapAsync(
     res.status(200).json({ users });
   },
 );
+
+export const getEventInvitations = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const invitations = await eventService.getEventInvitations(id, req.userId!);
+  res.status(200).json({ invitations });
+});

@@ -13,8 +13,9 @@ export const useRespondToInvitation = (onSuccess?: () => void) => {
   return useMutation({
     mutationFn: ({ eventId, status }: { eventId: string; status: "accepted" | "rejected" }) =>
       respondToInvitation(eventId, status),
-    onSuccess: (_data, { status }) => {
+    onSuccess: (_data, { eventId, status }) => {
       queryClient.invalidateQueries({ queryKey: [CALENDAR_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["event-invitations", eventId] }); // ✅
       toast.success(status === "accepted" ? "Invitation accepted." : "Invitation declined.");
       onSuccess?.();
     },

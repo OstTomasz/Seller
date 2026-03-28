@@ -109,6 +109,9 @@ export const createEvent = async (
   if (mandatory && creatorRole !== "director" && creatorRole !== "deputy") {
     throw new ForbiddenError();
   }
+  if (mandatory && data.type === "personal") {
+    throw new BadRequestError("Personal events cannot be mandatory");
+  }
 
   // resolve invitee IDs
   let resolvedInviteeIds: string[] = [...(data.inviteeIds ?? [])];
@@ -214,6 +217,7 @@ export const updateEvent = async (
     description?: string | null;
     type?: EventType;
     clientId?: string | null;
+    inviteeIds?: string[];
   },
   userId: string,
 ): Promise<{ event: IEvent; conflicts: IEvent[] }> => {
@@ -234,6 +238,64 @@ export const updateEvent = async (
     allDay,
   });
   if (!updated) throw new NotFoundError("Event not found");
+  if (data.inviteeIds && data.inviteeIds.length > 0) {
+    const existing = await invitationRepository.findInvitationsByEventId(eventId);
+
+    const existingMap = new Map(
+      existing.map((inv) => {
+        const invitee = inv.inviteeId as unknown as { _id: { toString(): string } } | string;
+        const id =
+          typeof invitee === "object" && invitee !== null
+            ? invitee._id.toString()
+            : String(invitee);
+        return [id, inv];
+      }),
+    );
+
+    const newInviteeIds: string[] = [];
+    const resetInviteeIds: string[] = [];
+
+    for (const id of data.inviteeIds) {
+      if (id === userId) continue;
+      const existingInv = existingMap.get(id);
+
+      if (!existingInv) {
+        newInviteeIds.push(id); // zupełnie nowy
+      } else if (existingInv.status === "rejected") {
+        resetInviteeIds.push(id); //
+      }
+      // accepted/pending — pomijamy
+    }
+
+    if (newInviteeIds.length > 0) {
+      await invitationRepository.createInvitations(
+        newInviteeIds.map((inviteeId) => ({ eventId, inviteeId, status: "pending" })),
+      );
+    }
+
+    // ✅ Reset odrzuconych — update status z rejected → pending
+    if (resetInviteeIds.length > 0) {
+      await invitationRepository.resetRejectedInvitations(eventId, resetInviteeIds);
+    }
+
+    const notifyIds = [...newInviteeIds, ...resetInviteeIds];
+    if (notifyIds.length > 0) {
+      await notificationRepository.createNotifications(
+        notifyIds.map((recipientId) => ({
+          userId: recipientId,
+          type: "event_invitation" as NotificationType,
+          clientId: null,
+          eventId,
+          message: `You have been invited to: ${updated.title}`,
+          metadata: { eventTitle: updated.title },
+        })),
+      );
+    }
+    console.log("inviteeIds from payload:", data.inviteeIds);
+    console.log("existingMap keys:", [...existingMap.keys()]);
+    console.log("resetInviteeIds:", resetInviteeIds);
+    console.log("newInviteeIds:", newInviteeIds);
+  }
 
   return { event: updated, conflicts };
 };
@@ -285,3 +347,20 @@ export const respondToInvitation = async (
 };
 
 export const getAllUsersForInvite = async () => userRepository.findAllUsersForInvite();
+
+/**
+ * Returns all invitations for an event — only owner or invitee can view.
+ */
+export const getEventInvitations = async (
+  eventId: string,
+  userId: string,
+): Promise<IInvitation[]> => {
+  const event = await eventRepository.findEventById(eventId);
+  if (!event) throw new NotFoundError("Event not found");
+
+  const isOwner = getCreatorId(event.createdBy) === userId;
+  const invitation = await invitationRepository.findInvitationByEventAndUser(eventId, userId);
+  if (!isOwner && !invitation) throw new ForbiddenError();
+
+  return invitationRepository.findInvitationsByEventId(eventId);
+};

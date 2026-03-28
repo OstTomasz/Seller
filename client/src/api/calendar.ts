@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import type { IEvent, IInvitation } from "@seller/shared/types";
+import type { EventType, IEvent, IInvitation } from "@seller/shared/types";
 import type { UserForInvite } from "@/types";
 
 export interface EventsQueryParams {
@@ -29,8 +29,9 @@ export interface UpdateEventPayload {
   allDay?: boolean;
   location?: string | null;
   description?: string | null;
-  type?: "client_meeting" | "team_meeting" | "personal";
+  type?: EventType;
   clientId?: string | null;
+  inviteeIds?: string[];
 }
 
 // Backend wraps all responses — { events }, { invitations }, { event, conflicts } etc.

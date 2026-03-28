@@ -33,3 +33,23 @@ export const deleteInvitationsByEventId = async (eventId: string): Promise<void>
 
 export const findAcceptedInviteesByEventId = async (eventId: string): Promise<IInvitation[]> =>
   Invitation.find({ eventId, status: "accepted" }).populate("inviteeId", "firstName lastName");
+
+/**
+ * Returns all invitations for an event with invitee details.
+ */
+export const findInvitationsByEventId = async (eventId: string) =>
+  Invitation.find({ eventId })
+    .populate("inviteeId", "firstName lastName numericId")
+    .sort({ status: 1, createdAt: 1 });
+/**
+ * Resets rejected invitations back to pending for re-invite flow.
+ */
+export const resetRejectedInvitations = async (
+  eventId: string,
+  inviteeIds: string[],
+): Promise<void> => {
+  await Invitation.updateMany(
+    { eventId, inviteeId: { $in: inviteeIds }, status: "rejected" },
+    { status: "pending" },
+  );
+};
