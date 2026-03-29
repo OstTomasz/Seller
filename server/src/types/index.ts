@@ -47,6 +47,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: UserRole;
+  phone: string | null;
   grade: UserGrade | null;
   position: Types.ObjectId | null;
   isActive: boolean;

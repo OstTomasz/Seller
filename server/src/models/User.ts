@@ -28,6 +28,7 @@ const userSchema = new Schema<IUser>(
       ref: "Position",
       default: null,
     },
+    phone: { type: String, default: null, trim: true },
     isActive: { type: Boolean, default: true },
     mustChangePassword: {
       type: Boolean,

@@ -17,6 +17,7 @@ export type {
   IRegionForInviteSchema,
   UserForInvite,
   IInvitationWithInvitee,
+  IUserProfile,
 } from "@seller/shared/types";
 
 import {
@@ -27,6 +28,7 @@ import {
   type IEvent,
   type IInvitation,
   eventTypeSchema,
+  type IUserProfile,
 } from "@seller/shared/types";
 import { stringOrDate } from "react-big-calendar";
 import z from "zod";
@@ -59,6 +61,8 @@ export interface Region {
 
 export interface User extends IUserBase {
   position: Position | null;
+  createdAt: string;
+  phone: string | null;
 }
 
 export interface Client extends Omit<IClientBase, "notes"> {
@@ -142,4 +146,21 @@ export interface UserForInviteRegion {
   name: string;
   prefix: string;
   parentRegion: string | null;
+}
+
+export interface UserWithProfile {
+  user: User & {
+    position: {
+      _id: string;
+      code: string;
+      type: import("@/types").UserRole;
+      region: {
+        _id: string;
+        name: string;
+        prefix: string;
+        parentRegion: { _id: string; name: string; prefix: string } | null;
+      } | null;
+    } | null;
+  };
+  profile: IUserProfile | null;
 }

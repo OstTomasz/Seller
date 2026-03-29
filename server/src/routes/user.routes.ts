@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as userController from "../controllers/user.controller";
+import * as userProfileController from "../controllers/userProfile.controller";
 import { requireRole } from "../middleware/role.middleware";
 
 const router = Router();
@@ -14,7 +15,10 @@ router.get(
   requireRole("director", "deputy", "advisor"),
   userController.getSalespersons,
 );
+router.get("/for-structure", userController.getUsersForStructure);
+router.get("/:id/details", userProfileController.getUserWithProfile);
 router.get("/:id", userController.getUserById);
+router.patch("/:id/profile", userProfileController.upsertUserProfile);
 
 // Director and deputy can create and manage users
 router.post("/", requireRole("director", "deputy"), userController.createUser);

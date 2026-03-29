@@ -277,3 +277,5 @@ export const getSalespersons = async (
 
   return [];
 };
+
+export const getUsersForStructure = async () => userRepository.findAllUsersForInvite();

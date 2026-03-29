@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useClient } from "./hooks/useClient";
 import { useAuthStore } from "@/store/authStore";
 import { Breadcrumbs, Card, Loader, FetchError, Button } from "@/components/ui";
@@ -45,7 +45,7 @@ const SectionHeader = ({
   children?: React.ReactNode;
 }) => (
   <div className="flex justify-between items-center mb-4">
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 mb-4 w-full justify-center">
       <Icon className="h-4 w-4 text-celery-500" />
       <h2 className="text-sm font-semibold text-celery-500 uppercase tracking-wider">{title}</h2>
     </div>
@@ -54,9 +54,9 @@ const SectionHeader = ({
 );
 
 const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="flex flex-col gap-0.5">
-    <span className="text-xs text-celery-600">{label}</span>
-    <span className="text-sm text-celery-200">{value ?? "—"}</span>
+  <div className="flex flex-col gap-0.5 mx-auto">
+    <span className="text-xs text-celery-600 mx-auto">{label}</span>
+    <span className="text-sm text-celery-200 mx-auto">{value ?? "—"}</span>
   </div>
 );
 
@@ -70,6 +70,7 @@ export const ClientPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
   const role = user?.role as UserRole;
+  const navigate = useNavigate();
   const [isEditBasicOpen, setIsEditBasicOpen] = useState(false);
   const [isEditAddressesOpen, setIsEditAddressesOpen] = useState(false);
   const [isEditNotesOpen, setIsEditNotesOpen] = useState(false);
@@ -85,11 +86,13 @@ export const ClientPage = () => {
   if (isLoading) return <Loader label="client" />;
   if (isError || !client) return <FetchError label="client" />;
 
-  const salesperson = client.assignedTo?.currentHolder
+  const salespersonId = client.assignedTo?.currentHolder?._id ?? null;
+  const salespersonName = client.assignedTo?.currentHolder
     ? `${client.assignedTo.currentHolder.firstName} ${client.assignedTo.currentHolder.lastName}`
     : "—";
 
-  const advisor = client.assignedAdvisor?.currentHolder
+  const advisorId = client.assignedAdvisor?.currentHolder?._id ?? null;
+  const advisorName = client.assignedAdvisor?.currentHolder
     ? `${client.assignedAdvisor.currentHolder.firstName} ${client.assignedAdvisor.currentHolder.lastName}`
     : "—";
 
@@ -211,8 +214,36 @@ export const ClientPage = () => {
             </Button>
           </SectionHeader>
           <div className="grid grid-cols-2 gap-10 w-[90%] mx-auto items-center">
-            <Field label="Salesperson" value={salesperson} />
-            <Field label="Advisor" value={advisor} />
+            <Field
+              label="Salesperson"
+              value={
+                salespersonId ? (
+                  <button
+                    onClick={() => navigate(`/users/${salespersonId}`)}
+                    className="text-celery-200 hover:text-celery-100 hover:underline transition-colors text-left"
+                  >
+                    {salespersonName}
+                  </button>
+                ) : (
+                  salespersonName
+                )
+              }
+            />
+            <Field
+              label="Advisor"
+              value={
+                advisorId ? (
+                  <button
+                    onClick={() => navigate(`/users/${advisorId}`)}
+                    className="text-celery-200 hover:text-celery-100 hover:underline transition-colors text-left"
+                  >
+                    {advisorName}
+                  </button>
+                ) : (
+                  advisorName
+                )
+              }
+            />
             <Field label="Region" value={region} />
             {showSuperregion ? <Field label="Superregion" value={superregion} /> : null}
           </div>

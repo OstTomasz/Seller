@@ -129,3 +129,14 @@ export const findUsersByRole = async (role: UserRole): Promise<IUser[]> =>
  */
 export const findUsersByIds = async (userIds: string[]): Promise<IUser[]> =>
   User.find({ _id: { $in: userIds }, isActive: true }).select("-password");
+
+export const findUserByIdWithPosition = async (userId: string) =>
+  User.findById(userId)
+    .select("-password")
+    .populate({
+      path: "position",
+      populate: {
+        path: "region",
+        populate: { path: "parentRegion", select: "name prefix" },
+      },
+    });

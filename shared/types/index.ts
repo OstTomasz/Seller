@@ -75,10 +75,12 @@ export const userBaseSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   email: z.string(),
+  phone: z.string().nullable(),
   role: userRoleSchema,
   grade: userGradeSchema.nullable(),
   isActive: z.boolean(),
   mustChangePassword: z.boolean(),
+  createdAt: z.string(),
 });
 export type IUserBase = z.infer<typeof userBaseSchema>;
 
@@ -270,3 +272,40 @@ export const invitationWithInviteeSchema = z.object({
   updatedAt: z.string(),
 });
 export type IInvitationWithInvitee = z.infer<typeof invitationWithInviteeSchema>;
+
+//===User Profile====
+
+export const userProfileSchema = z.object({
+  _id: z.string(),
+  userId: z.string(),
+  phone: z.string().nullable(),
+  description: z.string().nullable(),
+  workplace: z.string().nullable(),
+  avatarIndex: z.number().int().min(0).max(4),
+  updatedAt: z.string(),
+});
+export type IUserProfile = z.infer<typeof userProfileSchema>;
+
+export const userWithProfileSchema = z.object({
+  user: userBaseSchema.extend({
+    position: z
+      .object({
+        _id: z.string(),
+        code: z.string(),
+        type: userRoleSchema,
+        region: z
+          .object({
+            _id: z.string(),
+            name: z.string(),
+            prefix: z.string(),
+            parentRegion: z
+              .object({ _id: z.string(), name: z.string(), prefix: z.string() })
+              .nullable(),
+          })
+          .nullable(),
+      })
+      .nullable(),
+  }),
+  profile: userProfileSchema.nullable(),
+});
+export type IUserWithProfile = z.infer<typeof userWithProfileSchema>;

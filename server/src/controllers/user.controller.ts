@@ -128,3 +128,10 @@ export const getSalespersons = wrapAsync(
     res.status(200).json({ users });
   },
 );
+
+export const getUsersForStructure = wrapAsync(
+  async (_req: Request, res: Response): Promise<void> => {
+    const users = await userService.getUsersForStructure();
+    res.status(200).json({ users });
+  },
+);

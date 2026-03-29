@@ -194,6 +194,7 @@ const seed = async () => {
     mustChangePassword: false,
     isActive: true,
     createdBy: null,
+    phone: "+48 500 000 001",
   });
 
   const deputy1 = await User.create({
@@ -207,6 +208,7 @@ const seed = async () => {
     mustChangePassword: false,
     isActive: true,
     createdBy: director._id,
+    phone: "+48 500 000 001",
   });
   const deputy2 = await User.create({
     firstName: "Thomas",
@@ -219,6 +221,7 @@ const seed = async () => {
     mustChangePassword: false,
     isActive: true,
     createdBy: director._id,
+    phone: "+48 500 000 003",
   });
 
   const createUser = async (
@@ -229,11 +232,13 @@ const seed = async () => {
     grade: UserGrade | null,
     positionId: mongoose.Types.ObjectId,
     createdBy: mongoose.Types.ObjectId,
+    phone: string,
   ): Promise<IUser> =>
     User.create({
       firstName,
       lastName,
       email,
+      phone,
       password: "password123",
       role,
       grade,
@@ -251,6 +256,7 @@ const seed = async () => {
     3,
     advPOMPos._id,
     deputy1._id,
+    "+48 600 100 001",
   );
   const advWAR = await createUser(
     "Anne",
@@ -260,6 +266,7 @@ const seed = async () => {
     2,
     advWARPos._id,
     deputy1._id,
+    "+48 600 100 002",
   );
   const advMAL = await createUser(
     "Sofia",
@@ -269,6 +276,7 @@ const seed = async () => {
     4,
     advMALPos._id,
     deputy2._id,
+    "+48 600 100 003",
   );
   const advSLA = await createUser(
     "Mark",
@@ -278,6 +286,7 @@ const seed = async () => {
     3,
     advSLAPos._id,
     deputy2._id,
+    "+48 600 100 004",
   );
 
   const sp1POM = await createUser(
@@ -288,6 +297,7 @@ const seed = async () => {
     2,
     sp1POMPos._id,
     advPOM._id,
+    "+48 600 200 001",
   );
   const sp2POM = await createUser(
     "Beatrice",
@@ -297,6 +307,7 @@ const seed = async () => {
     1,
     sp2POMPos._id,
     advPOM._id,
+    "+48 600 200 002",
   );
   const sp1WAR = await createUser(
     "Charles",
@@ -306,6 +317,7 @@ const seed = async () => {
     1,
     sp1WARPos._id,
     advWAR._id,
+    "+48 600 200 003",
   );
   const sp2WAR = await createUser(
     "Diana",
@@ -315,6 +327,7 @@ const seed = async () => {
     2,
     sp2WARPos._id,
     advWAR._id,
+    "+48 600 200 004",
   );
   const sp1MAL = await createUser(
     "Edward",
@@ -324,6 +337,7 @@ const seed = async () => {
     2,
     sp1MALPos._id,
     advMAL._id,
+    "+48 600 200 005",
   );
   const sp2MAL = await createUser(
     "Fiona",
@@ -333,6 +347,7 @@ const seed = async () => {
     1,
     sp2MALPos._id,
     advMAL._id,
+    "+48 600 200 006",
   );
   const sp1SLA = await createUser(
     "George",
@@ -342,6 +357,7 @@ const seed = async () => {
     3,
     sp1SLAPos._id,
     advSLA._id,
+    "+48 600 200 007",
   );
   const sp2SLA = await createUser(
     "Hannah",
@@ -351,6 +367,7 @@ const seed = async () => {
     2,
     sp2SLAPos._id,
     advSLA._id,
+    "+48 600 200 008",
   );
 
   console.log("Users created");
