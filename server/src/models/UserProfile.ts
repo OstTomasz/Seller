@@ -5,6 +5,8 @@ export interface IUserProfileDocument extends Document {
   description: string | null;
   workplace: string | null;
   avatarIndex: number;
+  avatar: string | null;
+  lastLoginAt: Date | null;
 }
 
 const userProfileSchema = new Schema<IUserProfileDocument>(
@@ -13,6 +15,8 @@ const userProfileSchema = new Schema<IUserProfileDocument>(
     description: { type: String, default: null, trim: true },
     workplace: { type: String, default: null, trim: true },
     avatarIndex: { type: Number, default: 0, min: 0, max: 4 },
+    avatar: { type: String, default: null }, // base64 string
+    lastLoginAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

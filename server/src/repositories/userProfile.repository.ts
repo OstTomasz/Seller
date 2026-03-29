@@ -18,3 +18,10 @@ export const upsertProfile = async (
     { $set: data },
     { upsert: true, new: true, runValidators: true },
   );
+
+export const updateLastLogin = async (userId: string) =>
+  UserProfile.findOneAndUpdate(
+    { userId },
+    { $set: { lastLoginAt: new Date() } },
+    { upsert: true, new: true },
+  );

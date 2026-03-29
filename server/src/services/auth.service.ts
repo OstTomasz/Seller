@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { IUser, TokenPayload } from "../types";
 import { UnauthorizedError, NotFoundError } from "../utils/errors";
 import * as userRepository from "../repositories/user.repository";
+import * as userProfileRepository from "../repositories/userProfile.repository";
 
 // login resp
 interface LoginResult {
@@ -33,6 +34,8 @@ export const login = async (email: string, password: string) => {
   if (!isPasswordValid) throw new UnauthorizedError("Invalid credentials");
 
   const token = generateToken(user);
+  await userProfileRepository.updateLastLogin(user._id.toString());
+
   return { user, token };
 };
 

@@ -282,7 +282,9 @@ export const userProfileSchema = z.object({
   description: z.string().nullable(),
   workplace: z.string().nullable(),
   avatarIndex: z.number().int().min(0).max(4),
+  avatar: z.string().nullable(),
   updatedAt: z.string(),
+  lastLoginAt: z.string().nullable(),
 });
 export type IUserProfile = z.infer<typeof userProfileSchema>;
 

@@ -16,6 +16,8 @@ router.get(
   userController.getSalespersons,
 );
 router.get("/for-structure", userController.getUsersForStructure);
+router.get("/me/profile", userProfileController.getMyProfile);
+router.patch("/me/profile", userProfileController.upsertMyProfile);
 router.get("/:id/details", userProfileController.getUserWithProfile);
 router.get("/:id", userController.getUserById);
 router.patch("/:id/profile", userProfileController.upsertUserProfile);

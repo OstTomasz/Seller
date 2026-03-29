@@ -12,6 +12,7 @@ import type { UserRole } from "@/types";
 import { ArchivePage } from "@/features/archive/ArchivePage";
 import { CompanyPage } from "@/features/users/CompanyPage";
 import { UserPage } from "@/features/users/UserPage";
+import { SettingsPage } from "@/features/users/SettingsPage";
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuthStore();
@@ -76,7 +77,7 @@ export const AppRouter = () => {
           <Route path="/clients/:id" element={<ClientPage />} />
           <Route path="/company" element={<CompanyPage />} />
           <Route path="/users/:id" element={<UserPage />} />
-          <Route path="/settings" element={<p className="text-celery-300">Settings</p>} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route
             path="/management"
             element={

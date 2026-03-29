@@ -13,3 +13,13 @@ export const upsertUserProfile = wrapAsync(async (req: Request, res: Response) =
   const result = await userProfileService.upsertUserProfile(id, req.userId!, req.body);
   res.status(200).json(result);
 });
+
+export const getMyProfile = wrapAsync(async (req: Request, res: Response) => {
+  const result = await userProfileService.getUserWithProfile(req.userId!);
+  res.status(200).json(result);
+});
+
+export const upsertMyProfile = wrapAsync(async (req: Request, res: Response) => {
+  const result = await userProfileService.upsertUserProfile(req.userId!, req.userId!, req.body);
+  res.status(200).json(result);
+});

@@ -44,6 +44,7 @@ export const UserPage = () => {
   const positionCode = user.position?.code ?? null;
   const regionName = user.position?.region?.name ?? null;
   const superregionName = user.position?.region?.parentRegion?.name ?? null;
+  const avatarSrc = profile?.avatar ?? logoPlaceholder;
 
   return (
     <div className="flex flex-col max-w-3xl mx-auto gap-6">
@@ -52,7 +53,7 @@ export const UserPage = () => {
       {/* Header */}
       <div className="flex items-center gap-6">
         <img
-          src={logoPlaceholder}
+          src={avatarSrc}
           alt={fullName}
           className="w-20 h-20 rounded-full object-cover border-2 border-celery-700 bg-bg-elevated"
         />
@@ -68,7 +69,7 @@ export const UserPage = () => {
       {/* Contact */}
       <Card>
         <SectionHeader icon={Phone} title="Contact" />
-        <div className="grid grid-cols-2 gap-6 w-[90%] mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 w-[90%] mx-auto">
           <Field
             label="Phone"
             value={
@@ -110,9 +111,10 @@ export const UserPage = () => {
       {/* Employment */}
       <Card>
         <SectionHeader icon={Calendar} title="Employment" />
-        <div className="grid grid-cols-2 gap-6 w-[90%] mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 w-[90%] mx-auto">
           <Field label="Hired at" value={formatDate(user.createdAt)} />
           <Field label="Workplace" value={profile?.workplace ?? null} />
+          <Field label="Last login" value={formatDate(profile?.lastLoginAt ?? null)} />
         </div>
       </Card>
 

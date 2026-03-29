@@ -20,4 +20,11 @@ export const usersApi = {
   ) => api.patch<UserWithProfile>(`/users/${id}/profile`, payload),
 
   getAllForStructure: () => api.get<{ users: UserForInvite[] }>("/users/for-structure"),
+
+  getMyProfile: () => api.get<UserWithProfile>("/users/me/profile"),
+  updateMyProfile: (payload: {
+    description?: string | null;
+    workplace?: string | null;
+    avatar?: string | null;
+  }) => api.patch<UserWithProfile>("/users/me/profile", payload),
 };
