@@ -164,3 +164,24 @@ export interface UserWithProfile {
   };
   profile: IUserProfile | null;
 }
+
+export interface PositionWithHolder {
+  _id: string;
+  code: string;
+  type: UserRole;
+  region: {
+    _id: string;
+    name: string;
+    prefix: string;
+    parentRegion: { _id: string; name: string; prefix: string } | null;
+  } | null;
+  currentHolder: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    numericId: number;
+    role: UserRole;
+    grade: number | null;
+    isActive: boolean;
+  } | null;
+}

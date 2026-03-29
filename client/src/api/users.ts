@@ -27,4 +27,23 @@ export const usersApi = {
     workplace?: string | null;
     avatar?: string | null;
   }) => api.patch<UserWithProfile>("/users/me/profile", payload),
+
+  updateUser: (
+    id: string,
+    payload: { positionId?: string | null; firstName?: string; lastName?: string; email?: string },
+  ) => api.patch<{ user: User }>(`/users/${id}`, payload),
+
+  toggleActive: (id: string) => api.patch<{ user: User }>(`/users/${id}/toggle-active`),
+
+  createUser: (payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    temporaryPassword: string;
+    role: string;
+    grade?: number | null;
+    positionId?: string | null;
+  }) => api.post<{ user: User }>("/users", payload),
+
+  removeFromPosition: (id: string) => api.patch<{ user: User }>(`/users/${id}/remove-position`),
 };

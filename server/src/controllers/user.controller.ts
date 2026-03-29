@@ -135,3 +135,9 @@ export const getUsersForStructure = wrapAsync(
     res.status(200).json({ users });
   },
 );
+
+export const removeFromPosition = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const user = await userService.removeUserFromPosition(id, req.userId!, req.userRole as UserRole);
+  res.status(200).json({ user });
+});

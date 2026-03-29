@@ -35,3 +35,5 @@ export const findAllRegionsPopulated = async () =>
 
 export const findSubregionsByParentId = async (parentRegionId: string) =>
   Region.find({ parentRegion: parentRegionId });
+
+export const findSuperregions = async () => Region.find({ parentRegion: null }).sort({ name: 1 });

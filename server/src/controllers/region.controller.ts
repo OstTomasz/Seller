@@ -77,3 +77,17 @@ export const getRegionById = wrapAsync(
     res.status(200).json({ region });
   },
 );
+
+export const moveRegion = wrapAsync(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const { newParentId } = req.body;
+  if (!newParentId) throw new BadRequestError("newParentId is required");
+
+  const region = await regionService.moveRegionToSuperregion(
+    id,
+    newParentId,
+    req.userId!,
+    req.userRole as UserRole,
+  );
+  res.status(200).json({ region });
+});

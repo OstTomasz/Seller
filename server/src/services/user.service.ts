@@ -279,3 +279,21 @@ export const getSalespersons = async (
 };
 
 export const getUsersForStructure = async () => userRepository.findAllUsersForInvite();
+
+export const removeUserFromPosition = async (
+  userId: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser> => {
+  const user = await userRepository.findRawUserById(userId);
+  if (!user) throw new NotFoundError("User not found");
+  if (!user.position) throw new BadRequestError("User has no position");
+
+  if (requesterRole === "deputy") {
+    await verifyDeputyUserAccess(requesterId, user);
+  }
+
+  await positionRepository.clearPositionCurrentHolder(user.position.toString());
+  const updated = await userRepository.updateUserById(userId, { position: null });
+  return updated!;
+};

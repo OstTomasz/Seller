@@ -1,9 +1,5 @@
 import { IRegion, UserRole } from "../types";
-import {
-  BadRequestError,
-  ForbiddenError,
-  NotFoundError,
-} from "../utils/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "../utils/errors";
 import * as regionRepository from "../repositories/region.repository";
 import * as positionRepository from "../repositories/position.repository";
 import * as userRepository from "../repositories/user.repository";
@@ -17,10 +13,7 @@ const getDeputyUserId = async (region: IRegion): Promise<string | null> => {
   return position?.currentHolder?.toString() ?? null;
 };
 
-const verifyDeputyAccess = async (
-  deputyUserId: string,
-  regionId: string,
-): Promise<void> => {
+const verifyDeputyAccess = async (deputyUserId: string, regionId: string): Promise<void> => {
   const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
 
@@ -116,19 +109,33 @@ export const updateRegionDeputy = async (
 
   const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
-
-  if (region.parentRegion !== null) {
+  if (region.parentRegion !== null)
     throw new BadRequestError("Only superregions can have a deputy");
+  if (!region.deputy) throw new BadRequestError("Superregion has no deputy position");
+
+  if (deputyUserId) {
+    const targetUser = await userRepository.findRawUserById(deputyUserId);
+    if (!targetUser) throw new NotFoundError("User not found");
+    if (targetUser.role !== "deputy") throw new BadRequestError("User must have deputy role");
+
+    // Check if user already holds another position
+    if (targetUser.position) {
+      const currentPos = await positionRepository.findPositionById(targetUser.position.toString());
+      // Allow if it's the same position (re-assigning to same superregion)
+      if (currentPos && currentPos._id.toString() !== region.deputy.toString()) {
+        throw new BadRequestError("User already holds a position in another region");
+      }
+    }
+
+    // Clear old holder of this deputy position
+    const deputyPos = await positionRepository.findPositionById(region.deputy.toString());
+    if (deputyPos?.currentHolder) {
+      await userRepository.updateUserById(deputyPos.currentHolder.toString(), { position: null });
+    }
   }
 
-  if (!region.deputy) {
-    throw new BadRequestError("Superregion has no deputy position");
-  }
-
-  // update currentHolder on the deputy position
   await positionRepository.updatePositionCurrentHolder(region.deputy.toString(), deputyUserId);
 
-  // update user's position reference
   if (deputyUserId) {
     await userRepository.updateUserById(deputyUserId, { position: region.deputy });
   }
@@ -151,8 +158,7 @@ export const deleteRegion = async (
   }
 
   const hasChildren = await regionRepository.regionHasChildren(regionId);
-  if (hasChildren)
-    throw new BadRequestError("Cannot delete region with subregions");
+  if (hasChildren) throw new BadRequestError("Cannot delete region with subregions");
 
   // delete all positions in this region
   await positionRepository.deletePositionsByRegionId(regionId);
@@ -174,4 +180,25 @@ export const getRegionByPrefix = async (prefix: string): Promise<IRegion> => {
   const region = await regionRepository.findRegionByPrefix(prefix);
   if (!region) throw new NotFoundError("Region not found");
   return region;
+};
+
+export const moveRegionToSuperregion = async (
+  regionId: string,
+  newParentId: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IRegion> => {
+  if (requesterRole === "deputy") throw new ForbiddenError();
+
+  const region = await regionRepository.findRegionById(regionId);
+  if (!region) throw new NotFoundError("Region not found");
+  if (!region.parentRegion) throw new BadRequestError("Cannot move a superregion");
+
+  const newParent = await regionRepository.findRegionById(newParentId);
+  if (!newParent) throw new NotFoundError("Target superregion not found");
+  if (newParent.parentRegion) throw new BadRequestError("Target must be a superregion");
+
+  const updated = await regionRepository.updateRegionById(regionId, { parentRegion: newParentId });
+  if (!updated) throw new NotFoundError("Region not found");
+  return updated;
 };

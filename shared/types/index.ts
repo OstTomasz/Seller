@@ -245,6 +245,7 @@ export const userForInviteSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   numericId: z.number(),
+  isActive: z.boolean(),
   position: z
     .object({
       _id: z.string(),

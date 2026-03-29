@@ -15,6 +15,7 @@ import userRoutes from "./routes/user.routes";
 import clientRoutes from "./routes/client.routes";
 import notificationRoutes from "./routes/notification.routes";
 import eventRoutes from "./routes/event.routes";
+import positionRoutes from "./routes/position.routes";
 
 import "./models/Region";
 import "./models/User";
@@ -67,6 +68,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/notifications", authenticate, notificationRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/positions", positionRoutes);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });

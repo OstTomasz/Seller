@@ -13,6 +13,7 @@ import { ArchivePage } from "@/features/archive/ArchivePage";
 import { CompanyPage } from "@/features/users/CompanyPage";
 import { UserPage } from "@/features/users/UserPage";
 import { SettingsPage } from "@/features/users/SettingsPage";
+import { ManagementPage } from "@/features/menagement/ManagementPage";
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuthStore();
@@ -82,7 +83,7 @@ export const AppRouter = () => {
             path="/management"
             element={
               <RoleRoute roles={["deputy", "director"]}>
-                <p className="text-celery-300">Management</p>
+                <ManagementPage />
               </RoleRoute>
             }
           />

@@ -36,5 +36,10 @@ router.patch(
   requireRole("director", "deputy"),
   userController.resetPassword,
 );
+router.patch(
+  "/:id/remove-position",
+  requireRole("director", "deputy"),
+  userController.removeFromPosition,
+);
 
 export default router;
