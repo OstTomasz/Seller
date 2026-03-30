@@ -113,31 +113,19 @@ export const updateRegionDeputy = async (
     throw new BadRequestError("Only superregions can have a deputy");
   if (!region.deputy) throw new BadRequestError("Superregion has no deputy position");
 
-  if (deputyUserId) {
-    const targetUser = await userRepository.findRawUserById(deputyUserId);
-    if (!targetUser) throw new NotFoundError("User not found");
-    if (targetUser.role !== "deputy") throw new BadRequestError("User must have deputy role");
-
-    // Check if user already holds another position
-    if (targetUser.position) {
-      const currentPos = await positionRepository.findPositionById(targetUser.position.toString());
-      // Allow if it's the same position (re-assigning to same superregion)
-      if (currentPos && currentPos._id.toString() !== region.deputy.toString()) {
-        throw new BadRequestError("User already holds a position in another region");
-      }
-    }
-
-    // Clear old holder of this deputy position
-    const deputyPos = await positionRepository.findPositionById(region.deputy.toString());
-    if (deputyPos?.currentHolder) {
-      await userRepository.updateUserById(deputyPos.currentHolder.toString(), { position: null });
-    }
+  const deputyPos = await positionRepository.findPositionById(region.deputy.toString());
+  if (deputyPos?.currentHolder) {
+    await userRepository.updateUserById(deputyPos.currentHolder.toString(), { position: null });
   }
 
   await positionRepository.updatePositionCurrentHolder(region.deputy.toString(), deputyUserId);
 
   if (deputyUserId) {
-    await userRepository.updateUserById(deputyUserId, { position: region.deputy });
+    await userRepository.updateUserById(deputyUserId, {
+      position: region.deputy,
+      role: "deputy",
+      grade: null,
+    });
   }
 
   const updated = await regionRepository.findRegionByIdPopulated(regionId);

@@ -22,10 +22,11 @@ import { AddPositionModal } from "./modals/AddPositionModal";
 import { RemovePositionModal } from "./modals/RemovePositionModal";
 import { AssignUserModal } from "./modals/AssignUserModal";
 import { MoveUserModal } from "./modals/MoveUserModal";
-import type { PositionWithHolder, UserRole, Region } from "@/types";
+import type { PositionWithHolder, UserRole, Region, UserForInvite } from "@/types";
 import { regionsApi } from "@/api/regions";
 import { useQuery } from "@tanstack/react-query";
 import { useUsersWithoutPosition } from "./hooks/useManagementStructure";
+import { usersApi } from "@/api/users";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -188,21 +189,24 @@ const SubRegionSection = ({
   onMoveUser: (p: PositionWithHolder) => void;
 }) => (
   <div className="flex flex-col gap-1 ml-4">
-    <button
-      type="button"
-      onClick={onToggle}
-      className="flex items-center gap-2 px-2 py-1 w-full rounded text-left
-                 text-xs font-semibold text-celery-500 uppercase tracking-wider
-                 hover:bg-celery-800 transition-colors"
+    <div
+      className="flex items-center gap-2 px-2 py-1 w-full rounded ml-4
+                text-xs font-semibold text-celery-500 uppercase tracking-wider"
     >
-      {collapsed ? (
-        <ChevronRight className="size-3.5 shrink-0" />
-      ) : (
-        <ChevronDown className="size-3.5 shrink-0" />
-      )}
-      {node.region.name} ({node.region.prefix})
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex items-center gap-2 flex-1 text-left hover:text-celery-300 transition-colors"
+      >
+        {collapsed ? (
+          <ChevronRight className="size-3.5 shrink-0" />
+        ) : (
+          <ChevronDown className="size-3.5 shrink-0" />
+        )}
+        {node.region.name} ({node.region.prefix})
+      </button>
       {canEdit ? (
-        <span className="ml-auto flex gap-0.5">
+        <span className="flex gap-0.5">
           <ActionBtn
             icon={Pencil}
             onClick={() =>
@@ -234,7 +238,7 @@ const SubRegionSection = ({
           />
         </span>
       ) : null}
-    </button>
+    </div>
     {!collapsed ? (
       <div className="flex flex-col gap-1 ml-6">
         {node.positions.map((p) => (
@@ -267,6 +271,11 @@ export const ManagementStructure = () => {
   } = useQuery({
     queryKey: ["management-regions"],
     queryFn: () => regionsApi.getAll().then((r) => r.data.regions),
+  });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: () => usersApi.getAllForStructure().then((r) => r.data.users),
   });
 
   const [search, setSearch] = useState("");
@@ -303,36 +312,54 @@ export const ManagementStructure = () => {
   // Deputy — filter to own superregion only
   const visibleHierarchy = useMemo(() => {
     if (!hierarchy) return null;
-    if (isDirector) return hierarchy;
+    const q = search.toLowerCase().trim();
 
-    // Find deputy's superregion
-    const myPosition = positions?.find(
-      (p) => p.type === "deputy" && p.currentHolder?._id === user?._id,
-    );
-    const mySuperregionId = myPosition?.region?._id;
-
-    return {
-      ...hierarchy,
-      superRegions: hierarchy.superRegions.filter((sr) => sr.region._id === mySuperregionId),
+    const filterPositions = (positions: PositionWithHolder[]) => {
+      if (!q) return positions;
+      return positions.filter(
+        (p) =>
+          p.code.toLowerCase().includes(q) ||
+          (p.currentHolder &&
+            `${p.currentHolder.firstName} ${p.currentHolder.lastName}`.toLowerCase().includes(q)),
+      );
     };
-  }, [hierarchy, isDirector, positions, user?._id]);
+
+    let result = hierarchy;
+
+    if (isDirector) {
+      result = {
+        ...hierarchy,
+        superRegions: hierarchy.superRegions.map((sr) => ({
+          ...sr,
+          subRegions: sr.subRegions.map((sub) => ({
+            ...sub,
+            positions: filterPositions(sub.positions),
+          })),
+        })),
+      };
+    } else {
+      const myPos = positions?.find(
+        (p) => p.type === "deputy" && p.currentHolder?._id === user?._id,
+      );
+      result = {
+        ...hierarchy,
+        superRegions: hierarchy.superRegions
+          .filter((sr) => sr.region._id === myPos?.region?._id)
+          .map((sr) => ({
+            ...sr,
+            subRegions: sr.subRegions.map((sub) => ({
+              ...sub,
+              positions: filterPositions(sub.positions),
+            })),
+          })),
+      };
+    }
+
+    return result;
+  }, [hierarchy, isDirector, positions, user?._id, search]);
 
   const allVacantPositions = useMemo(
     () => (positions ?? []).filter((p) => !p.currentHolder && p.type === "salesperson"),
-    [positions],
-  );
-
-  const deputies = useMemo(
-    () =>
-      (positions ?? [])
-        .filter((p) => p.type === "deputy" && p.currentHolder)
-        .map((p) => ({
-          _id: p.currentHolder!._id,
-          firstName: p.currentHolder!.firstName,
-          lastName: p.currentHolder!.lastName,
-          numericId: p.currentHolder!.numericId,
-          position: { _id: p._id, code: p.code, region: p.region },
-        })),
     [positions],
   );
 
@@ -345,7 +372,7 @@ export const ManagementStructure = () => {
     <>
       <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-celery-500 pointer-events-none" />
+          <Search className="absolute left-3 top-3 size-4 text-celery-500 pointer-events-none" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -380,21 +407,24 @@ export const ManagementStructure = () => {
             return (
               <div key={sr.region._id} className="flex flex-col gap-1">
                 {/* Superregion header */}
-                <button
-                  type="button"
-                  onClick={() => toggle(sr.region._id, setCollapsed)}
-                  className="flex items-center gap-2 px-2 py-1 w-full rounded text-left
-                             text-xs font-semibold text-celery-500 uppercase tracking-wider
-                             hover:bg-celery-800 transition-colors"
+                <div
+                  className="flex items-center gap-2 px-2 py-1 w-full rounded
+                text-xs font-semibold text-celery-500 uppercase tracking-wider"
                 >
-                  {isSrCollapsed ? (
-                    <ChevronRight className="size-3.5" />
-                  ) : (
-                    <ChevronDown className="size-3.5" />
-                  )}
-                  {sr.region.name} ({sr.region.prefix})
+                  <button
+                    type="button"
+                    onClick={() => toggle(sr.region._id, setCollapsed)}
+                    className="flex items-center gap-2 flex-1 text-left hover:text-celery-300 transition-colors"
+                  >
+                    {isSrCollapsed ? (
+                      <ChevronRight className="size-3.5" />
+                    ) : (
+                      <ChevronDown className="size-3.5" />
+                    )}
+                    {sr.region.name} ({sr.region.prefix})
+                  </button>
                   {isDirector ? (
-                    <span className="ml-auto flex gap-0.5">
+                    <span className="flex gap-0.5">
                       <ActionBtn
                         icon={Pencil}
                         onClick={() =>
@@ -413,7 +443,7 @@ export const ManagementStructure = () => {
                       />
                     </span>
                   ) : null}
-                </button>
+                </div>
 
                 {!isSrCollapsed ? (
                   <div className="flex flex-col gap-1">
@@ -430,6 +460,14 @@ export const ManagementStructure = () => {
                             {sr.deputyPosition.code}
                           </span>
                         </span>
+                        {isDirector && deputyHolder ? (
+                          <ActionBtn
+                            icon={UserX}
+                            onClick={() => setAssignPosition(sr.deputyPosition)}
+                            title="Remove deputy"
+                            variant="danger"
+                          />
+                        ) : null}
                       </div>
                     ) : null}
 
@@ -462,7 +500,7 @@ export const ManagementStructure = () => {
       <EditRegionModal region={editRegion} onClose={() => setEditRegion(null)} />
       <EditDeputyModal
         superregion={editDeputy}
-        deputies={deputies as Parameters<typeof EditDeputyModal>[0]["deputies"]}
+        allUsers={allUsers as UserForInvite[]}
         onClose={() => setEditDeputy(null)}
       />
       <MoveRegionModal

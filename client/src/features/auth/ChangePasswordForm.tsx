@@ -7,6 +7,7 @@ import { isAxiosError } from "axios";
 import { authApi } from "@/api/auth";
 import { ApiError } from "@/types";
 import { Button, Input } from "@/components/ui";
+import { useAuthStore } from "@/store/authStore";
 
 const changePasswordSchema = z
   .object({
@@ -36,9 +37,12 @@ export const ChangePasswordForm = ({ onSuccess }: ChangePasswordFormProps) => {
     mode: "all",
   });
 
+  const { updateAuth } = useAuthStore();
+
   const { mutate, isPending } = useMutation({
     mutationFn: authApi.changePassword,
-    onSuccess: () => {
+    onSuccess: (response) => {
+      updateAuth(response.data.token, { mustChangePassword: false });
       toast.success("Password changed successfully");
       reset();
       onSuccess?.();

@@ -131,9 +131,12 @@ export const updateUser = async (
   if (!user) throw new NotFoundError("User not found");
 
   if (requesterRole === "deputy") {
-    await verifyDeputyUserAccess(requesterId, user);
+    // Only verify access for users WHO ALREADY HAVE a position
+    // For users without position — verify target position belongs to deputy's superregion
+    if (user.position) {
+      await verifyDeputyUserAccess(requesterId, user);
+    }
 
-    // deputy cannot move user to position outside their superregion
     if (data.positionId) {
       const regionId = await getRegionFromPosition(data.positionId);
       if (!regionId) throw new ForbiddenError();
@@ -155,12 +158,22 @@ export const updateUser = async (
       await positionRepository.updatePositionCurrentHolder(data.positionId, userId);
     }
   }
+
   const updateFields: Record<string, unknown> = {};
   if (data.firstName !== undefined) updateFields.firstName = data.firstName;
   if (data.lastName !== undefined) updateFields.lastName = data.lastName;
   if (data.email !== undefined) updateFields.email = data.email;
   if (data.positionId !== undefined) updateFields.position = data.positionId;
 
+  if (data.positionId) {
+    const newPosition = await positionRepository.findPositionById(data.positionId);
+    if (newPosition && newPosition.type !== user.role) {
+      updateFields.role = newPosition.type;
+      if (newPosition.type === "director" || newPosition.type === "deputy") {
+        updateFields.grade = null;
+      }
+    }
+  }
   const updated = await userRepository.updateUserById(userId, updateFields);
   return updated!;
 };

@@ -73,7 +73,7 @@ export const ManagementUsers = () => {
       <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto">
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-celery-500 pointer-events-none" />
+            <Search className="absolute left-3 top-3 size-4 text-celery-500 pointer-events-none" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -81,7 +81,7 @@ export const ManagementUsers = () => {
               className="pl-9"
             />
           </div>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setCreateOpen(true)} className="h-fit">
             <Plus className="size-4 mr-2" />
             New user
           </Button>

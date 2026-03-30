@@ -5,7 +5,7 @@ import { ChangePasswordForm } from "./ChangePasswordForm";
 
 export const ForcePasswordChange = () => {
   const navigate = useNavigate();
-  const { user, updateAuth } = useAuthStore();
+  const { user } = useAuthStore();
 
   return (
     <div className="min-h-screen bg-bg-base flex items-center justify-center px-4 py-8">
@@ -20,12 +20,7 @@ export const ForcePasswordChange = () => {
             </p>
           </div>
           <Card elevated>
-            <ChangePasswordForm
-              onSuccess={() => {
-                updateAuth(null, { mustChangePassword: false });
-                navigate("/");
-              }}
-            />
+            <ChangePasswordForm onSuccess={() => navigate("/")} />
           </Card>
         </div>
         <div className="landscape-image">

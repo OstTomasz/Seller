@@ -246,6 +246,7 @@ export const userForInviteSchema = z.object({
   lastName: z.string(),
   numericId: z.number(),
   isActive: z.boolean(),
+  role: userRoleSchema,
   position: z
     .object({
       _id: z.string(),

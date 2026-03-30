@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Button, Select } from "@/components/ui";
 import {
   useAssignUser,
@@ -19,6 +19,10 @@ export const AssignUserModal = ({ position, availableUsers, onClose }: Props) =>
   const { mutate: assignUser, isPending: isAssigning } = useAssignUser();
   const { mutate: removeFromPos, isPending: isRemoving } = useRemoveFromPosition();
   const { mutate: deactivate, isPending: isDeactivating } = useDeactivateUser();
+
+  useEffect(() => {
+    if (!position) setSelectedUserId("");
+  }, [position]);
 
   const handleRemoveFromPosition = () => {
     if (!position?.currentHolder) return;
