@@ -173,13 +173,7 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
   return (
     <>
       {/* proper client modal */}
-      <Modal
-        isOpen={isOpen}
-        onClose={discard.tryClose}
-        title="Add client"
-        size="lg"
-        disableOutsideClick
-      >
+      <Modal isOpen={isOpen} onClose={discard.tryClose} title="Add client" size="lg">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto pr-1">
             {/* ── Basic info ──────────────────────────────────────────── */}
@@ -363,7 +357,6 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
         }}
         title="Client is archived"
         size="sm"
-        disableOutsideClick
       >
         <div className="flex flex-col gap-6">
           {unarchiveRequestSent ? (

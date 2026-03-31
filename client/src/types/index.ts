@@ -18,6 +18,8 @@ export type {
   UserForInvite,
   IInvitationWithInvitee,
   IUserProfile,
+  IPositionHistory,
+  IUserNote,
 } from "@seller/shared/types";
 
 import {
@@ -184,4 +186,10 @@ export interface PositionWithHolder {
     grade: number | null;
     isActive: boolean;
   } | null;
+}
+
+export interface ArchivedUser extends User {
+  archivedAt: string;
+  archivedReason: string;
+  archivedPositionCode: string | null;
 }

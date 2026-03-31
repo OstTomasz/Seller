@@ -25,6 +25,7 @@ import "./models/Notification";
 import "./models/Event";
 import "./models/Invitation";
 import "./models/UserProfile";
+import "./models/PositionHistory";
 
 import { authenticate } from "./middleware/auth.middleware";
 import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";

@@ -68,6 +68,7 @@ export const CreateEventModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [isOpen], // recalculate only when modal opens — not on every render
   );
+
   const createEvent = useCreateEvent();
 
   const form = useForm<EventFormValues>({
@@ -106,13 +107,7 @@ export const CreateEventModal = ({
 
   return (
     <>
-      <Modal
-        isOpen={isOpen}
-        onClose={discard.tryClose}
-        title="New event"
-        size="md"
-        disableOutsideClick
-      >
+      <Modal isOpen={isOpen} onClose={discard.tryClose} title="New event" size="md">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <EventForm
             form={form}

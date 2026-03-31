@@ -229,13 +229,7 @@ export const EditAddressesModal = ({ isOpen, onClose, client }: EditAddressesMod
 
   return (
     <>
-      <Modal
-        isOpen={isOpen}
-        onClose={discard.tryClose}
-        disableOutsideClick={true}
-        title="Edit adresses"
-        size="lg"
-      >
+      <Modal isOpen={isOpen} onClose={discard.tryClose} title="Edit adresses" size="lg">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto pr-1">
             {addressFields.map((addressField, addrIdx) => (

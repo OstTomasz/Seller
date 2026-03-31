@@ -55,6 +55,10 @@ export interface IUser extends Document {
   createdBy: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
+  archivedAt: Date | null;
+  archivedReason: string | null;
+  archivedPositionCode: string | null;
+  notes: IMongoNote[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 

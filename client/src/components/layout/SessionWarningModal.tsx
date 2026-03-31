@@ -36,13 +36,7 @@ export const SessionWarningModal = ({ isOpen, onExtend, onLogout }: SessionWarni
   const timeDisplay = `${minutes}:${seconds.toString().padStart(2, "0")}`;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onExtend}
-      title="Session expiring"
-      size="sm"
-      disableOutsideClick
-    >
+    <Modal isOpen={isOpen} onClose={onExtend} title="Session expiring" size="sm">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col items-center gap-3 py-2">
           <Clock className="h-8 w-8 text-celery-500" />

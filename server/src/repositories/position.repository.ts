@@ -48,3 +48,10 @@ export const findPositionsByType = async (type: string) =>
 
 export const deletePositionById = async (positionId: string) =>
   Position.findByIdAndDelete(positionId);
+
+export const updatePositionCode = async (positionId: string, code: string) =>
+  Position.findByIdAndUpdate(
+    positionId,
+    { code: code.toUpperCase() },
+    { returnDocument: "after", runValidators: true },
+  );

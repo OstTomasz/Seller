@@ -49,13 +49,7 @@ export const RequestArchiveModal = ({ client, onClose }: RequestArchiveModalProp
   };
 
   return (
-    <Modal
-      isOpen={client !== null}
-      onClose={onClose}
-      title="Request archive"
-      size="sm"
-      disableOutsideClick
-    >
+    <Modal isOpen={client !== null} onClose={onClose} title="Request archive" size="sm">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         <div className="flex flex-col gap-1">
           <div className="p-3 rounded-lg bg-bg-base border border-celery-700 mb-2">

@@ -93,13 +93,7 @@ export const EditEventModal = ({ event, onClose }: EditEventModalProps) => {
 
   return (
     <>
-      <Modal
-        isOpen={event !== null}
-        onClose={discard.tryClose}
-        title="Edit event"
-        size="md"
-        disableOutsideClick
-      >
+      <Modal isOpen={event !== null} onClose={discard.tryClose} title="Edit event" size="md">
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <EventForm
             form={form}

@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import * as userService from "../services/user.service";
+import * as positionHistoryRepository from "../repositories/positionHistory.repository";
+import * as userRepository from "../repositories/user.repository";
 import { UserRole } from "../types";
-import { BadRequestError } from "../utils/errors";
+import { BadRequestError, NotFoundError } from "../utils/errors";
 import { generateTokenForUser } from "../services/auth.service";
 import { wrapAsync } from "../utils/wrapAsync";
 
@@ -22,24 +24,16 @@ export const getUserById = wrapAsync(
 
 export const createUser = wrapAsync(
   async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-    const { firstName, lastName, email, temporaryPassword, role, grade, positionId } = req.body;
+    const { firstName, lastName, email, temporaryPassword, grade, positionId, phone } = req.body;
 
-    if (!firstName || !lastName || !email || !temporaryPassword || !role) {
+    if (!firstName || !lastName || !email || !temporaryPassword || !positionId || !phone) {
       throw new BadRequestError(
-        "firstName, lastName, email, temporaryPassword and role are required",
+        "firstName, lastName, email, phone, temporaryPassword and positionId are required",
       );
     }
 
     const user = await userService.createUser(
-      {
-        firstName,
-        lastName,
-        email,
-        temporaryPassword,
-        role,
-        grade,
-        positionId,
-      },
+      { firstName, lastName, email, temporaryPassword, phone, grade, positionId },
       req.userId!,
       req.userRole as UserRole,
     );
@@ -139,5 +133,56 @@ export const getUsersForStructure = wrapAsync(
 export const removeFromPosition = wrapAsync(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };
   const user = await userService.removeUserFromPosition(id, req.userId!, req.userRole as UserRole);
+  res.status(200).json({ user });
+});
+
+export const archiveUser = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const { reason } = req.body;
+  if (!reason) throw new BadRequestError("reason is required");
+  const user = await userService.archiveUser(id, reason, req.userId!, req.userRole as UserRole);
+  res.status(200).json({ user });
+});
+
+export const getUserPositionHistory = wrapAsync(
+  async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params as { id: string };
+    const user = await userRepository.findUserById(id);
+    if (!user) throw new NotFoundError("User not found");
+    const history = await positionHistoryRepository.findHistoryByPositionId(id);
+    res.status(200).json({ history });
+  },
+);
+
+export const getArchivedUsers = wrapAsync(async (_req: Request, res: Response): Promise<void> => {
+  const users = await userService.getArchivedUsers();
+  res.status(200).json({ users });
+});
+
+export const addUserNote = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params as { id: string };
+  const { content } = req.body;
+  if (!content) throw new BadRequestError("content is required");
+  const user = await userService.addUserNote(id, content, req.userId!, req.userRole as UserRole);
+  res.status(200).json({ user });
+});
+
+export const updateUserNote = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id, noteId } = req.params as { id: string; noteId: string };
+  const { content } = req.body;
+  if (!content) throw new BadRequestError("content is required");
+  const user = await userService.updateUserNote(
+    id,
+    noteId,
+    content,
+    req.userId!,
+    req.userRole as UserRole,
+  );
+  res.status(200).json({ user });
+});
+
+export const deleteUserNote = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { id, noteId } = req.params as { id: string; noteId: string };
+  const user = await userService.deleteUserNote(id, noteId, req.userId!, req.userRole as UserRole);
   res.status(200).json({ user });
 });

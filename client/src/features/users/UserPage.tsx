@@ -3,6 +3,7 @@ import { Breadcrumbs, Card, Loader, FetchError } from "@/components/ui";
 import { Phone, Briefcase, Calendar, FileText, LucideIcon } from "lucide-react";
 import { useUserDetails } from "./hooks/useUserDetails";
 import logoPlaceholder from "@/assets/logo.avif";
+import { formatDate } from "@/lib/utils";
 
 // ── Shared sub-components (reuse pattern from ClientPage) ─────────────────────
 
@@ -19,15 +20,6 @@ const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <span className="text-sm text-celery-200 mx-auto">{value ?? "—"}</span>
   </div>
 );
-
-const formatDate = (val: string | null) => {
-  if (!val) return "—";
-  return new Date(val).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -112,7 +104,7 @@ export const UserPage = () => {
       <Card>
         <SectionHeader icon={Calendar} title="Employment" />
         <div className="grid md:grid-cols-3 gap-6 w-[90%] mx-auto">
-          <Field label="Hired at" value={formatDate(user.createdAt)} />
+          <Field label="Hired at" value={formatDate(user.createdAt, true)} />
           <Field label="Workplace" value={profile?.workplace ?? null} />
           <Field label="Last login" value={formatDate(profile?.lastLoginAt ?? null)} />
         </div>

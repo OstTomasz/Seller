@@ -135,6 +135,7 @@ export const InviteUsersModal = ({
   const [localSelected, setLocalSelected] = useState<string[]>(selectedIds);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [discardOpen, setDiscardOpen] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   // Sync selection when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -144,14 +145,13 @@ export const InviteUsersModal = ({
     }
   }, [isOpen, selectedIds]);
 
+  useEffect(() => {
+    if (!isOpen) setIsDirty(false);
+  }, [isOpen]);
+
   const hierarchy = useMemo(() => {
     return buildHierarchy(users, excludeUserId);
   }, [users, excludeUserId]);
-
-  const isDirty = useMemo(() => {
-    if (localSelected.length !== selectedIds.length) return true;
-    return localSelected.some((id) => !selectedIds.includes(id));
-  }, [localSelected, selectedIds]);
 
   // Filter hierarchy nodes for display based on search
   const visibleHierarchy = useMemo(() => {
@@ -241,7 +241,10 @@ export const InviteUsersModal = ({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-celery-500" />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setIsDirty(true);
+              }}
               placeholder="Search by name, ID or code…"
               className="pl-9"
             />

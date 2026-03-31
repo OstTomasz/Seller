@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import type { User, UserForInvite } from "@/types";
+import type { ArchivedUser, User, UserForInvite } from "@/types";
 import type { UserWithProfile } from "@/types";
 
 export const usersApi = {
@@ -46,4 +46,18 @@ export const usersApi = {
   }) => api.post<{ user: User }>("/users", payload),
 
   removeFromPosition: (id: string) => api.patch<{ user: User }>(`/users/${id}/remove-position`),
+
+  archiveUser: (id: string, reason: string) =>
+    api.patch<{ user: User }>(`/users/${id}/archive`, { reason }),
+
+  getArchivedUsers: () => api.get<{ users: ArchivedUser[] }>("/users/archived"),
+
+  addNote: (id: string, content: string) =>
+    api.post<{ user: User }>(`/users/${id}/notes`, { content }),
+
+  updateNote: (id: string, noteId: string, content: string) =>
+    api.patch<{ user: User }>(`/users/${id}/notes/${noteId}`, { content }),
+
+  deleteNote: (id: string, noteId: string) =>
+    api.delete<{ user: User }>(`/users/${id}/notes/${noteId}`),
 };

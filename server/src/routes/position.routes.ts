@@ -6,6 +6,8 @@ const router = Router();
 
 router.get("/", positionController.getPositions);
 router.post("/", requireRole("director", "deputy"), positionController.createPosition);
+router.patch("/:id/code", requireRole("director", "deputy"), positionController.updateCode);
 router.delete("/:id", requireRole("director", "deputy"), positionController.deletePosition);
+router.get("/:id/history", positionController.getPositionHistory);
 
 export default router;

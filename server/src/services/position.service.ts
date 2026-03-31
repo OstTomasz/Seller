@@ -68,3 +68,19 @@ export const deleteSalespersonPosition = async (
 
   await positionRepository.deletePositionById(positionId);
 };
+
+export const updatePositionCode = async (
+  positionId: string,
+  code: string,
+  requesterId: string,
+  requesterRole: UserRole,
+) => {
+  const position = await positionRepository.findPositionById(positionId);
+  if (!position) throw new NotFoundError("Position not found");
+
+  if (requesterRole === "deputy" && position.region) {
+    await verifyDeputyRegionAccess(requesterId, position.region.toString());
+  }
+
+  return positionRepository.updatePositionCode(positionId, code);
+};

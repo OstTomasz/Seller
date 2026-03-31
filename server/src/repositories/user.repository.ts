@@ -64,6 +64,7 @@ export const createUser = async (data: {
   lastName: string;
   email: string;
   password: string;
+  phone: string;
   role: UserRole;
   grade: UserGrade | null;
   position: string | null;
@@ -74,6 +75,7 @@ export const createUser = async (data: {
     lastName: data.lastName,
     email: data.email,
     password: data.password,
+    phone: data.phone,
     role: data.role,
     grade: data.grade,
     position: data.position,
@@ -140,3 +142,27 @@ export const findUserByIdWithPosition = async (userId: string) =>
         populate: { path: "parentRegion", select: "name prefix" },
       },
     });
+
+export const findArchivedUsers = async () =>
+  User.find({ isActive: false }).select("-password").sort({ archivedAt: -1 });
+
+export const addNoteToUser = async (userId: string, content: string, createdBy: string) =>
+  User.findByIdAndUpdate(
+    userId,
+    { $push: { notes: { content, createdBy, createdAt: new Date(), updatedAt: new Date() } } },
+    { returnDocument: "after" },
+  ).select("-password");
+
+export const updateUserNote = async (userId: string, noteId: string, content: string) =>
+  User.findOneAndUpdate(
+    { _id: userId, "notes._id": noteId },
+    { $set: { "notes.$.content": content, "notes.$.updatedAt": new Date() } },
+    { returnDocument: "after" },
+  ).select("-password");
+
+export const deleteUserNote = async (userId: string, noteId: string) =>
+  User.findByIdAndUpdate(
+    userId,
+    { $pull: { notes: { _id: noteId } } },
+    { returnDocument: "after" },
+  ).select("-password");

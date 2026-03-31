@@ -71,13 +71,7 @@ export const EditBasicModal = ({ isOpen, onClose, client }: EditBasicModalProps)
 
   return (
     <>
-      <Modal
-        isOpen={isOpen}
-        onClose={discard.tryClose}
-        disableOutsideClick={true}
-        title="Edit basic info"
-        size="lg"
-      >
+      <Modal isOpen={isOpen} onClose={discard.tryClose} title="Edit basic info" size="lg">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">

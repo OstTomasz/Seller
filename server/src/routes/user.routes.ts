@@ -18,13 +18,24 @@ router.get(
 router.get("/for-structure", userController.getUsersForStructure);
 router.get("/me/profile", userProfileController.getMyProfile);
 router.patch("/me/profile", userProfileController.upsertMyProfile);
+router.get("/archived", requireRole("director", "deputy"), userController.getArchivedUsers);
 router.get("/:id/details", userProfileController.getUserWithProfile);
 router.get("/:id", userController.getUserById);
 router.patch("/:id/profile", userProfileController.upsertUserProfile);
 
 // Director and deputy can create and manage users
 router.post("/", requireRole("director", "deputy"), userController.createUser);
-router.patch("/:id", requireRole("director", "deputy"), userController.updateUser);
+router.post("/:id/notes", requireRole("director", "deputy"), userController.addUserNote);
+router.patch(
+  "/:id/notes/:noteId",
+  requireRole("director", "deputy"),
+  userController.updateUserNote,
+);
+router.delete(
+  "/:id/notes/:noteId",
+  requireRole("director", "deputy"),
+  userController.deleteUserNote,
+);
 router.patch("/:id/role", requireRole("director"), userController.updateUserRoleAndGrade);
 router.patch(
   "/:id/toggle-active",
@@ -41,5 +52,8 @@ router.patch(
   requireRole("director", "deputy"),
   userController.removeFromPosition,
 );
+router.patch("/:id/archive", requireRole("director", "deputy"), userController.archiveUser);
+
+router.patch("/:id", requireRole("director", "deputy"), userController.updateUser);
 
 export default router;

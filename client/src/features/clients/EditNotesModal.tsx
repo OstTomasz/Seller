@@ -98,7 +98,7 @@ export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditN
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} disableOutsideClick={true} title="Notes" size="lg">
+      <Modal isOpen={isOpen} onClose={onClose} title="Notes" size="lg">
         <div className="flex flex-col gap-4">
           {/* ── notes list ────────────────────────────────────────────────── */}
           <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-1">

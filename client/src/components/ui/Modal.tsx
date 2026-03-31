@@ -1,3 +1,4 @@
+// client/src/components/ui/Modal.tsx — przywróć do oryginalnej wersji:
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
@@ -11,7 +12,6 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   size?: "sm" | "md" | "lg";
-  disableOutsideClick?: boolean;
 }
 
 const sizeStyles = {
@@ -20,15 +20,7 @@ const sizeStyles = {
   lg: "max-w-2xl",
 };
 
-export const Modal = ({
-  isOpen,
-  onClose,
-  disableOutsideClick = false,
-  title,
-  children,
-  className,
-  size = "md",
-}: ModalProps) => {
+export const Modal = ({ isOpen, onClose, title, children, className, size = "md" }: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,15 +30,12 @@ export const Modal = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-
       const openPanels = document.querySelectorAll("[data-modal-panel]");
       const lastPanel = openPanels[openPanels.length - 1];
-
       if (panelRef.current && lastPanel === panelRef.current) {
         onClose();
       }
     };
-
     if (isOpen) document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
@@ -71,7 +60,6 @@ export const Modal = ({
           aria-modal="true"
           aria-labelledby={title ? "modal-title" : undefined}
           className="fixed inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm"
-          onClick={disableOutsideClick ? undefined : onClose}
         >
           <motion.div
             key="modal-panel"

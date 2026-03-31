@@ -313,3 +313,29 @@ export const userWithProfileSchema = z.object({
   profile: userProfileSchema.nullable(),
 });
 export type IUserWithProfile = z.infer<typeof userWithProfileSchema>;
+
+export const positionHistorySchema = z.object({
+  _id: z.string(),
+  positionId: z.string(),
+  userId: z.union([
+    z.string(),
+    z.object({
+      _id: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      numericId: z.number(),
+    }),
+  ]),
+  assignedAt: z.string(),
+  removedAt: z.string().nullable(),
+});
+export type IPositionHistory = z.infer<typeof positionHistorySchema>;
+
+export const userNoteSchema = z.object({
+  _id: z.string(),
+  content: z.string(),
+  createdBy: z.union([z.string(), noteAuthorSchema]).nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type IUserNote = z.infer<typeof userNoteSchema>;

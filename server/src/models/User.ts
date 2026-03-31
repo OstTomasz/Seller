@@ -44,7 +44,19 @@ const userSchema = new Schema<IUser>(
       type: Number,
       unique: true,
     },
+    archivedAt: { type: Date, default: null },
+    archivedReason: { type: String, default: null, trim: true },
+    archivedPositionCode: { type: String, default: null, trim: true },
+    notes: [
+      {
+        content: { type: String, required: true, trim: true },
+        createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
+
   { timestamps: true },
 );
 

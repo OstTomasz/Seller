@@ -5,6 +5,7 @@ import { useMyProfile } from "./hooks/useMyProfile";
 import { useUpdateMyProfile } from "./hooks/useMyProfile";
 import logoPlaceholder from "@/assets/logo.avif";
 import { ChangePasswordForm } from "../auth/ChangePasswordForm";
+import { formatDate } from "@/lib/utils";
 
 const SectionHeader = ({ icon: Icon, title }: { icon: LucideIcon; title: string }) => (
   <div className="flex items-center gap-2 mb-4 w-full justify-center">
@@ -12,17 +13,6 @@ const SectionHeader = ({ icon: Icon, title }: { icon: LucideIcon; title: string 
     <h2 className="text-sm font-semibold text-celery-500 uppercase tracking-wider">{title}</h2>
   </div>
 );
-
-const formatDate = (val: string | null) => {
-  if (!val) return "—";
-  return new Date(val).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 export const SettingsPage = () => {
   const { data, isLoading, isError } = useMyProfile();
@@ -178,7 +168,9 @@ export const SettingsPage = () => {
         <div className="grid grid-cols-2 gap-6 w-[90%] mx-auto">
           <div className="flex flex-col gap-0.5">
             <span className="text-xs text-celery-600 mx-auto">Member since</span>
-            <span className="text-sm text-celery-200 mx-auto">{formatDate(user.createdAt)}</span>
+            <span className="text-sm text-celery-200 mx-auto">
+              {formatDate(user.createdAt, true)}
+            </span>
           </div>
           <div className="flex flex-col gap-0.5">
             <span className="text-xs text-celery-600 mx-auto">Last login</span>

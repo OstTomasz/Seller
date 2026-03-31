@@ -9,6 +9,7 @@ import { EditBasicModal } from "./EditBasicModal";
 import { EditAddressesModal } from "./EditAddressesModal";
 import { EditNotesModal } from "./EditNotesModal";
 import { EditAssignmentModal } from "./EditAssignmentModal";
+import { formatDate } from "@/lib/utils";
 
 // v2
 // const STATUS_LABELS: Record<string, string> = {
@@ -23,17 +24,6 @@ import { EditAssignmentModal } from "./EditAssignmentModal";
 //   inactive: "error",
 //   archived: "muted",
 // };
-
-const formatDate = (date: string | null) => {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
 
 const SectionHeader = ({
   icon: Icon,
@@ -290,8 +280,8 @@ export const ClientPage = () => {
         <SectionHeader icon={Clock} title="Others" />
         <div className="flex flex-col gap-4 w-[90%] mx-auto items-center">
           <div className="flex gap-10">
-            <Field label="Created at" value={formatDate(client.createdAt)} />
-            <Field label="Last updated" value={formatDate(client.updatedAt)} />
+            <Field label="Created at" value={formatDate(client.createdAt, true)} />
+            <Field label="Last updated" value={formatDate(client.updatedAt, true)} />
           </div>
           {client.inactivityReason ? (
             <Field label="Inactivity reason" value={client.inactivityReason} />

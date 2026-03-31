@@ -3,6 +3,7 @@ import { ForbiddenError, NotFoundError, BadRequestError, ConflictError } from ".
 import * as userRepository from "../repositories/user.repository";
 import * as positionRepository from "../repositories/position.repository";
 import * as regionRepository from "../repositories/region.repository";
+import * as positionHistoryRepository from "../repositories/positionHistory.repository";
 import { getPositionIdsInSuperregion } from "../utils/rbac";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -61,57 +62,49 @@ export const createUser = async (
     lastName: string;
     email: string;
     temporaryPassword: string;
-    role: UserRole;
+    phone: string;
     grade?: UserGrade | null;
-    positionId?: string | null;
+    positionId: string;
   },
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IUser> => {
+  // Validate position exists and is vacant
+  const position = await positionRepository.findPositionById(data.positionId);
+  if (!position) throw new NotFoundError("Position not found");
+  if (position.currentHolder) throw new BadRequestError("Position is already occupied");
+
+  // Deputy can only create users in their superregion
   if (requesterRole === "deputy") {
-    if (data.role === "director" || data.role === "deputy") {
-      throw new ForbiddenError();
-    }
-
-    if (!data.positionId) throw new ForbiddenError();
-
-    // verify position belongs to deputy's superregion
     const regionId = await getRegionFromPosition(data.positionId);
     if (!regionId) throw new ForbiddenError();
     await verifyDeputyRegionAccess(requesterId, regionId);
   }
 
-  if (!data.email.endsWith("@seller.com")) {
+  if (!data.email.endsWith("@seller.com"))
     throw new BadRequestError("Email must end with @seller.com");
-  }
 
   const existingUser = await userRepository.findUserByEmail(data.email);
   if (existingUser) throw new ConflictError("User with this email already exists");
 
-  // verify position is vacant
-  if (data.positionId) {
-    const position = await positionRepository.findPositionById(data.positionId);
-    if (!position) throw new NotFoundError("Position not found");
-    if (position.currentHolder) {
-      throw new BadRequestError("Position is already occupied");
-    }
-  }
+  // Role derived from position type
+  const role = position.type as UserRole;
+  const grade = role === "director" || role === "deputy" ? null : (data.grade ?? null);
 
   const user = await userRepository.createUser({
     firstName: data.firstName,
     lastName: data.lastName,
     email: data.email,
     password: data.temporaryPassword,
-    role: data.role,
-    grade: data.grade ?? null,
-    position: data.positionId ?? null,
+    role,
+    grade,
+    position: data.positionId,
     createdBy: requesterId,
+    phone: data.phone,
   });
 
-  // assign user to position
-  if (data.positionId) {
-    await positionRepository.updatePositionCurrentHolder(data.positionId, user._id.toString());
-  }
+  await positionRepository.updatePositionCurrentHolder(data.positionId, user._id.toString());
+  await positionHistoryRepository.createHistoryEntry(data.positionId, user._id.toString());
 
   return user;
 };
@@ -148,6 +141,7 @@ export const updateUser = async (
   if (data.positionId !== undefined) {
     if (user.position) {
       await positionRepository.clearPositionCurrentHolder(user.position.toString());
+      await positionHistoryRepository.closeHistoryEntry(user.position.toString(), userId);
     }
     if (data.positionId) {
       const newPosition = await positionRepository.findPositionById(data.positionId);
@@ -156,6 +150,7 @@ export const updateUser = async (
         throw new BadRequestError("Position is already occupied");
       }
       await positionRepository.updatePositionCurrentHolder(data.positionId, userId);
+      await positionHistoryRepository.createHistoryEntry(data.positionId, userId);
     }
   }
 
@@ -307,6 +302,119 @@ export const removeUserFromPosition = async (
   }
 
   await positionRepository.clearPositionCurrentHolder(user.position.toString());
+  await positionHistoryRepository.closeHistoryEntry(user.position.toString(), userId);
   const updated = await userRepository.updateUserById(userId, { position: null });
+  return updated!;
+};
+
+export const archiveUser = async (
+  userId: string,
+  reason: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser> => {
+  const user = await userRepository.findRawUserById(userId);
+  if (!user) throw new NotFoundError("User not found");
+  if (userId === requesterId) throw new BadRequestError("Cannot archive yourself");
+  if (!user.isActive) throw new BadRequestError("User is already archived");
+
+  if (requesterRole === "deputy") {
+    if (user.position) await verifyDeputyUserAccess(requesterId, user);
+  }
+
+  const positionCode = null as string | null;
+  let resolvedCode: string | null = positionCode;
+
+  if (user.position) {
+    const pos = await positionRepository.findPositionById(user.position.toString());
+    resolvedCode = pos?.code ?? null;
+    await positionRepository.clearPositionCurrentHolder(user.position.toString());
+    await positionHistoryRepository.closeHistoryEntry(user.position.toString(), userId);
+  }
+
+  const updated = await userRepository.updateUserById(userId, {
+    isActive: false,
+    position: null,
+    archivedAt: new Date(),
+    archivedReason: reason,
+    archivedPositionCode: resolvedCode,
+  });
+
+  return updated!;
+};
+
+export const getArchivedUsers = async () => userRepository.findArchivedUsers();
+
+export const addUserNote = async (
+  targetUserId: string,
+  content: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser> => {
+  if (requesterRole !== "director" && requesterRole !== "deputy") throw new ForbiddenError();
+
+  const user = await userRepository.findRawUserById(targetUserId);
+  if (!user) throw new NotFoundError("User not found");
+
+  if (requesterRole === "deputy") {
+    if (user.position) await verifyDeputyUserAccess(requesterId, user);
+  }
+
+  const updated = await userRepository.addNoteToUser(targetUserId, content, requesterId);
+  return updated!;
+};
+
+export const updateUserNote = async (
+  targetUserId: string,
+  noteId: string,
+  content: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser> => {
+  if (requesterRole !== "director" && requesterRole !== "deputy") throw new ForbiddenError();
+
+  const user = await userRepository.findUserById(targetUserId);
+  if (!user) throw new NotFoundError("User not found");
+
+  const note = (
+    user as unknown as {
+      notes: { _id: { toString(): string }; createdBy: { toString(): string } }[];
+    }
+  ).notes.find((n) => n._id.toString() === noteId);
+  if (!note) throw new NotFoundError("Note not found");
+
+  // Deputy can only edit own notes
+  if (requesterRole === "deputy" && note.createdBy.toString() !== requesterId) {
+    throw new ForbiddenError();
+  }
+
+  const updated = await userRepository.updateUserNote(targetUserId, noteId, content);
+  return updated!;
+};
+
+export const deleteUserNote = async (
+  targetUserId: string,
+  noteId: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser> => {
+  if (requesterRole !== "director" && requesterRole !== "deputy") throw new ForbiddenError();
+
+  const user = await userRepository.findUserById(targetUserId);
+  if (!user) throw new NotFoundError("User not found");
+
+  const note = (
+    user as unknown as {
+      notes: { _id: { toString(): string }; createdBy: { toString(): string } }[];
+    }
+  ).notes.find((n) => n._id.toString() === noteId);
+  if (!note) throw new NotFoundError("Note not found");
+
+  // Deputy can only delete own notes, director can delete all
+  if (requesterRole === "deputy" && note.createdBy.toString() !== requesterId) {
+    throw new ForbiddenError();
+  }
+
+  const updated = await userRepository.deleteUserNote(targetUserId, noteId);
   return updated!;
 };

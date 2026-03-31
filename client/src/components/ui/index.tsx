@@ -12,5 +12,7 @@ export { Loader } from "./Loader";
 export { FetchError } from "./FetchError";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { Dropdown } from "./Dropdown";
+export { SortableHeader } from "./SortableHeader";
+export { Pagination } from "./Pagination";
 
 export type { BreadcrumbItem } from "./Breadcrumbs";
