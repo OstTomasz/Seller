@@ -31,6 +31,7 @@ import {
   type IInvitation,
   eventTypeSchema,
   type IUserProfile,
+  IUserNote,
 } from "@seller/shared/types";
 import { stringOrDate } from "react-big-calendar";
 import z from "zod";
@@ -65,6 +66,7 @@ export interface User extends IUserBase {
   position: Position | null;
   createdAt: string;
   phone: string | null;
+  notes?: IUserNote[];
 }
 
 export interface Client extends Omit<IClientBase, "notes"> {

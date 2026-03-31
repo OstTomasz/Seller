@@ -141,7 +141,8 @@ export const findUserByIdWithPosition = async (userId: string) =>
         path: "region",
         populate: { path: "parentRegion", select: "name prefix" },
       },
-    });
+    })
+    .populate("notes.createdBy", "firstName lastName");
 
 export const findArchivedUsers = async () =>
   User.find({ isActive: false }).select("-password").sort({ archivedAt: -1 });

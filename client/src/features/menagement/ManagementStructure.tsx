@@ -485,12 +485,24 @@ export const ManagementStructure = () => {
                           </span>
                         </button>
                         {isDirector && deputyHolder ? (
-                          <ActionBtn
-                            icon={UserX}
-                            onClick={() => setAssignPosition(sr.deputyPosition)}
-                            title="Remove deputy"
-                            variant="danger"
-                          />
+                          <div className="flex items-center gap-0.5">
+                            <ActionBtn
+                              icon={Pencil}
+                              onClick={() => {
+                                const u = allUsers.find(
+                                  (u: UserForInvite) => u._id === deputyHolder._id,
+                                );
+                                if (u) setEditUser(u as unknown as User);
+                              }}
+                              title="Edit deputy"
+                            />
+                            <ActionBtn
+                              icon={UserX}
+                              onClick={() => setAssignPosition(sr.deputyPosition)}
+                              title="Remove deputy"
+                              variant="danger"
+                            />
+                          </div>
                         ) : null}
                       </div>
                     ) : null}

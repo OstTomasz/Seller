@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Modal, Button, Input, Select } from "@/components/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Modal, Button, Input, Select, Textarea } from "@/components/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usersApi } from "@/api/users";
 import { toast } from "sonner";
-import type { User } from "@/types";
+import type { INoteAuthor, IUserNote, User } from "@/types";
+import { useAuthStore } from "@/store/authStore";
+import { Plus, Trash2 } from "lucide-react";
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
@@ -20,7 +22,14 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-// ── Hook ──────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const getNoteAuthor = (createdBy: string | INoteAuthor | null): string => {
+  if (!createdBy || typeof createdBy === "string") return "Unknown";
+  return `${createdBy.firstName} ${createdBy.lastName}`;
+};
+
+// ── Hooks ──────────────────────────────────────────────────────────────────────
 
 const useUpdateUser = (userId: string) => {
   const qc = useQueryClient();
@@ -36,6 +45,26 @@ const useUpdateUser = (userId: string) => {
   });
 };
 
+const useUserNotes = (userId: string) => {
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["user-details", userId] });
+    qc.invalidateQueries({ queryKey: ["all-users"] });
+  };
+
+  const add = useMutation({
+    mutationFn: (content: string) => usersApi.addNote(userId, content),
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (noteId: string) => usersApi.deleteNote(userId, noteId),
+    onSuccess: invalidate,
+  });
+
+  return { add, remove };
+};
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -47,8 +76,19 @@ interface Props {
 
 export const EditUserModal = ({ user, onClose }: Props) => {
   const { mutate, isPending } = useUpdateUser(user?._id ?? "");
+  const { user: currentUser } = useAuthStore();
+  const isDirector = currentUser?.role === "director";
 
   const showGrade = user?.role === "advisor" || user?.role === "salesperson";
+
+  const { data: userDetails } = useQuery({
+    queryKey: ["user-details", user?._id ?? ""],
+    queryFn: () => usersApi.getDetails(user!._id).then((r) => r.data),
+    enabled: !!user?._id,
+  });
+  const notes = (userDetails?.user as unknown as { notes?: IUserNote[] })?.notes ?? [];
+  const { add: addNote, remove: removeNote } = useUserNotes(user?._id ?? "");
+  const [newNote, setNewNote] = useState("");
 
   const {
     register,
@@ -101,35 +141,121 @@ export const EditUserModal = ({ user, onClose }: Props) => {
     );
   };
 
-  return (
-    <Modal isOpen={!!user} onClose={onClose} title="Edit user" size="md">
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        {/* Basic info */}
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="First name" error={errors.firstName?.message} {...register("firstName")} />
-          <Input label="Last name" error={errors.lastName?.message} {...register("lastName")} />
-        </div>
-        <Input label="Email" error={errors.email?.message} {...register("email")} />
-        <Input label="Phone" error={errors.phone?.message} {...register("phone")} />
-        {showGrade ? (
-          <Select
-            label="Grade"
-            error={errors.grade?.message}
-            options={[1, 2, 3, 4].map((g) => ({ value: String(g), label: String(g) }))}
-            placeholder="Select grade…"
-            {...register("grade")}
-          />
-        ) : null}
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    addNote.mutate(newNote.trim(), {
+      onSuccess: () => {
+        toast.success("Note added");
+        setNewNote("");
+      },
+      onError: () => toast.error("Failed to add note"),
+    });
+  };
 
-        <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
-          <Button variant="ghost" type="button" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={!isDirty || isPending}>
-            {isPending ? "Saving…" : "Save changes"}
-          </Button>
+  const handleDeleteNote = (noteId: string) => {
+    removeNote.mutate(noteId, {
+      onSuccess: () => toast.success("Note deleted"),
+      onError: () => toast.error("Failed to delete note"),
+    });
+  };
+
+  return (
+    <Modal isOpen={!!user} onClose={onClose} title="Edit user" size="lg">
+      <div className="flex flex-col gap-6">
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="First name"
+              error={errors.firstName?.message}
+              {...register("firstName")}
+            />
+            <Input label="Last name" error={errors.lastName?.message} {...register("lastName")} />
+          </div>
+          <Input label="Email" error={errors.email?.message} {...register("email")} />
+          <Input label="Phone" error={errors.phone?.message} {...register("phone")} />
+          {showGrade ? (
+            <Select
+              label="Grade"
+              error={errors.grade?.message}
+              options={[1, 2, 3, 4].map((g) => ({ value: String(g), label: String(g) }))}
+              placeholder="Select grade…"
+              {...register("grade")}
+            />
+          ) : null}
+          <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
+            <Button variant="ghost" type="button" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!isDirty || isPending}>
+              {isPending ? "Saving…" : "Save changes"}
+            </Button>
+          </div>
+        </form>
+
+        {/* Notes section */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-celery-700">
+          <h3 className="text-xs font-semibold text-celery-500 uppercase tracking-wider">Notes</h3>
+
+          {/* Existing notes */}
+          {notes.length > 0 ? (
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+              {notes.map((note) => {
+                const canDelete =
+                  isDirector ||
+                  (typeof note.createdBy !== "string" && note.createdBy?._id === currentUser?._id);
+                return (
+                  <div
+                    key={note._id}
+                    className="flex gap-2 p-3 rounded-lg border border-celery-700 bg-bg-base"
+                  >
+                    <div className="flex-1 flex flex-col gap-1">
+                      <p className="text-sm text-celery-300 whitespace-pre-wrap">{note.content}</p>
+                      <span className="text-xs text-celery-600">
+                        {getNoteAuthor(note.createdBy)} ·{" "}
+                        {new Date(note.createdAt).toLocaleDateString("pl-PL")}
+                      </span>
+                    </div>
+                    {canDelete ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteNote(note._id)}
+                        className="text-celery-600 hover:text-red-400 transition-colors shrink-0"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-celery-600">No notes yet.</p>
+          )}
+
+          {/* Add note */}
+          <div className="flex flex-col gap-2">
+            <Textarea
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="Add a note…"
+              rows={2}
+            />
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={handleAddNote}
+                disabled={!newNote.trim() || addNote.isPending}
+              >
+                <Plus className="size-3.5 mr-1" />
+                {addNote.isPending ? "Adding…" : "Add note"}
+              </Button>
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 };
