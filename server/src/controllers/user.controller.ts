@@ -45,11 +45,11 @@ export const createUser = wrapAsync(
 export const updateUser = wrapAsync(
   async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     const { id } = req.params as { id: string };
-    const { firstName, lastName, email, positionId } = req.body;
+    const { firstName, lastName, email, positionId, phone, grade } = req.body;
 
     const user = await userService.updateUser(
       id,
-      { firstName, lastName, email, positionId },
+      { firstName, lastName, email, positionId, phone, grade },
       req.userId!,
       req.userRole as UserRole,
     );

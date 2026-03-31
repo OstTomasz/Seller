@@ -181,6 +181,7 @@ export const InviteUsersModal = ({
 
   const toggle = (userId: string) => {
     if (lockedIds.includes(userId)) return;
+    setIsDirty(true);
     setLocalSelected((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
     );
@@ -189,6 +190,7 @@ export const InviteUsersModal = ({
   const toggleGroup = (ids: string[]) => {
     const unlocked = ids.filter((id) => !lockedIds.includes(id));
     const allSelected = unlocked.every((id) => localSelected.includes(id));
+    setIsDirty(true);
     setLocalSelected((prev) =>
       allSelected
         ? prev.filter((id) => !unlocked.includes(id))
@@ -243,7 +245,6 @@ export const InviteUsersModal = ({
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setIsDirty(true);
               }}
               placeholder="Search by name, ID or code…"
               className="pl-9"

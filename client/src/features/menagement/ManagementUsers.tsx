@@ -1,18 +1,25 @@
+// client/src/features/menagement/ManagementUsers.tsx
 import { useState, useMemo } from "react";
 import { Search, Plus } from "lucide-react";
-import { Input, Loader, FetchError, Button } from "@/components/ui";
+import { Input, Loader, FetchError, Button, Pagination } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 import { usersApi } from "@/api/users";
 import { useAuthStore } from "@/store/authStore";
 import { useAllPositions } from "./hooks/useManagementStructure";
 import { CreateUserModal } from "./modals/CreateUserModal";
-import type { User, UserRole, PositionWithHolder } from "@/types";
+import type { User, PositionWithHolder } from "@/types";
+import { EditUserModal } from "./modals/EditUserModal";
+
+const ROWS_PER_PAGE = [10, 20] as const;
 
 export const ManagementUsers = () => {
   const { user: currentUser } = useAuthStore();
   const isDirector = currentUser?.role === "director";
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState<10 | 20>(10);
 
   const {
     data: users,
@@ -33,9 +40,11 @@ export const ManagementUsers = () => {
   const filtered = useMemo(() => {
     if (!users) return [];
     const q = search.toLowerCase().trim();
-    let list = users;
 
-    // Deputy sees only their superregion's users
+    // Only active users
+    let list = users.filter((u) => u.isActive);
+
+    // Deputy sees only their superregion
     if (!isDirector) {
       const myPos = positions?.find(
         (p: PositionWithHolder) => p.type === "deputy" && p.currentHolder?._id === currentUser?._id,
@@ -61,12 +70,14 @@ export const ManagementUsers = () => {
     );
   }, [users, search, isDirector, positions, currentUser?._id]);
 
+  const totalPages = Math.ceil(filtered.length / rowsPerPage);
+  const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  // Reset page on search change
+  useMemo(() => setPage(1), [search]);
+
   if (isLoading) return <Loader label="users" />;
   if (isError) return <FetchError label="users" />;
-
-  const allowedRoles: UserRole[] = isDirector
-    ? ["advisor", "salesperson"]
-    : ["advisor", "salesperson"];
 
   return (
     <>
@@ -88,7 +99,7 @@ export const ManagementUsers = () => {
         </div>
 
         <div className="flex flex-col gap-1">
-          {filtered.map((u) => {
+          {paginated.map((u) => {
             const pos = u.position as unknown as PositionWithHolder | null;
             return (
               <div
@@ -96,29 +107,40 @@ export const ManagementUsers = () => {
                 className="flex items-center justify-between rounded-lg px-3 py-2.5 bg-bg-elevated"
               >
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-sm text-celery-200">
+                  <button
+                    onClick={() => setEditUser(u)}
+                    className="text-sm text-celery-200 hover:text-celery-100 text-left transition-colors"
+                  >
                     {u.firstName} {u.lastName}
                     <span className="ml-2 text-xs text-celery-500">#{u.numericId}</span>
-                  </span>
+                  </button>
                   <span className="text-xs text-celery-600">{u.email}</span>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-celery-500">
-                  {pos?.code ? (
-                    <span>{pos.code}</span>
-                  ) : (
-                    <span className="italic">No position</span>
-                  )}
-                  <span className={u.isActive ? "text-celery-400" : "text-red-400"}>
-                    {u.isActive ? "Active" : "Inactive"}
-                  </span>
-                </div>
+                {pos?.code ? (
+                  <span className="text-xs text-celery-500">{pos.code}</span>
+                ) : (
+                  <span className="text-xs text-celery-600 italic">No position</span>
+                )}
               </div>
             );
           })}
-          {filtered.length === 0 ? (
+          {paginated.length === 0 ? (
             <p className="text-sm text-celery-600 text-center py-8">No users found.</p>
           ) : null}
         </div>
+
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalItems={filtered.length}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={ROWS_PER_PAGE}
+          onPageChange={setPage}
+          onRowsPerPageChange={(n) => {
+            setRowsPerPage(n as 10 | 20);
+            setPage(1);
+          }}
+        />
       </div>
 
       <CreateUserModal
@@ -127,9 +149,10 @@ export const ManagementUsers = () => {
         availablePositions={vacantPositions.map((p: PositionWithHolder) => ({
           id: p._id,
           code: p.code,
+          type: p.type,
         }))}
-        allowedRoles={allowedRoles}
       />
+      <EditUserModal user={editUser} onClose={() => setEditUser(null)} />
     </>
   );
 };

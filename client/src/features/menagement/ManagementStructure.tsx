@@ -22,7 +22,8 @@ import { AddPositionModal } from "./modals/AddPositionModal";
 import { RemovePositionModal } from "./modals/RemovePositionModal";
 import { AssignUserModal } from "./modals/AssignUserModal";
 import { MoveUserModal } from "./modals/MoveUserModal";
-import type { PositionWithHolder, UserRole, Region, UserForInvite } from "@/types";
+import { EditUserModal } from "./modals/EditUserModal";
+import type { PositionWithHolder, UserRole, Region, UserForInvite, User } from "@/types";
 import { regionsApi } from "@/api/regions";
 import { useQuery } from "@tanstack/react-query";
 import { useUsersWithoutPosition } from "./hooks/useManagementStructure";
@@ -111,22 +112,31 @@ const PositionRow = ({
   onAssign,
   onRemovePosition,
   onMoveUser,
+  onEditUser,
 }: {
   position: PositionWithHolder;
   canEdit: boolean;
   onAssign: (p: PositionWithHolder) => void;
   onRemovePosition: (p: PositionWithHolder) => void;
   onMoveUser: (p: PositionWithHolder) => void;
+  onEditUser: (userId: string) => void;
 }) => (
-  <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-bg-elevated">
-    <span className="text-sm text-celery-300">
+  <div className="flex items-center justify-between rounded-lg pr-2 bg-bg-elevated">
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (position.currentHolder) onEditUser(position.currentHolder._id);
+      }}
+      className="text-celery-300 hover:text-celery-100 transition-colors text-left"
+    >
       {position.currentHolder ? (
         `${position.currentHolder.firstName} ${position.currentHolder.lastName}`
       ) : (
-        <span className="text-celery-600 italic">Vacant</span>
+        <span className="italic text-celery-600">Vacant</span>
       )}
       <span className="ml-2 text-xs text-celery-500">{position.code}</span>
-    </span>
+    </button>
     {canEdit ? (
       <div className="flex items-center gap-0.5">
         {position.currentHolder ? (
@@ -175,6 +185,7 @@ const SubRegionSection = ({
   onAssign,
   onRemovePosition,
   onMoveUser,
+  onEditUser,
 }: {
   node: SubRegionNode;
   collapsed: boolean;
@@ -187,6 +198,7 @@ const SubRegionSection = ({
   onAssign: (p: PositionWithHolder) => void;
   onRemovePosition: (p: PositionWithHolder) => void;
   onMoveUser: (p: PositionWithHolder) => void;
+  onEditUser: (userId: string) => void;
 }) => (
   <div className="flex flex-col gap-1 ml-4">
     <div
@@ -249,6 +261,7 @@ const SubRegionSection = ({
             onAssign={onAssign}
             onRemovePosition={onRemovePosition}
             onMoveUser={onMoveUser}
+            onEditUser={onEditUser}
           />
         ))}
       </div>
@@ -262,6 +275,7 @@ export const ManagementStructure = () => {
   const { user } = useAuthStore();
   const role = user?.role as UserRole;
   const isDirector = role === "director";
+  const [editUser, setEditUser] = useState<User | null>(null);
   const { data: usersWithoutPosition = [] } = useUsersWithoutPosition();
   const { data: positions, isLoading: posLoading, isError: posError } = useAllPositions();
   const {
@@ -449,8 +463,18 @@ export const ManagementStructure = () => {
                   <div className="flex flex-col gap-1">
                     {/* Deputy row */}
                     {sr.deputyPosition ? (
-                      <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-bg-elevated">
-                        <span className="text-sm text-celery-300">
+                      <div className="flex items-center justify-between rounded-lg pr-2 bg-bg-elevated">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!deputyHolder) return;
+                            const u = allUsers.find(
+                              (u: UserForInvite) => u._id === deputyHolder._id,
+                            );
+                            if (u) setEditUser(u as unknown as User);
+                          }}
+                          className="text-sm text-celery-300 hover:text-celery-100 transition-colors text-left"
+                        >
                           {deputyHolder ? (
                             `${deputyHolder.firstName} ${deputyHolder.lastName}`
                           ) : (
@@ -459,7 +483,7 @@ export const ManagementStructure = () => {
                           <span className="ml-2 text-xs text-celery-500">
                             {sr.deputyPosition.code}
                           </span>
-                        </span>
+                        </button>
                         {isDirector && deputyHolder ? (
                           <ActionBtn
                             icon={UserX}
@@ -486,6 +510,10 @@ export const ManagementStructure = () => {
                         onAssign={setAssignPosition}
                         onRemovePosition={(p) => setRemovePosition({ id: p._id, code: p.code })}
                         onMoveUser={setMoveUserPosition}
+                        onEditUser={(userId) => {
+                          const u = allUsers.find((u: UserForInvite) => u._id === userId);
+                          if (u) setEditUser(u as unknown as User);
+                        }}
                       />
                     ))}
                   </div>
@@ -533,6 +561,7 @@ export const ManagementStructure = () => {
         }))}
         onClose={() => setMoveUserPosition(null)}
       />
+      <EditUserModal user={editUser} onClose={() => setEditUser(null)} />
     </>
   );
 };

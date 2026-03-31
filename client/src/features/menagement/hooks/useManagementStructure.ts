@@ -97,14 +97,6 @@ export const useAssignUser = () => {
   });
 };
 
-export const useDeactivateUser = () => {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (userId: string) => usersApi.toggleActive(userId),
-    onSuccess: () => invalidateAll(qc),
-  });
-};
-
 export const useCreateUser = () => {
   const qc = useQueryClient();
   return useMutation({

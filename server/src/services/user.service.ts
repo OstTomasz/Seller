@@ -116,6 +116,8 @@ export const updateUser = async (
     lastName?: string;
     email?: string;
     positionId?: string | null;
+    phone?: string | null;
+    grade?: number | null;
   },
   requesterId: string,
   requesterRole: UserRole,
@@ -159,6 +161,8 @@ export const updateUser = async (
   if (data.lastName !== undefined) updateFields.lastName = data.lastName;
   if (data.email !== undefined) updateFields.email = data.email;
   if (data.positionId !== undefined) updateFields.position = data.positionId;
+  if (data.phone !== undefined) updateFields.phone = data.phone;
+  if (data.grade !== undefined) updateFields.grade = data.grade;
 
   if (data.positionId) {
     const newPosition = await positionRepository.findPositionById(data.positionId);

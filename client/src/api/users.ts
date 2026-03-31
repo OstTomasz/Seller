@@ -30,7 +30,14 @@ export const usersApi = {
 
   updateUser: (
     id: string,
-    payload: { positionId?: string | null; firstName?: string; lastName?: string; email?: string },
+    payload: {
+      positionId?: string | null;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phone?: string | null;
+      grade?: number | null;
+    },
   ) => api.patch<{ user: User }>(`/users/${id}`, payload),
 
   toggleActive: (id: string) => api.patch<{ user: User }>(`/users/${id}/toggle-active`),
@@ -40,6 +47,7 @@ export const usersApi = {
     lastName: string;
     email: string;
     temporaryPassword: string;
+    phone: string;
     role: string;
     grade?: number | null;
     positionId?: string | null;

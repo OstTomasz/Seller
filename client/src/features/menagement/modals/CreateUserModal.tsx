@@ -1,19 +1,21 @@
-import { useForm } from "react-hook-form";
+// client/src/features/menagement/modals/CreateUserModal.tsx
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Modal, Button, Input, Select } from "@/components/ui";
 import { useCreateUser } from "../hooks/useManagementStructure";
+import { useAllPositions } from "../hooks/useManagementStructure";
 import { toast } from "sonner";
-import type { UserRole } from "@/types";
+import type { PositionWithHolder } from "@/types";
 
 const schema = z.object({
   firstName: z.string().min(1, "Required"),
   lastName: z.string().min(1, "Required"),
-  email: z.email("Invalid email").endsWith("@seller.com", "Must be @seller.com"),
+  email: z.string().email("Invalid email").endsWith("@seller.com", "Must be @seller.com"),
   temporaryPassword: z.string().min(8, "Min 8 characters"),
-  role: z.enum(["advisor", "salesperson"]),
+  phone: z.string().min(1, "Required"),
   grade: z.string().nullable(),
-  positionId: z.string().nullable(),
+  positionId: z.string().min(1, "Position is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -21,28 +23,44 @@ type FormData = z.infer<typeof schema>;
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  availablePositions: { id: string; code: string }[];
-  allowedRoles: UserRole[];
+  availablePositions: { id: string; code: string; type?: string }[];
 }
 
-export const CreateUserModal = ({ isOpen, onClose, availablePositions, allowedRoles }: Props) => {
+export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) => {
   const { mutate, isPending } = useCreateUser();
+  const { data: allPositions } = useAllPositions();
+
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { grade: null, positionId: null },
+    defaultValues: { grade: null, positionId: "" },
   });
+
+  const selectedPositionId = useWatch({ control, name: "positionId" });
+
+  // Determine position type to conditionally show grade
+  const selectedPosition = allPositions?.find(
+    (p: PositionWithHolder) => p._id === selectedPositionId,
+  );
+  const isDeputyPosition = selectedPosition?.type === "deputy";
+  const gradeRequired = !!selectedPositionId && !isDeputyPosition;
 
   const onSubmit = (data: FormData) => {
     mutate(
       {
-        ...data,
-        grade: data.grade ? (Number(data.grade) as 1 | 2 | 3 | 4) : null,
-        positionId: data.positionId || null,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        temporaryPassword: data.temporaryPassword,
+        phone: data.phone,
+        role: "salesperson", // overridden by backend based on position
+        grade: gradeRequired && data.grade ? (Number(data.grade) as 1 | 2 | 3 | 4) : null,
+        positionId: data.positionId,
       },
       {
         onSuccess: () => {
@@ -67,22 +85,21 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions, allowedRo
           <Input label="Last name" error={errors.lastName?.message} {...register("lastName")} />
         </div>
         <Input label="Email" error={errors.email?.message} {...register("email")} />
+        <Input label="Phone" error={errors.phone?.message} {...register("phone")} />
         <Input
           label="Temporary password"
-          type="password"
+          type="text"
           error={errors.temporaryPassword?.message}
           {...register("temporaryPassword")}
         />
-        <div className="grid grid-cols-2 gap-4">
-          <Select
-            label="Role"
-            error={errors.role?.message}
-            options={allowedRoles
-              .filter((r) => r === "advisor" || r === "salesperson")
-              .map((r) => ({ value: r, label: r }))}
-            placeholder="Select role…"
-            {...register("role")}
-          />
+        <Select
+          label="Position"
+          error={errors.positionId?.message}
+          options={availablePositions.map((p) => ({ value: p.id, label: p.code }))}
+          placeholder="Select position…"
+          {...register("positionId")}
+        />
+        {gradeRequired ? (
           <Select
             label="Grade"
             error={errors.grade?.message}
@@ -90,13 +107,7 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions, allowedRo
             placeholder="Select grade…"
             {...register("grade")}
           />
-        </div>
-        <Select
-          label="Position (optional)"
-          options={availablePositions.map((p) => ({ value: p.id, label: p.code }))}
-          placeholder="Assign to position…"
-          {...register("positionId")}
-        />
+        ) : null}
         <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancel
