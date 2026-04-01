@@ -84,6 +84,7 @@ describe("POST /api/users", () => {
         lastName: "Salesperson",
         email: "new@seller.com",
         temporaryPassword: "temp1234",
+        phone: "+48 600 000 001",
         role: "salesperson",
         grade: 1,
         positionId: vacantPosition._id.toString(),
@@ -110,6 +111,7 @@ describe("POST /api/users", () => {
         lastName: "Salesperson",
         email: "new@seller.com",
         temporaryPassword: "temp1234",
+        phone: "+48 600 000 001",
         role: "salesperson",
         grade: 1,
         positionId: vacantPosition._id.toString(),
@@ -126,8 +128,10 @@ describe("POST /api/users", () => {
         firstName: "New",
         lastName: "Director",
         email: "new@seller.com",
+
         temporaryPassword: "temp1234",
-        role: "director",
+        phone: "+48 600 000 001",
+        positionId: ctx.directorPositionId,
       });
 
     expect(res.status).toBe(403);
@@ -159,6 +163,7 @@ describe("POST /api/users", () => {
         lastName: "Salesperson",
         email: "new@seller.com",
         temporaryPassword: "temp1234",
+        phone: "+48 600 000 001",
         role: "salesperson",
         grade: 1,
         positionId: otherPosition._id.toString(),
@@ -176,6 +181,7 @@ describe("POST /api/users", () => {
         lastName: "Salesperson",
         email: "new@seller.com",
         temporaryPassword: "temp1234",
+        phone: "+48 600 000 001",
         role: "salesperson",
         grade: 1,
         positionId: ctx.salespersonPositionId,
@@ -193,6 +199,7 @@ describe("POST /api/users", () => {
         lastName: "User",
         email: "advisor@seller.com",
         temporaryPassword: "temp1234",
+        phone: "+48 600 000 001",
         role: "salesperson",
         grade: 1,
         positionId: ctx.salespersonPositionId,

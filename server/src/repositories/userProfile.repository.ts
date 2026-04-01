@@ -16,12 +16,12 @@ export const upsertProfile = async (
   UserProfile.findOneAndUpdate(
     { userId },
     { $set: data },
-    { upsert: true, new: true, runValidators: true },
+    { upsert: true, returnDocument: "after", runValidators: true },
   );
 
 export const updateLastLogin = async (userId: string) =>
   UserProfile.findOneAndUpdate(
     { userId },
     { $set: { lastLoginAt: new Date() } },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   );

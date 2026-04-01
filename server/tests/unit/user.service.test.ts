@@ -60,7 +60,7 @@ describe("createUser", () => {
         lastName: "User",
         email: "new@seller.com",
         temporaryPassword: "temp1234",
-        role: "salesperson",
+        phone: "+48 600 000 001",
         grade: 1,
         positionId: vacantPosition._id.toString(),
       },
@@ -88,7 +88,7 @@ describe("createUser", () => {
         lastName: "User",
         email: "new@seller.com",
         temporaryPassword: "temp1234",
-        role: "salesperson",
+        phone: "+48 600 000 001",
         grade: 1,
         positionId: vacantPosition._id.toString(),
       },
@@ -107,7 +107,8 @@ describe("createUser", () => {
           lastName: "Director",
           email: "new@seller.com",
           temporaryPassword: "temp1234",
-          role: "director",
+          phone: "+48 600 000 001",
+          positionId: db.directorPositionId,
         },
         db.deputyId,
         "deputy",
@@ -139,7 +140,7 @@ describe("createUser", () => {
           lastName: "User",
           email: "new@seller.com",
           temporaryPassword: "temp1234",
-          role: "salesperson",
+          phone: "+48 600 000 001",
           grade: 1,
           positionId: outsidePosition._id.toString(),
         },
@@ -157,7 +158,7 @@ describe("createUser", () => {
           lastName: "User",
           email: "advisor@seller.com",
           temporaryPassword: "temp1234",
-          role: "salesperson",
+          phone: "+48 600 000 001",
           grade: 1,
           positionId: db.salespersonPositionId,
         },
@@ -166,6 +167,7 @@ describe("createUser", () => {
       ),
     ).rejects.toThrow("User with this email already exists");
   });
+
   it("should throw BadRequestError for email not ending with @seller.com", async () => {
     await expect(
       userService.createUser(
@@ -174,7 +176,8 @@ describe("createUser", () => {
           lastName: "User",
           email: "new@gmail.com",
           temporaryPassword: "temp1234",
-          role: "salesperson",
+          phone: "+48 600 000 001",
+          positionId: db.salespersonPositionId,
           grade: 1,
         },
         db.directorId,

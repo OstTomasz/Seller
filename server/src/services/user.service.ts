@@ -69,25 +69,28 @@ export const createUser = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IUser> => {
-  // Validate position exists and is vacant
-  const position = await positionRepository.findPositionById(data.positionId);
-  if (!position) throw new NotFoundError("Position not found");
-  if (position.currentHolder) throw new BadRequestError("Position is already occupied");
-
-  // Deputy can only create users in their superregion
-  if (requesterRole === "deputy") {
-    const regionId = await getRegionFromPosition(data.positionId);
-    if (!regionId) throw new ForbiddenError();
-    await verifyDeputyRegionAccess(requesterId, regionId);
-  }
-
+  // 1. Email validation
   if (!data.email.endsWith("@seller.com"))
     throw new BadRequestError("Email must end with @seller.com");
 
   const existingUser = await userRepository.findUserByEmail(data.email);
   if (existingUser) throw new ConflictError("User with this email already exists");
 
-  // Role derived from position type
+  // 2. RBAC — deputy cannot create director/deputy, only in own superregion
+  if (requesterRole === "deputy") {
+    const pos = await positionRepository.findPositionById(data.positionId);
+    if (pos?.type === "director" || pos?.type === "deputy") throw new ForbiddenError();
+    const regionId = await getRegionFromPosition(data.positionId);
+    if (!regionId) throw new ForbiddenError();
+    await verifyDeputyRegionAccess(requesterId, regionId);
+  }
+
+  // 3. Position validation
+  const position = await positionRepository.findPositionById(data.positionId);
+  if (!position) throw new NotFoundError("Position not found");
+  if (position.currentHolder) throw new BadRequestError("Position is already occupied");
+
+  // 4. Role derived from position type
   const role = position.type as UserRole;
   const grade = role === "director" || role === "deputy" ? null : (data.grade ?? null);
 
@@ -96,11 +99,11 @@ export const createUser = async (
     lastName: data.lastName,
     email: data.email,
     password: data.temporaryPassword,
+    phone: data.phone,
     role,
     grade,
     position: data.positionId,
     createdBy: requesterId,
-    phone: data.phone,
   });
 
   await positionRepository.updatePositionCurrentHolder(data.positionId, user._id.toString());
