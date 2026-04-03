@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { User } from "../types";
 import { queryClient } from "@/lib/queryClient";
 
@@ -32,6 +32,6 @@ export const useAuthStore = create<AuthState>()(
         set({ token: null, user: null });
       },
     }),
-    { name: "auth-storage" },
+    { name: "auth-storage", storage: createJSONStorage(() => sessionStorage) },
   ),
 );

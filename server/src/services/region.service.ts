@@ -100,6 +100,26 @@ export const updateRegionName = async (
   return region;
 };
 
+export const updateRegionPrefix = async (
+  regionId: string,
+  prefix: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IRegion> => {
+  const region = await regionRepository.findRegionById(regionId);
+  if (!region) throw new NotFoundError("Region not found");
+  if (region.parentRegion) throw new BadRequestError("Only superregions can have a prefix updated");
+  if (requesterRole === "deputy") await verifyDeputyAccess(requesterId, regionId);
+
+  const existing = await regionRepository.findRegionByPrefix(prefix);
+  if (existing && existing._id.toString() !== regionId)
+    throw new BadRequestError("Prefix already in use");
+
+  const updated = await regionRepository.updateRegionById(regionId, { prefix });
+  if (!updated) throw new NotFoundError("Region not found");
+  return updated;
+};
+
 export const updateRegionDeputy = async (
   regionId: string,
   deputyUserId: string | null,

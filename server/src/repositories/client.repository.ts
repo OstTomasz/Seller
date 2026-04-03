@@ -88,3 +88,12 @@ export const findArchivedClientByNip = async (nip: string): Promise<IClient | nu
 
 export const findArchivedClients = async (): Promise<IClient[]> =>
   (await deepPopulate(Client.find({ status: "archived" }).sort({ companyName: 1 }))) as IClient[];
+
+/** Finds any non-archived client by NIP assigned to a specific salesperson position */
+export const findActiveClientByNipAndSalesperson = async (
+  nip: string,
+  salespersonPositionId: string,
+): Promise<IClient | null> =>
+  Client.findOne({ nip, assignedTo: salespersonPositionId, status: { $ne: "archived" } })
+    .populate("assignedTo")
+    .lean();

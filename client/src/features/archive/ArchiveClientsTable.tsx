@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Client } from "@/types";
 import { cn } from "@/lib/utils";
 import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Dropdown } from "@/components/ui";
 
 type SortField = "companyName" | "lastActivityAt" | "_id";
@@ -43,7 +43,6 @@ interface ArchiveClientsTableProps {
 
 export const ArchiveClientsTable = ({ clients, onUnarchive }: ArchiveClientsTableProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const search = searchParams.get("search") ?? "";
@@ -244,9 +243,7 @@ export const ArchiveClientsTable = ({ clients, onUnarchive }: ArchiveClientsTabl
                     <td className="px-4 py-3">
                       <button
                         onClick={() =>
-                          navigate(`/clients/${client._id}`, {
-                            state: { clientsSearch: location.search },
-                          })
+                          navigate(`/clients/${client._id}`, { state: { from: "archive" } })
                         }
                         className="text-celery-200 hover:text-celery-100 font-medium text-left"
                       >

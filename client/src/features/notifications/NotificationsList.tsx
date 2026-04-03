@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { INotification } from "@/types";
 import { NotificationDetailModal } from "./NotificationDetailModal";
 import { useNotifications } from "./hooks/useNotifications";
@@ -8,8 +8,12 @@ import { Bell, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationItem } from "./NotificationItem";
 
-export const NotificationList = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
+interface NotificationListProps {
+  defaultExpanded?: boolean;
+}
+
+export const NotificationList = ({ defaultExpanded = false }: NotificationListProps) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [detailNotification, setDetailNotification] = useState<INotification | null>(null);
   const {
     data: notifications = [],
@@ -20,6 +24,10 @@ export const NotificationList = () => {
     remove,
   } = useNotifications();
 
+  useEffect(() => {
+    if (defaultExpanded) setIsExpanded(true);
+  }, [defaultExpanded]);
+
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleDetails = (notification: INotification) => {
@@ -29,7 +37,7 @@ export const NotificationList = () => {
 
   return (
     <>
-      <div className="rounded-lg border border-celery-600 bg-bg-surface">
+      <div className="max-w-6xl mx-auto w-full rounded-lg border border-celery-600 bg-bg-surface">
         {/* Header  */}
         <button
           onClick={() => setIsExpanded((prev) => !prev)}

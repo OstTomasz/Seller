@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 
 import { localizer } from "./lib/calendarSetup";
 import { useCalendarData } from "./hooks/useCalendarData";
+import { useUpdateEvent } from "./hooks/useUpdateEvent";
 import { CalendarEventTile } from "./CalendarEventTile";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { cn } from "@/lib/utils";
@@ -24,16 +25,26 @@ interface AppCalendarProps {
 }
 
 export const AppCalendar = ({ onEventClick, onSlotClick, onDayClick }: AppCalendarProps) => {
-  const {
-    events,
-    isLoading,
-    error,
-    currentView,
-    currentDate,
-    onNavigate,
-    onViewChange,
-    onEventDrop,
-  } = useCalendarData();
+  const { events, isLoading, error, currentView, currentDate, onNavigate, onViewChange } =
+    useCalendarData();
+  const { mutate: updateEvent } = useUpdateEvent();
+
+  const handleEventDrop = useCallback(
+    ({ event, start, end }: { event: CalendarEvent; start: Date | string; end: Date | string }) => {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      const allDay = event.resource.raw.allDay;
+      const duration = allDay
+        ? null
+        : Math.round((endDate.getTime() - startDate.getTime()) / 60000);
+
+      updateEvent({
+        eventId: event.resource.raw._id,
+        payload: { startDate: startDate.toISOString(), duration, allDay },
+      });
+    },
+    [updateEvent],
+  );
 
   const draggableAccessor = useCallback((event: CalendarEvent) => event.resource.canDrag, []);
 
@@ -85,8 +96,8 @@ export const AppCalendar = ({ onEventClick, onSlotClick, onDayClick }: AppCalend
             }
             onSlotClick(slotInfo);
           }}
-          onEventDrop={onEventDrop}
-          onEventResize={onEventDrop}
+          onEventDrop={handleEventDrop}
+          onEventResize={handleEventDrop}
           draggableAccessor={draggableAccessor}
           dayPropGetter={dayPropGetter}
           slotPropGetter={slotPropGetter}

@@ -7,6 +7,7 @@ import { ArchiveClientsTable } from "./ArchiveClientsTable";
 import { ArchivedUsersTable } from "./ArchivedUsersTable";
 import { Loader, FetchError } from "@/components/ui";
 import { UnarchiveModal } from "./UnarchiveModal";
+import { UnarchiveUserModal } from "./UnarchiveUserModal";
 import type { ArchivedUser } from "@/types";
 
 type ArchiveTab = "clients" | "employees";
@@ -14,13 +15,13 @@ type ArchiveTab = "clients" | "employees";
 export const ArchivePage = () => {
   const [activeTab, setActiveTab] = useState<ArchiveTab>("clients");
   const [unarchiveClient, setUnarchiveClient] = useState<Client | null>(null);
-  const [, setUnarchiveUser] = useState<ArchivedUser | null>(null);
+  const [unarchiveUser, setUnarchiveUser] = useState<ArchivedUser | null>(null);
 
   const { data: clients = [], isLoading: cLoading, isError: cError } = useArchivedClients();
   const { data: users = [], isLoading: uLoading, isError: uError } = useArchivedUsers();
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-5xl mx-auto w-full">
       <h1 className="text-fluid-h1 font-bold text-celery-100">Archive</h1>
 
       <div className="flex gap-1 border-b border-celery-700">
@@ -56,7 +57,7 @@ export const ArchivePage = () => {
       )}
 
       <UnarchiveModal client={unarchiveClient} onClose={() => setUnarchiveClient(null)} />
-      {/* UnarchiveUserModal — do zbudowania w późniejszym kroku */}
+      <UnarchiveUserModal user={unarchiveUser} onClose={() => setUnarchiveUser(null)} />
     </div>
   );
 };

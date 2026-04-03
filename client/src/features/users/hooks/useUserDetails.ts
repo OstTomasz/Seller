@@ -6,5 +6,6 @@ export const useUserDetails = (id: string) =>
   useQuery({
     queryKey: ["user-details", id],
     queryFn: (): Promise<UserWithProfile> => usersApi.getDetails(id).then((r) => r.data),
+    staleTime: 1000 * 60 * 2,
     enabled: !!id,
   });

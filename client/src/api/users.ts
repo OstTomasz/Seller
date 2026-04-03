@@ -68,4 +68,9 @@ export const usersApi = {
 
   deleteNote: (id: string, noteId: string) =>
     api.delete<{ user: User }>(`/users/${id}/notes/${noteId}`),
+
+  resetPassword: (id: string, temporaryPassword: string) =>
+    api.patch(`/users/${id}/reset-password`, { temporaryPassword }),
+
+  unarchiveUser: (id: string) => api.patch<{ user: User }>(`/users/${id}/unarchive`),
 };

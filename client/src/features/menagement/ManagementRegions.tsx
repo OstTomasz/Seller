@@ -1,18 +1,32 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Loader, FetchError, Button } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 import { regionsApi } from "@/api/regions";
 import { useAuthStore } from "@/store/authStore";
-import { useAllPositions } from "./hooks/useManagementStructure";
+import { useDeleteRegion, useAllPositions } from "./hooks/useManagementStructure";
+import { useConfirm } from "@/hooks/useConfirm";
 import { CreateRegionModal } from "./modals/CreateRegionModal";
 import type { Region, PositionWithHolder } from "@/types";
+
+import { ConfirmDialog } from "@/components/ui";
 
 export const ManagementRegions = () => {
   const { user } = useAuthStore();
   const isDirector = user?.role === "director";
   const [createRegionOpen, setCreateRegionOpen] = useState(false);
   const [createSuperregionOpen, setCreateSuperregionOpen] = useState(false);
+  const { mutate: deleteRegion, isPending: isDeleting } = useDeleteRegion();
+
+  const {
+    isOpen,
+    payload: regionToDelete,
+    ask,
+    confirm,
+    cancel,
+  } = useConfirm<Region>((region) => {
+    deleteRegion(region._id);
+  });
 
   const {
     data: regions,
@@ -66,17 +80,33 @@ export const ManagementRegions = () => {
                 {sr.name} ({sr.prefix})
               </h3>
               <div className="flex flex-col gap-1 ml-4">
-                {children.map((sub: Region) => (
-                  <div
-                    key={sub._id}
-                    className="flex items-center justify-between rounded-lg px-3 py-2 bg-bg-elevated"
-                  >
-                    <span className="text-sm text-celery-200">
-                      {sub.name}
-                      <span className="ml-2 text-xs text-celery-500">{sub.prefix}</span>
-                    </span>
-                  </div>
-                ))}
+                {children.map((sub: Region) => {
+                  const hasHolders = positions?.some(
+                    (p: PositionWithHolder) =>
+                      p.region?._id === sub._id && p.currentHolder !== null,
+                  );
+                  return (
+                    <div
+                      key={sub._id}
+                      className="flex items-center justify-between rounded-lg px-3 py-2 bg-bg-elevated"
+                    >
+                      <span className="text-sm text-celery-200">
+                        {sub.name}
+                        <span className="ml-2 text-xs text-celery-500">{sub.prefix}</span>
+                      </span>
+                      {isDirector && !hasHolders ? (
+                        <button
+                          type="button"
+                          disabled={isDeleting}
+                          onClick={() => ask(sub)}
+                          className="text-celery-600 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
                 {children.length === 0 ? (
                   <p className="text-xs text-celery-600 italic px-3">No regions</p>
                 ) : null}
@@ -97,6 +127,13 @@ export const ManagementRegions = () => {
         onClose={() => setCreateSuperregionOpen(false)}
         superregions={superregions}
         isSuperregion
+      />
+      <ConfirmDialog
+        isOpen={isOpen}
+        title="Delete region"
+        description={`Delete "${regionToDelete?.name ?? ""}"? This cannot be undone.`}
+        onConfirm={confirm}
+        onClose={cancel}
       />
     </>
   );

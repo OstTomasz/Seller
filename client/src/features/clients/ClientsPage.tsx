@@ -21,7 +21,7 @@ export const ClientsPage = () => {
   if (isError) return <FetchError label="clients" />;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="max-w-6xl flex flex-col gap-6 mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-fluid-h1 font-bold text-celery-100">Clients</h1>

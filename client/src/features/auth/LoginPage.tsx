@@ -30,7 +30,7 @@ const TEST_USERS: (TestUser | TestLabel)[] = [
   { email: "deputy1@seller.com", password: "password123", note: "" },
   { email: "adv.pom@seller.com", password: "Password123", note: "POM advisor" },
   { email: "sp1.pom@seller.com", password: "Password123", note: "3 active + 1 archived" },
-  { email: "sp2.pom@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "sp2.pom@seller.com", password: "Password123", note: "3 active + 1 archived" },
   { email: "adv.war@seller.com", password: "password123", note: "WAR advisor" },
   { email: "sp1.war@seller.com", password: "password123", note: "3 active + 1 archived" },
   { email: "sp2.war@seller.com", password: "password123", note: "3 active + 1 archived" },

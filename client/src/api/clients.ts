@@ -1,5 +1,6 @@
 import { api } from "@/lib/axios";
 import { Client } from "@/types";
+import { NipCheckResult } from "@seller/shared/types";
 
 export interface GetClientsResponse {
   clients: Client[];
@@ -124,10 +125,10 @@ export const clientsApi = {
   deleteNote: (id: string, noteId: string) =>
     api.delete<{ client: Client }>(`/clients/${id}/notes/${noteId}`),
 
-  checkNip: (nip: string) =>
-    api.get<{ archived: boolean; clientId: string | null; companyName: string | null }>(
-      `/clients/check-nip/${nip}`,
-    ),
+  checkNip: (nip: string, salespersonPositionId?: string) =>
+    api.get<NipCheckResult>(`/clients/check-nip/${nip}`, {
+      params: salespersonPositionId ? { salespersonPositionId } : undefined,
+    }),
 
   requestUnarchive: (clientId: string) =>
     api.post<{ message: string }>(`/notifications/unarchive-request`, { clientId }),

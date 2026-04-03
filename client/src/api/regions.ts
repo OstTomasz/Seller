@@ -12,4 +12,6 @@ export const regionsApi = {
   create: (name: string, prefix: string, parentRegionId?: string) =>
     api.post<{ region: Region }>("/regions", { name, prefix, parentRegionId }),
   delete: (id: string) => api.delete(`/regions/${id}`),
+  updatePrefix: (id: string, prefix: string) =>
+    api.patch<{ region: Region }>(`/regions/${id}/prefix`, { prefix }),
 };

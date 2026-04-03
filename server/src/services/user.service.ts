@@ -425,3 +425,17 @@ export const deleteUserNote = async (
   const updated = await userRepository.deleteUserNote(targetUserId, noteId);
   return updated!;
 };
+
+export const unarchiveUser = async (
+  userId: string,
+  requesterId: string,
+  requesterRole: UserRole,
+): Promise<IUser> => {
+  if (requesterRole !== "director") throw new ForbiddenError();
+  const user = await userRepository.findUserById(userId);
+  if (!user) throw new NotFoundError("User not found");
+  if (user.isActive) throw new BadRequestError("User is not archived");
+  const updated = await userRepository.updateUserById(userId, { isActive: true });
+  if (!updated) throw new NotFoundError("User not found");
+  return updated;
+};

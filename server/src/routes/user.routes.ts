@@ -22,6 +22,7 @@ router.get("/archived", requireRole("director", "deputy"), userController.getArc
 router.get("/:id/details", userProfileController.getUserWithProfile);
 router.get("/:id", userController.getUserById);
 router.patch("/:id/profile", userProfileController.upsertUserProfile);
+router.patch("/:id/unarchive", requireRole("director"), userController.unarchiveUser);
 
 // Director and deputy can create and manage users
 router.post("/", requireRole("director", "deputy"), userController.createUser);

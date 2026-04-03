@@ -9,6 +9,7 @@ const variantStyles: Record<EventVariant, string> = {
   own: "bg-celery-600 text-white",
   invited_accepted: "bg-gold-400 text-gold-900",
   invited_pending: "bg-gold-900 text-gold-300 border border-dashed border-gold-700",
+  invited_rejected: "bg-red-900 text-red-300 border border-dashed border-red-700",
   mandatory: "bg-red-700 text-white",
   team: "bg-celery-800 text-celery-200 border border-celery-600",
 };

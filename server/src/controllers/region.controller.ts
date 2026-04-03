@@ -3,6 +3,7 @@ import * as regionService from "../services/region.service";
 import { UserRole } from "../types";
 import { BadRequestError } from "../utils/errors";
 import { wrapAsync } from "../utils/wrapAsync";
+import { updateRegionPrefixSchema } from "@seller/shared/types";
 
 export const createRegion = wrapAsync(
   async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
@@ -90,4 +91,16 @@ export const moveRegion = wrapAsync(async (req: Request, res: Response) => {
     req.userRole as UserRole,
   );
   res.status(200).json({ region });
+});
+
+export const updateRegionPrefix = wrapAsync(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const { prefix } = updateRegionPrefixSchema.parse(req.body);
+  const region = await regionService.updateRegionPrefix(
+    id,
+    prefix,
+    req.userId!,
+    req.userRole as UserRole,
+  );
+  res.json({ status: "success", data: { region } });
 });

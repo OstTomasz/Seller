@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Modal, Button, Select } from "@/components/ui";
 import { useUpdateDeputy } from "../hooks/useManagementStructure";
+import { useConfirm } from "@/hooks/useConfirm";
+import { ConfirmDialog } from "@/components/ui";
 import { toast } from "sonner";
 import { UserForInvite } from "@/types";
 
 interface Props {
-  superregion: { id: string; name: string } | null;
+  superregion: { id: string; name: string; hasHolder: boolean } | null;
   allUsers: UserForInvite[];
   onClose: () => void;
 }
@@ -18,9 +20,9 @@ export const EditDeputyModal = ({ superregion, allUsers, onClose }: Props) => {
     if (!superregion) setSelected("");
   }, [superregion]);
 
-  const availableDeputies = allUsers.filter((u) => !u.position);
+  const availableDeputies = allUsers.filter((u) => !u.position && u.isActive);
 
-  const handleSubmit = () => {
+  const doMutate = () => {
     if (!superregion) return;
     mutate(
       { id: superregion.id, deputyId: selected || null },
@@ -38,32 +40,52 @@ export const EditDeputyModal = ({ superregion, allUsers, onClose }: Props) => {
     );
   };
 
+  const { isOpen, ask, confirm, cancel } = useConfirm<void>(() => doMutate());
+
+  const handleSubmit = () => {
+    if (!superregion) return;
+    if (superregion.hasHolder && selected) {
+      ask(undefined as void);
+    } else {
+      doMutate();
+    }
+  };
+
   return (
-    <Modal isOpen={!!superregion} onClose={onClose} title="Change deputy" size="sm">
-      <div className="flex flex-col gap-4">
-        {availableDeputies.length === 0 ? (
-          <p className="text-sm text-celery-500">No available deputies without a position.</p>
-        ) : (
-          <Select
-            label="Deputy"
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            placeholder="— Select deputy —"
-            options={availableDeputies.map((u) => ({
-              value: u._id,
-              label: `${u.firstName} ${u.lastName} #${u.numericId}`,
-            }))}
-          />
-        )}
-        <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isPending || !selected}>
-            {isPending ? "Saving…" : "Save"}
-          </Button>
+    <>
+      <Modal isOpen={!!superregion} onClose={onClose} title="Change deputy" size="sm">
+        <div className="flex flex-col gap-4">
+          {availableDeputies.length === 0 ? (
+            <p className="text-sm text-celery-500">No available deputies without a position.</p>
+          ) : (
+            <Select
+              label="Deputy"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              placeholder="— Select deputy —"
+              options={availableDeputies.map((u) => ({
+                value: u._id,
+                label: `${u.firstName} ${u.lastName} #${u.numericId}`,
+              }))}
+            />
+          )}
+          <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
+            <Button variant="ghost" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isPending || !selected}>
+              {isPending ? "Saving…" : "Save"}
+            </Button>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      <ConfirmDialog
+        isOpen={isOpen}
+        title="Replace current deputy?"
+        description="This superregion already has a deputy. Replacing them will remove their current position."
+        onConfirm={confirm}
+        onClose={cancel}
+      />
+    </>
   );
 };

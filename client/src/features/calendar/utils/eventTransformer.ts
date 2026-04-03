@@ -12,7 +12,9 @@ const resolveVariant = (
   if (isOwn) return "own";
 
   if (invitation) {
-    return invitation.status === "accepted" ? "invited_accepted" : "invited_pending";
+    if (invitation.status === "accepted") return "invited_accepted";
+    if (invitation.status === "rejected") return "invited_rejected";
+    return "invited_pending";
   }
 
   // Region event visible via RBAC, but user is neither author nor invitee
@@ -46,7 +48,6 @@ export const transformEvent = (
     invitation,
     variant,
     canEdit: isOwn,
-    // Pending invitations and mandatory events are not draggable
     canDrag: isOwn && !event.mandatory,
   };
 

@@ -4,6 +4,7 @@ import { usersApi } from "@/api/users";
 import { positionsApi } from "@/api/positions";
 import { buildHierarchy } from "@/features/users/utils/buildHierarchy";
 import type { UserForInvite } from "@/types";
+import { toast } from "sonner";
 
 export const useManagementStructure = () => {
   const regions = useQuery({
@@ -34,6 +35,20 @@ export const useUpdateRegionName = () => {
   return useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => regionsApi.updateName(id, name),
     onSuccess: () => invalidateAll(qc),
+  });
+};
+
+export const useUpdateRegionPrefix = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, prefix }: { id: string; prefix: string }) =>
+      regionsApi.updatePrefix(id, prefix),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["management-regions"] });
+      queryClient.invalidateQueries({ queryKey: ["company-structure"] });
+      toast.success("Region prefix updated.");
+    },
+    onError: () => toast.error("Failed to update prefix."),
   });
 };
 
@@ -127,3 +142,20 @@ export const useUsersWithoutPosition = () =>
         .getAllForStructure()
         .then((r) => (r.data.users as UserForInvite[]).filter((u) => !u.position && u.isActive)),
   });
+
+/** Mutation for deleting a region. Invalidates management structure. */
+export const useDeleteRegion = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => regionsApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["management-regions"] });
+      queryClient.invalidateQueries({ queryKey: ["company-structure"] });
+      toast.success("Region deleted.");
+    },
+    onError: (e: unknown) => {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg ?? "Failed to delete region.");
+    },
+  });
+};

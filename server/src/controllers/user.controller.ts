@@ -186,3 +186,9 @@ export const deleteUserNote = wrapAsync(async (req: Request, res: Response): Pro
   const user = await userService.deleteUserNote(id, noteId, req.userId!, req.userRole as UserRole);
   res.status(200).json({ user });
 });
+
+export const unarchiveUser = wrapAsync(async (req: Request, res: Response) => {
+  const { id } = req.params as { id: string };
+  const user = await userService.unarchiveUser(id, req.userId!, req.userRole as UserRole);
+  res.json({ status: "success", data: { user } });
+});

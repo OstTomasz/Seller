@@ -34,6 +34,7 @@ export const CreateRegionModal = ({
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -41,6 +42,10 @@ export const CreateRegionModal = ({
   });
 
   const onSubmit = (data: FormData) => {
+    if (!isSuperregion && !forceParentId && !data.parentRegionId) {
+      setError("parentRegionId", { message: "Superregion is required" });
+      return;
+    }
     mutate(
       {
         name: data.name,

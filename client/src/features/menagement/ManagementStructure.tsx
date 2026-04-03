@@ -300,7 +300,11 @@ export const ManagementStructure = () => {
   const [editRegion, setEditRegion] = useState<{ id: string; name: string; prefix: string } | null>(
     null,
   );
-  const [editDeputy, setEditDeputy] = useState<{ id: string; name: string } | null>(null);
+  const [editDeputy, setEditDeputy] = useState<{
+    id: string;
+    name: string;
+    hasHolder: boolean;
+  } | null>(null);
   const [moveRegion, setMoveRegion] = useState<{ id: string; name: string } | null>(null);
   const [addPosition, setAddPosition] = useState<{
     id: string;
@@ -452,7 +456,13 @@ export const ManagementStructure = () => {
                       />
                       <ActionBtn
                         icon={UserPlus}
-                        onClick={() => setEditDeputy({ id: sr.region._id, name: sr.region.name })}
+                        onClick={() =>
+                          setEditDeputy({
+                            id: sr.region._id,
+                            name: sr.region.name,
+                            hasHolder: !!sr.deputyPosition?.currentHolder,
+                          })
+                        }
                         title="Change deputy"
                       />
                     </span>

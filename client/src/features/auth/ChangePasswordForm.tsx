@@ -34,7 +34,8 @@ export const ChangePasswordForm = ({ onSuccess }: ChangePasswordFormProps) => {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(changePasswordSchema),
-    mode: "all",
+    mode: "onBlur",
+    defaultValues: { currentPassword: "", newPassword: "", confirmPassword: "" },
   });
 
   const { updateAuth } = useAuthStore();

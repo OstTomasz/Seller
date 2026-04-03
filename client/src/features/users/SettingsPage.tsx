@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
-import { Card, Loader, FetchError, Button, Input, Textarea } from "@/components/ui";
+import { useEffect, useRef, useState } from "react";
+import { Card, Loader, FetchError, Button, Input, Textarea, ConfirmDialog } from "@/components/ui";
 import { User, Lock, Clock, LucideIcon } from "lucide-react";
+import { toast } from "sonner";
 import { useMyProfile } from "./hooks/useMyProfile";
 import { useUpdateMyProfile } from "./hooks/useMyProfile";
+
 import logoPlaceholder from "@/assets/logo.avif";
 import { ChangePasswordForm } from "../auth/ChangePasswordForm";
 import { formatDate } from "@/lib/utils";
@@ -23,7 +25,17 @@ export const SettingsPage = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [isDiscardOpen, setIsDiscardOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
 
   // Sync state when data loads
   const initialized = useRef(false);
@@ -46,7 +58,7 @@ export const SettingsPage = () => {
     if (!file) return;
 
     if (file.size > 1024 * 1024) {
-      alert("File too large. Maximum size is 1MB.");
+      toast.error("File too large. Maximum size is 1MB.");
       return;
     }
 
@@ -69,9 +81,11 @@ export const SettingsPage = () => {
       },
       {
         onSuccess: () => {
+          toast.success("Settings saved.");
           setIsDirty(false);
           initialized.current = false; // re-sync on next render
         },
+        onError: () => toast.error("Failed to save settings."),
       },
     );
   };
@@ -180,6 +194,16 @@ export const SettingsPage = () => {
           </div>
         </div>
       </Card>
+      <ConfirmDialog
+        isOpen={isDiscardOpen}
+        title="Discard changes?"
+        description="You have unsaved changes. Leave anyway?"
+        onConfirm={() => {
+          setIsDiscardOpen(false);
+          setIsDirty(false);
+        }}
+        onClose={() => setIsDiscardOpen(false)}
+      />
     </div>
   );
 };

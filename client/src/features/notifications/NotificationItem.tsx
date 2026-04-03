@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { INotification, NotificationType } from "@/types";
 import { Badge } from "@/components/ui";
 import { Trash2, CheckCheck, MailOpen } from "lucide-react";
@@ -24,6 +25,7 @@ const TYPE_CONFIG: Record<NotificationType, { label: string; variant: BadgeVaria
   event_mandatory: { label: "Mandatory event invitation", variant: "warning" },
   event_conflict: { label: "Event conflict", variant: "error" },
   event_response: { label: "Event response", variant: "gold" },
+  event_updated: { label: "Event updated", variant: "warning" },
 };
 
 interface NotificationItemProps {
@@ -53,6 +55,14 @@ export const NotificationItem = ({
     notification.clientId !== undefined &&
     typeof notification.clientId === "object"
       ? notification.clientId.companyName
+      : null;
+
+  const navigate = useNavigate();
+  const clientId =
+    !isEventNotification &&
+    notification.clientId !== null &&
+    typeof notification.clientId === "object"
+      ? notification.clientId._id
       : null;
 
   const displayText = isEventNotification
@@ -92,6 +102,18 @@ export const NotificationItem = ({
         </p>
         <span className="text-xs text-celery-600">{formattedDate}</span>
       </button>
+
+      {clientId ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/clients/${clientId}`);
+          }}
+          className="text-xs text-celery-500 hover:text-celery-300 underline underline-offset-2 transition-colors text-left"
+        >
+          {clientName}
+        </button>
+      ) : null}
 
       {/* przyciski akcji — existing code bez zmian */}
       <div className="flex items-center gap-1 shrink-0 mt-0.5">

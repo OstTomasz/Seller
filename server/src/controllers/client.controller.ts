@@ -315,13 +315,12 @@ export const directArchive = wrapAsync(
   },
 );
 
-export const checkNip = wrapAsync(
-  async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
-    const { nip } = req.params as { nip: string };
-    const result = await clientService.checkNipInArchive(nip);
-    res.status(200).json(result);
-  },
-);
+export const checkNip = wrapAsync(async (req: Request, res: Response): Promise<void> => {
+  const { nip } = req.params as { nip: string };
+  const { salespersonPositionId } = req.query as { salespersonPositionId?: string };
+  const result = await clientService.checkNip(nip, salespersonPositionId);
+  res.status(200).json(result);
+});
 
 export const rejectArchive = wrapAsync(async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params as { id: string };

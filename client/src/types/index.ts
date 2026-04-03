@@ -77,7 +77,13 @@ export interface Client extends Omit<IClientBase, "notes"> {
 
 // ── Calendar types ────────────────────────────────────────────────────────────
 
-export type EventVariant = "own" | "invited_pending" | "invited_accepted" | "mandatory" | "team";
+export type EventVariant =
+  | "own"
+  | "invited_pending"
+  | "invited_accepted"
+  | "invited_rejected"
+  | "mandatory"
+  | "team";
 
 export type CalendarView = "month" | "week" | "agenda";
 
@@ -90,6 +96,8 @@ export interface CalendarEventResource {
   canEdit: boolean;
   /** Whether current user can drag & drop this event */
   canDrag: boolean;
+
+  inviteeIds?: string[];
 }
 
 export interface CalendarEvent {

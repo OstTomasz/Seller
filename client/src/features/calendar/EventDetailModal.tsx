@@ -73,6 +73,7 @@ const variantBadgeStyles: Record<EventVariant, string> = {
   own: "bg-celery-700 text-celery-100",
   invited_accepted: "bg-gold-700 text-gold-100",
   invited_pending: "bg-gold-900 text-gold-300 border border-gold-600 border-dashed",
+  invited_rejected: "bg-red-900 text-red-300 border border-red-600 border-dashed",
   mandatory: "bg-red-900 text-red-200",
   team: "bg-celery-900 text-celery-400",
 };
@@ -81,6 +82,7 @@ const variantLabel: Record<EventVariant, string> = {
   own: "Your event",
   invited_accepted: "Accepted",
   invited_pending: "Pending invitation",
+  invited_rejected: "Declined",
   mandatory: "Mandatory",
   team: "Team event",
 };
@@ -201,6 +203,10 @@ export const EventDetailModal = ({ event, onClose, onEdit, onCopy }: EventDetail
 
   const { raw, variant, canEdit } = event.resource;
   const isPendingInvitation = variant === "invited_pending";
+  const isInvited = (variant === "invited_pending" ||
+    variant === "invited_accepted" ||
+    variant === "invited_rejected") satisfies boolean;
+  const currentInvitationStatus = event.resource.invitation?.status ?? null;
   const isPending = isResponding || isDeleting;
   const isPast = isPastEvent(raw.startDate);
 
@@ -283,20 +289,23 @@ export const EventDetailModal = ({ event, onClose, onEdit, onCopy }: EventDetail
             </div>
 
             <div className="flex gap-3">
-              {isPendingInvitation && !isPast ? (
+              {isInvited && !isPast ? (
                 <>
                   <Button variant="ghost" onClick={onClose} disabled={isPending}>
-                    Later
+                    {isPendingInvitation ? "Later" : "Close"}
                   </Button>
                   <Button
                     variant="ghost"
                     className="text-red-400 hover:text-red-300"
                     onClick={() => handleRespond("rejected")}
-                    disabled={isPending}
+                    disabled={isPending || currentInvitationStatus === "rejected"}
                   >
                     Decline
                   </Button>
-                  <Button onClick={() => handleRespond("accepted")} disabled={isPending}>
+                  <Button
+                    onClick={() => handleRespond("accepted")}
+                    disabled={isPending || currentInvitationStatus === "accepted"}
+                  >
                     {isResponding ? "Saving..." : "Accept"}
                   </Button>
                 </>

@@ -3,17 +3,22 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Modal, Button, Input, Select } from "@/components/ui";
-import { useCreateUser } from "../hooks/useManagementStructure";
-import { useAllPositions } from "../hooks/useManagementStructure";
+
+import { useConfirm } from "@/hooks/useConfirm";
+import { ConfirmDialog } from "@/components/ui";
 import { toast } from "sonner";
 import type { PositionWithHolder } from "@/types";
+import { useAllPositions, useCreateUser } from "../hooks/useManagementStructure";
 
 const schema = z.object({
   firstName: z.string().min(1, "Required"),
   lastName: z.string().min(1, "Required"),
   email: z.string().email("Invalid email").endsWith("@seller.com", "Must be @seller.com"),
   temporaryPassword: z.string().min(8, "Min 8 characters"),
-  phone: z.string().min(1, "Required"),
+  phone: z
+    .string()
+    .min(1, "Required")
+    .regex(/^\+?[\d\s\-()]{7,15}$/, "Invalid phone number"),
   grade: z.string().nullable(),
   positionId: z.string().min(1, "Position is required"),
 });
@@ -29,6 +34,15 @@ interface Props {
 export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) => {
   const { mutate, isPending } = useCreateUser();
   const { data: allPositions } = useAllPositions();
+  const {
+    isOpen: isCancelOpen,
+    ask: askCancel,
+    confirm: confirmCancel,
+    cancel: cancelCancel,
+  } = useConfirm<string>(() => {
+    reset();
+    onClose();
+  });
 
   const {
     register,
@@ -38,6 +52,7 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) 
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: { grade: null, positionId: "" },
   });
 
@@ -109,7 +124,7 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) 
           />
         ) : null}
         <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
-          <Button variant="ghost" type="button" onClick={onClose}>
+          <Button variant="ghost" type="button" onClick={() => askCancel("")}>
             Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
@@ -117,6 +132,14 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) 
           </Button>
         </div>
       </form>
+
+      <ConfirmDialog
+        isOpen={isCancelOpen}
+        title="Discard changes?"
+        description="User will not be created. Are you sure?"
+        onConfirm={confirmCancel}
+        onClose={cancelCancel}
+      />
     </Modal>
   );
 };

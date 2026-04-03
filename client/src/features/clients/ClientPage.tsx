@@ -67,6 +67,7 @@ export const ClientPage = () => {
   const [isEditAssignmentOpen, setIsEditAssignmentOpen] = useState(false);
 
   const location = useLocation();
+  const fromArchive = (location.state as { from?: string } | null)?.from === "archive";
   const clientsSearch = (location.state as { clientsSearch?: string } | null)?.clientsSearch ?? "";
 
   const { data: client, isLoading, isError } = useClient(id!);
@@ -89,17 +90,19 @@ export const ClientPage = () => {
   const region = client.assignedTo?.region?.name ?? "—";
   const superregion = client.assignedTo?.region?.parentRegion?.name ?? "—";
 
-  const showAssignment = role === "deputy" || role === "director";
+  const showAssignment = role === "advisor" || role === "deputy" || role === "director";
+  const canEditAssignment = role === "deputy" || role === "director";
   const showSuperregion = role === "director";
 
   return (
     <div className="flex flex-col max-w-7xl mx-auto gap-6">
       {/* Breadcrumbs */}
       <Breadcrumbs
-        items={[
-          { label: "Clients", to: `/clients${clientsSearch}` },
-          { label: client.companyName },
-        ]}
+        items={
+          fromArchive
+            ? [{ label: "Archive", to: "/archive" }, { label: client.companyName }]
+            : [{ label: "Clients", to: `/clients${clientsSearch}` }, { label: client.companyName }]
+        }
       />
 
       {/* Page header */}
@@ -194,14 +197,16 @@ export const ClientPage = () => {
       {showAssignment ? (
         <Card>
           <SectionHeader icon={Users} title="Assignment">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditAssignmentOpen(true)}
-              className="text-celery-500 hover:text-celery-300"
-            >
-              <Pencil size={14} />
-            </Button>
+            {canEditAssignment ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditAssignmentOpen(true)}
+                className="text-celery-500 hover:text-celery-300"
+              >
+                <Pencil size={14} />
+              </Button>
+            ) : null}
           </SectionHeader>
           <div className="grid grid-cols-2 gap-10 w-[90%] mx-auto items-center">
             <Field
@@ -283,9 +288,6 @@ export const ClientPage = () => {
             <Field label="Created at" value={formatDate(client.createdAt, true)} />
             <Field label="Last updated" value={formatDate(client.updatedAt, true)} />
           </div>
-          {client.inactivityReason ? (
-            <Field label="Inactivity reason" value={client.inactivityReason} />
-          ) : null}
         </div>
       </Card>
 

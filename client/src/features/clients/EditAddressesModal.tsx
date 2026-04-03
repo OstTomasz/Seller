@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Plus, Trash2 } from "lucide-react";
@@ -347,7 +347,22 @@ const AddressSection = ({
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs text-celery-500">Postal code</label>
-          <Input {...register(`addresses.${addrIdx}.postalCode`)} placeholder="00-000" />
+          <Controller
+            control={control}
+            name={`addresses.${addrIdx}.postalCode`}
+            render={({ field }) => (
+              <Input
+                {...field}
+                placeholder="00-000"
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, "").slice(0, 5);
+                  const formatted =
+                    digits.length > 2 ? `${digits.slice(0, 2)}-${digits.slice(2)}` : digits;
+                  field.onChange(formatted);
+                }}
+              />
+            )}
+          />
           <FieldError message={addrErrors?.postalCode?.message} />
         </div>
         <div className="col-span-2 flex flex-col gap-1">

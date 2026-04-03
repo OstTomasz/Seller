@@ -7,6 +7,7 @@ import * as regionRepository from "../repositories/region.repository";
 import * as userRepository from "../repositories/user.repository";
 import * as notificationService from "./notification.service";
 import { getPositionIdsInSuperregion } from "../utils/rbac";
+import { NipCheckResult } from "@seller/shared/types";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -307,8 +308,11 @@ export const updateNote = async (
   const note = client.notes.find((n) => n._id.toString() === noteId);
   if (!note) throw new NotFoundError("Note not found");
 
-  // only note author or director can edit
-  if (note.createdBy.toString() !== requesterId && requesterRole !== "director") {
+  const canEditNote =
+    note.createdBy.toString() === requesterId ||
+    requesterRole === "director" ||
+    requesterRole === "deputy";
+  if (!canEditNote) {
     throw new ForbiddenError();
   }
 
@@ -337,7 +341,11 @@ export const deleteNote = async (
   const note = client.notes[noteIndex];
 
   // only note author or director can delete
-  if (note.createdBy.toString() !== requesterId && requesterRole !== "director") {
+  const canDeleteNote =
+    note.createdBy.toString() === requesterId ||
+    requesterRole === "director" ||
+    requesterRole === "deputy";
+  if (!canDeleteNote) {
     throw new ForbiddenError();
   }
 
@@ -661,6 +669,9 @@ export const unarchiveClient = async (
     status: "active",
     lastActivityAt: new Date(),
     inactivityReason: null,
+    "archiveRequest.requestedAt": null,
+    "archiveRequest.requestedBy": null,
+    "archiveRequest.reason": null,
   });
   if (!updated) throw new NotFoundError("Client not found");
 
@@ -747,4 +758,46 @@ export const getClientsForEvent = async (userId: string, role: UserRole): Promis
   }
 
   return [];
+};
+
+/**
+ * Checks NIP against active clients (for given SP) and archive.
+ * @param nip - 10-digit NIP
+ * @param salespersonPositionId - optional, required for active check
+ */
+export const checkNip = async (
+  nip: string,
+  salespersonPositionId?: string,
+): Promise<NipCheckResult> => {
+  if (salespersonPositionId) {
+    const active = await clientRepository.findActiveClientByNipAndSalesperson(
+      nip,
+      salespersonPositionId,
+    );
+    if (active) {
+      const pos = active.assignedTo as unknown as {
+        user?: { firstName?: string; lastName?: string };
+      };
+      const salespersonName = pos?.user
+        ? `${pos.user.firstName ?? ""} ${pos.user.lastName ?? ""}`.trim()
+        : "the assigned salesperson";
+      return {
+        status: "active",
+        clientId: active._id.toString(),
+        companyName: active.companyName,
+        salespersonName,
+      };
+    }
+  }
+
+  const archived = await clientRepository.findArchivedClientByNip(nip);
+  if (archived) {
+    return {
+      status: "archived",
+      clientId: archived._id.toString(),
+      companyName: archived.companyName,
+    };
+  }
+
+  return { status: "free" };
 };

@@ -1,6 +1,6 @@
 // client/src/features/calendar/CalendarPage.tsx
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AppCalendar } from "./AppCalendar";
 import { EventDetailModal } from "./EventDetailModal";
 import { CreateEventModal } from "./CreateEventModal";
@@ -9,18 +9,27 @@ import { DayViewModal } from "./DayViewModal";
 import { isPastDate } from "./utils/calendarUtils";
 import type { CalendarEvent, EventFormValues } from "@/types";
 import { useCalendarData } from "./hooks/useCalendarData";
+import { useEventInvitations } from "./hooks/useEventInvitations";
 
-// Importy dla UI (takie same jak w powiadomieniach)
 import { Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const CalendarPage = () => {
+interface CalendarPageProps {
+  defaultExpanded?: boolean;
+}
+
+export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  useEffect(() => {
+    setIsExpanded(defaultExpanded);
+  }, [defaultExpanded]);
+
   const { events } = useCalendarData();
-
-  // Stan zwijania kalendarza (domyślnie rozwinięty)
-  const [isExpanded, setIsExpanded] = useState(true);
-
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const { data: selectedEventInvitations = [] } = useEventInvitations(
+    selectedEvent?.resource.raw._id ?? null,
+  );
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [slotStart, setSlotStart] = useState<Date | null>(null);
@@ -35,22 +44,25 @@ export const CalendarPage = () => {
     : [];
 
   const handleCopy = (event: CalendarEvent) => {
-    const raw = event.resource.raw;
+    const inviteeIds = selectedEventInvitations
+      .map((inv) => (typeof inv.inviteeId === "object" ? inv.inviteeId._id : inv.inviteeId))
+      .filter((id): id is string => Boolean(id));
+
     setCopyValues({
-      title: raw.title,
-      type: raw.type,
-      allDay: raw.allDay,
-      duration: raw.duration ?? 60,
-      location: raw.location ?? "",
-      description: raw.description ?? "",
-      startTime: raw.allDay ? "09:00" : dayjs(raw.startDate).format("HH:mm"),
+      title: event.resource.raw.title,
+      type: event.resource.raw.type,
+      location: event.resource.raw.location ?? undefined,
+      description: event.resource.raw.description ?? undefined,
+      allDay: event.resource.raw.allDay,
+      duration: event.resource.raw.duration ?? undefined,
+      inviteeIds,
     });
     setSelectedEvent(null);
   };
 
   return (
     <>
-      <div className="rounded-lg border border-celery-600 bg-bg-surface overflow-hidden transition-all duration-300">
+      <div className="flex flex-col gap-4 max-w-6xl mx-auto w-full rounded-lg border border-celery-600 bg-bg-surface overflow-hidden transition-all duration-300">
         {/* Header - Identyczny styl jak w powiadomieniach */}
         <button
           onClick={() => setIsExpanded((prev) => !prev)}

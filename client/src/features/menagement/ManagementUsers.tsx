@@ -32,10 +32,25 @@ export const ManagementUsers = () => {
 
   const { data: positions } = useAllPositions();
 
-  const vacantPositions = useMemo(
-    () => (positions ?? []).filter((p: PositionWithHolder) => !p.currentHolder),
-    [positions],
-  );
+  const vacantPositions = useMemo(() => {
+    const vacant = (positions ?? []).filter((p: PositionWithHolder) => !p.currentHolder);
+    if (isDirector) return vacant;
+
+    // Deputy sees only vacant positions in their superregion
+    const myPos = positions?.find(
+      (p: PositionWithHolder) => p.type === "deputy" && p.currentHolder?._id === currentUser?._id,
+    );
+    const mySuperregionId = myPos?.region?._id;
+
+    return vacant.filter((p: PositionWithHolder) => {
+      const regionParent = p.region?.parentRegion;
+      const parentId =
+        regionParent && typeof regionParent === "object"
+          ? (regionParent as { _id: string })._id
+          : regionParent;
+      return parentId === mySuperregionId || p.region?._id === mySuperregionId;
+    });
+  }, [positions, isDirector, currentUser?._id]);
 
   const filtered = useMemo(() => {
     if (!users) return [];
@@ -62,12 +77,7 @@ export const ManagementUsers = () => {
     }
 
     if (!q) return list;
-    return list.filter(
-      (u) =>
-        u.firstName.toLowerCase().includes(q) ||
-        u.lastName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q),
-    );
+    return list.filter((u) => `${u.firstName} ${u.lastName}`.toLowerCase().includes(q));
   }, [users, search, isDirector, positions, currentUser?._id]);
 
   const totalPages = Math.ceil(filtered.length / rowsPerPage);
@@ -88,7 +98,7 @@ export const ManagementUsers = () => {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name or email…"
+              placeholder="Search by name…"
               className="pl-9"
             />
           </div>

@@ -62,6 +62,10 @@ export const regionBaseSchema = z.object({
 });
 export type IRegionBase = z.infer<typeof regionBaseSchema>;
 
+export const updateRegionPrefixSchema = z.object({
+  prefix: z.string().min(1).max(5).toUpperCase(),
+});
+
 export const positionBaseSchema = z.object({
   _id: z.string(),
   code: z.string(),
@@ -132,6 +136,7 @@ export const notificationTypeSchema = z.enum([
   "event_mandatory",
   "event_conflict",
   "event_response",
+  "event_updated",
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
@@ -339,3 +344,8 @@ export const userNoteSchema = z.object({
   updatedAt: z.string(),
 });
 export type IUserNote = z.infer<typeof userNoteSchema>;
+
+export type NipCheckResult =
+  | { status: "free" }
+  | { status: "active"; clientId: string; companyName: string; salespersonName: string }
+  | { status: "archived"; clientId: string; companyName: string };

@@ -191,18 +191,19 @@ export const createEvent = async (
           eventId,
         );
         if (inviteeConflicts.length > 0) {
-          await notificationRepository.createNotification({
-            userId: inviteeId,
-            type: "event_conflict" as NotificationType,
-            clientId: null,
-            eventId: eventId,
-            message: `Mandatory event conflicts with: ${inviteeConflicts[0].title}`,
-            metadata: {
-              eventTitle: data.title,
-              conflictingEventId: inviteeConflicts[0]._id.toString(),
-              conflictingEventTitle: inviteeConflicts[0].title,
-            },
-          });
+          if (conflicts.length > 0) {
+            await notificationRepository.createNotification({
+              userId: creatorId,
+              type: "event_conflict" as NotificationType,
+              eventId: event._id.toString(),
+              message: `Your new event "${event.title}" conflicts with: ${conflicts[0].title}`,
+              metadata: {
+                eventTitle: event.title,
+                conflictingEventId: conflicts[0]._id.toString(),
+                conflictingEventTitle: conflicts[0].title,
+              },
+            });
+          }
         }
       }
     }
@@ -260,6 +261,29 @@ export const updateEvent = async (
         return [id, inv];
       }),
     );
+
+    const newInviteeSet = new Set(data.inviteeIds ?? []);
+
+    const existingInviteeIds = existing
+      .map((inv) => {
+        const raw = inv.inviteeId as unknown as { _id: { toString(): string } } | string;
+        return typeof raw === "object" && raw !== null ? raw._id.toString() : String(raw);
+      })
+      .filter((id) => id !== userId && !newInviteeSet.has(id));
+
+    if (conflicts.length > 0) {
+      await notificationRepository.createNotification({
+        userId,
+        type: "event_conflict" as NotificationType,
+        eventId: updated._id.toString(),
+        message: `Your event "${updated.title}" conflicts with: ${conflicts[0].title}`,
+        metadata: {
+          eventTitle: updated.title,
+          conflictingEventId: conflicts[0]._id.toString(),
+          conflictingEventTitle: conflicts[0].title,
+        },
+      });
+    }
 
     const newInviteeIds: string[] = [];
     const resetInviteeIds: string[] = [];
@@ -329,7 +353,8 @@ export const respondToInvitation = async (
 
   const invitation = await invitationRepository.findInvitationByEventAndUser(eventId, userId);
   if (!invitation) throw new NotFoundError("Invitation not found");
-  if (invitation.status !== "pending") throw new BadRequestError("Invitation already responded");
+  if (invitation.status === status)
+    throw new BadRequestError("Already responded with the same status");
 
   const updated = await invitationRepository.updateInvitationStatus(eventId, userId, status);
   if (!updated) throw new NotFoundError("Invitation not found");
