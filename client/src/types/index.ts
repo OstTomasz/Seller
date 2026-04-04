@@ -122,7 +122,13 @@ export const eventFormSchema = z
     title: z.string().min(1, "Title is required"),
     type: eventTypeSchema,
     allDay: z.boolean(),
-    startDate: z.string().min(1, "Date is required"),
+    startDate: z
+      .string()
+      .min(1, "Date is required")
+      .refine(
+        (val) => new Date(val) >= new Date(new Date().toDateString()),
+        "Cannot create events in the past",
+      ),
     startTime: z.string().optional(),
     duration: z.number().min(1).optional(),
     location: z.string().optional(),

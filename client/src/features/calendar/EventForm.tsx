@@ -278,7 +278,11 @@ export const EventForm = ({
             <div className={cn("grid gap-3", allDay ? "grid-cols-1" : "grid-cols-2")}>
               <div className="flex flex-col gap-1">
                 <label className="text-xs text-celery-500">Date</label>
-                <Input type="date" {...register("startDate")} />
+                <Input
+                  type="date"
+                  min={new Date().toISOString().split("T")[0]}
+                  {...register("startDate")}
+                />
                 <FieldError message={errors.startDate?.message} />
               </div>
 
