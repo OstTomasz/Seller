@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, Loader, FetchError, Button, Input, Textarea, ConfirmDialog } from "@/components/ui";
 import { User, Lock, Clock, LucideIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -19,7 +20,7 @@ const SectionHeader = ({ icon: Icon, title }: { icon: LucideIcon; title: string 
 export const SettingsPage = () => {
   const { data, isLoading, isError } = useMyProfile();
   const { mutate: updateProfile, isPending } = useUpdateMyProfile();
-
+  const navigate = useNavigate();
   const [workplace, setWorkplace] = useState("");
   const [description, setDescription] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export const SettingsPage = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [isDiscardOpen, setIsDiscardOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingNavRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -35,6 +37,23 @@ export const SettingsPage = () => {
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest("a[href]");
+      if (!target) return;
+      const href = target.getAttribute("href");
+      if (!href || href.startsWith("http")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDiscardOpen(true);
+
+      pendingNavRef.current = href;
+    };
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
   }, [isDirty]);
 
   // Sync state when data loads
@@ -198,11 +217,19 @@ export const SettingsPage = () => {
         isOpen={isDiscardOpen}
         title="Discard changes?"
         description="You have unsaved changes. Leave anyway?"
+        confirmLabel="Leave"
         onConfirm={() => {
           setIsDiscardOpen(false);
           setIsDirty(false);
+          if (pendingNavRef.current) {
+            navigate(pendingNavRef.current);
+            pendingNavRef.current = null;
+          }
         }}
-        onClose={() => setIsDiscardOpen(false)}
+        onClose={() => {
+          setIsDiscardOpen(false);
+          pendingNavRef.current = null;
+        }}
       />
     </div>
   );
