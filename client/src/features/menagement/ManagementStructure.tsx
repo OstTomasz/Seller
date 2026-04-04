@@ -11,7 +11,7 @@ import {
   UserX,
   UserPlus,
 } from "lucide-react";
-import { Input, Loader, FetchError } from "@/components/ui";
+import { Input, Loader, FetchError, ConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { useAllPositions } from "./hooks/useManagementStructure";
@@ -26,7 +26,7 @@ import { EditUserModal } from "./modals/EditUserModal";
 import type { PositionWithHolder, UserRole, Region, UserForInvite, User } from "@/types";
 import { regionsApi } from "@/api/regions";
 import { useQuery } from "@tanstack/react-query";
-import { useUsersWithoutPosition } from "./hooks/useManagementStructure";
+import { useUsersWithoutPosition, useDeleteRegion } from "./hooks/useManagementStructure";
 import { usersApi } from "@/api/users";
 import { EditPositionCodeModal } from "./modals/EditPositionCodeModal";
 
@@ -288,6 +288,11 @@ export const ManagementStructure = () => {
   );
   const { data: usersWithoutPosition = [] } = useUsersWithoutPosition();
   const { data: positions, isLoading: posLoading, isError: posError } = useAllPositions();
+  const { mutate: deleteRegion } = useDeleteRegion();
+  const [deleteSuperregion, setDeleteSuperregion] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+
   const {
     data: regions,
     isLoading: regLoading,
@@ -475,6 +480,14 @@ export const ManagementStructure = () => {
                         }
                         title="Change deputy"
                       />
+                      <ActionBtn
+                        icon={Trash2}
+                        onClick={() =>
+                          setDeleteSuperregion({ id: sr.region._id, name: sr.region.name })
+                        }
+                        title="Delete superregion"
+                        variant="danger"
+                      />
                     </span>
                   ) : null}
                 </div>
@@ -598,6 +611,18 @@ export const ManagementStructure = () => {
       <EditPositionCodeModal
         position={editPositionCode}
         onClose={() => setEditPositionCode(null)}
+      />
+      <ConfirmDialog
+        isOpen={!!deleteSuperregion}
+        onClose={() => setDeleteSuperregion(null)}
+        onConfirm={() => {
+          if (!deleteSuperregion) return;
+          deleteRegion(deleteSuperregion.id);
+          setDeleteSuperregion(null);
+        }}
+        title="Delete superregion?"
+        description={`Delete "${deleteSuperregion?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
       />
     </>
   );

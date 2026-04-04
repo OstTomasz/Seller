@@ -76,9 +76,21 @@ export const ManagementRegions = () => {
           const children = subregions.filter((sub: Region) => sub.parentRegion === sr._id);
           return (
             <div key={sr._id} className="flex flex-col gap-2">
-              <h3 className="text-xs font-semibold text-celery-500 uppercase tracking-wider px-2">
-                {sr.name} ({sr.prefix})
-              </h3>
+              <div className="flex items-center justify-between px-2">
+                <h3 className="text-xs font-semibold text-celery-500 uppercase tracking-wider">
+                  {sr.name} ({sr.prefix})
+                </h3>
+                {isDirector && children.length === 0 ? (
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => ask(sr)}
+                    className="text-celery-600 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                ) : null}
+              </div>
               <div className="flex flex-col gap-1 ml-4">
                 {children.map((sub: Region) => {
                   const hasHolders = positions?.some(
