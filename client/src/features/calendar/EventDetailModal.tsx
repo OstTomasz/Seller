@@ -300,13 +300,17 @@ export const EventDetailModal = ({ event, onClose, onEdit, onCopy }: EventDetail
                     onClick={() => handleRespond("rejected")}
                     disabled={isPending || currentInvitationStatus === "rejected"}
                   >
-                    Decline
+                    {currentInvitationStatus === "rejected" ? "Declined" : "Decline"}
                   </Button>
                   <Button
                     onClick={() => handleRespond("accepted")}
                     disabled={isPending || currentInvitationStatus === "accepted"}
                   >
-                    {isResponding ? "Saving..." : "Accept"}
+                    {isResponding
+                      ? "Saving..."
+                      : currentInvitationStatus === "accepted"
+                        ? "Accepted"
+                        : "Accept"}
                   </Button>
                 </>
               ) : (

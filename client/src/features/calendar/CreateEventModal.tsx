@@ -43,6 +43,7 @@ const buildDefaultValues = (
     duration: prefillValues?.duration ?? 60,
     location: prefillValues?.location ?? "",
     description: prefillValues?.description ?? "",
+    inviteeIds: prefillValues?.inviteeIds ?? [],
     clientId: null,
   };
 };

@@ -13,6 +13,7 @@ import { useEventInvitations } from "./hooks/useEventInvitations";
 
 import { Calendar as CalendarIcon, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
 
 interface CalendarPageProps {
   defaultExpanded?: boolean;
@@ -35,6 +36,8 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
   const [slotStart, setSlotStart] = useState<Date | null>(null);
   const [copyValues, setCopyValues] = useState<Partial<EventFormValues> | null>(null);
 
+  const { user } = useAuthStore();
+
   const dayEvents = selectedDay
     ? events.filter(
         (e) =>
@@ -44,11 +47,12 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
     : [];
 
   const handleCopy = (event: CalendarEvent) => {
+    console.log("selectedEventInvitations:", selectedEventInvitations);
     const inviteeIds = selectedEventInvitations
       .map((inv) => (typeof inv.inviteeId === "object" ? inv.inviteeId._id : inv.inviteeId))
-      .filter((id): id is string => Boolean(id));
+      .filter((id): id is string => Boolean(id) && id !== user?._id);
 
-    setCopyValues({
+    const snapshot = {
       title: event.resource.raw.title,
       type: event.resource.raw.type,
       location: event.resource.raw.location ?? undefined,
@@ -56,8 +60,10 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
       allDay: event.resource.raw.allDay,
       duration: event.resource.raw.duration ?? undefined,
       inviteeIds,
-    });
+    } satisfies Partial<EventFormValues>;
+
     setSelectedEvent(null);
+    setCopyValues(snapshot);
   };
 
   return (

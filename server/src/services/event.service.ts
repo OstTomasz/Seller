@@ -66,8 +66,8 @@ const getCreatorId = (createdBy: unknown): string => {
 export const getEvents = async (userId: string): Promise<IEvent[]> =>
   eventRepository.findEventsByUserId(userId);
 
-export const getPendingInvitations = async (userId: string): Promise<IInvitation[]> =>
-  invitationRepository.findPendingInvitationsByUserId(userId);
+export const getAllUserInvitations = async (userId: string): Promise<IInvitation[]> =>
+  invitationRepository.findAllInvitationsByUserId(userId);
 
 export const getEventById = async (eventId: string, userId: string): Promise<IEvent> => {
   const event = await eventRepository.findEventById(eventId);
@@ -448,3 +448,6 @@ const addMeetingNoteToClient = async (
     lastActivityAt: new Date(),
   });
 };
+
+export const getAllInvitations = async (userId: string): Promise<IInvitation[]> =>
+  invitationRepository.findAllInvitationsByUserId(userId);

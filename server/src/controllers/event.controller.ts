@@ -11,7 +11,7 @@ export const getEvents = wrapAsync(async (req: Request, res: Response): Promise<
 
 export const getPendingInvitations = wrapAsync(
   async (req: Request, res: Response): Promise<void> => {
-    const invitations = await eventService.getPendingInvitations(req.userId!);
+    const invitations = await eventService.getAllInvitations(req.userId!);
     res.status(200).json({ invitations });
   },
 );

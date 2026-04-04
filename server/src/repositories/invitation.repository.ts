@@ -15,6 +15,9 @@ export const findPendingInvitationsByUserId = async (userId: string): Promise<II
     })
     .sort({ createdAt: -1 });
 
+export const findAllInvitationsByUserId = async (userId: string): Promise<IInvitation[]> =>
+  Invitation.find({ inviteeId: userId });
+
 export const findInvitationByEventAndUser = async (
   eventId: string,
   inviteeId: string,

@@ -43,6 +43,10 @@ export const fetchPendingInvitations = async (): Promise<IInvitation[]> => {
   const { data } = await api.get<{ invitations: IInvitation[] }>("/events/invitations");
   return data.invitations;
 };
+export const fetchAllInvitations = async (): Promise<IInvitation[]> => {
+  const { data } = await api.get<{ invitations: IInvitation[] }>("/events/invitations");
+  return data.invitations;
+};
 
 export const fetchAllUsersForInvite = async (): Promise<UserForInvite[]> => {
   const { data } = await api.get<{ users: UserForInvite[] }>("/events/users");

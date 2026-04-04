@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { transformEvents } from "../utils/eventTransformer";
 import { useAuthStore } from "@/store/authStore";
 import type { CalendarEvent, CalendarView, DragDropEventArgs } from "@/types";
-import { fetchEvents, fetchPendingInvitations, updateEventDate } from "@/api/calendar";
+import { fetchEvents, fetchAllInvitations, updateEventDate } from "@/api/calendar";
 
 // Single source of truth for cache invalidation
 export const CALENDAR_QUERY_KEY = "calendar-events";
@@ -79,7 +79,7 @@ export const useCalendarData = (): UseCalendarDataReturn => {
     queryFn: async () => {
       const [rawEvents, invitations] = await Promise.all([
         fetchEvents(getRange()),
-        fetchPendingInvitations(),
+        fetchAllInvitations(),
       ]);
       return transformEvents(rawEvents, invitations, user!._id);
     },

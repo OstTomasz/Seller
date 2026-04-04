@@ -8,7 +8,7 @@ export const findAllUsers = async (): Promise<IUser[]> =>
   User.find().populate("position").select("-password").sort({ lastName: 1, firstName: 1 });
 
 export const findAllUsersForInvite = async () =>
-  User.find({ isActive: true, position: { $ne: null } })
+  User.find({ isActive: true })
     .populate({
       path: "position",
       populate: {
