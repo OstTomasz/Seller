@@ -19,6 +19,7 @@ const notificationSchema = new Schema<INotification>(
         "event_conflict",
         "event_response",
         "event_updated",
+        "event_cancelled",
       ],
       required: true,
     },

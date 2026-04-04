@@ -264,13 +264,6 @@ export const updateEvent = async (
 
     const newInviteeSet = new Set(data.inviteeIds ?? []);
 
-    const existingInviteeIds = existing
-      .map((inv) => {
-        const raw = inv.inviteeId as unknown as { _id: { toString(): string } } | string;
-        return typeof raw === "object" && raw !== null ? raw._id.toString() : String(raw);
-      })
-      .filter((id) => id !== userId && !newInviteeSet.has(id));
-
     if (conflicts.length > 0) {
       await notificationRepository.createNotification({
         userId,
@@ -293,11 +286,10 @@ export const updateEvent = async (
       const existingInv = existingMap.get(id);
 
       if (!existingInv) {
-        newInviteeIds.push(id); // zupełnie nowy
+        newInviteeIds.push(id);
       } else if (existingInv.status === "rejected") {
-        resetInviteeIds.push(id); //
+        resetInviteeIds.push(id);
       }
-      // accepted/pending — pomijamy
     }
 
     if (newInviteeIds.length > 0) {
@@ -323,10 +315,26 @@ export const updateEvent = async (
         })),
       );
     }
-    console.log("inviteeIds from payload:", data.inviteeIds);
-    console.log("existingMap keys:", [...existingMap.keys()]);
-    console.log("resetInviteeIds:", resetInviteeIds);
-    console.log("newInviteeIds:", newInviteeIds);
+  }
+  const allInvitations = await invitationRepository.findInvitationsByEventId(eventId);
+  const allInviteeIds = allInvitations
+    .map((inv) => {
+      const raw = inv.inviteeId as unknown as { _id: { toString(): string } } | string;
+      return typeof raw === "object" && raw !== null ? raw._id.toString() : String(raw);
+    })
+    .filter((id) => id !== userId);
+
+  if (allInviteeIds.length > 0) {
+    await notificationRepository.createNotifications(
+      allInviteeIds.map((recipientId) => ({
+        userId: recipientId,
+        type: "event_updated" as NotificationType,
+        clientId: null,
+        eventId,
+        message: `Event "${updated.title}" has been updated`,
+        metadata: { eventTitle: updated.title },
+      })),
+    );
   }
 
   return { event: updated, conflicts };
@@ -337,9 +345,30 @@ export const deleteEvent = async (eventId: string, userId: string): Promise<void
   if (!event) throw new NotFoundError("Event not found");
   if (getCreatorId(event.createdBy) !== userId) throw new ForbiddenError();
 
+  const invitations = await invitationRepository.findInvitationsByEventId(eventId);
+  const inviteeIds = invitations
+    .map((inv) => {
+      const raw = inv.inviteeId as unknown as { _id: { toString(): string } } | string;
+      return typeof raw === "object" && raw !== null ? raw._id.toString() : String(raw);
+    })
+    .filter((id) => id !== userId);
+
   await invitationRepository.deleteInvitationsByEventId(eventId);
   const deleted = await eventRepository.deleteEventById(eventId);
   if (!deleted) throw new NotFoundError("Event not found");
+
+  if (inviteeIds.length > 0) {
+    await notificationRepository.createNotifications(
+      inviteeIds.map((recipientId) => ({
+        userId: recipientId,
+        type: "event_cancelled" as NotificationType,
+        clientId: null,
+        eventId,
+        message: `Event "${event.title}" has been cancelled`,
+        metadata: { eventTitle: event.title },
+      })),
+    );
+  }
 };
 
 export const respondToInvitation = async (

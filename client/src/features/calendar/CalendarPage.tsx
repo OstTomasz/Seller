@@ -47,7 +47,6 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
     : [];
 
   const handleCopy = (event: CalendarEvent) => {
-    console.log("selectedEventInvitations:", selectedEventInvitations);
     const inviteeIds = selectedEventInvitations
       .map((inv) => (typeof inv.inviteeId === "object" ? inv.inviteeId._id : inv.inviteeId))
       .filter((id): id is string => Boolean(id) && id !== user?._id);
