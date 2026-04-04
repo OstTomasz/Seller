@@ -21,7 +21,7 @@ const deepPopulate = (query: mongoose.Query<unknown, unknown>) =>
     })
     .populate({
       path: "notes.createdBy",
-      select: "firstName lastName",
+      select: "firstName lastName role",
     });
 
 export const findClientById = async (clientId: string): Promise<IClient | null> =>

@@ -224,23 +224,25 @@ export const ClientPage = () => {
                 )
               }
             />
-            <Field
-              label="Advisor"
-              value={
-                advisorId ? (
-                  <button
-                    onClick={() => navigate(`/users/${advisorId}`)}
-                    className="text-celery-200 hover:text-celery-100 hover:underline transition-colors text-left"
-                  >
-                    {advisorName}
-                  </button>
-                ) : (
-                  advisorName
-                )
-              }
-            />
-            <Field label="Region" value={region} />
-            {showSuperregion ? <Field label="Superregion" value={superregion} /> : null}
+            {role !== "advisor" && (
+              <Field
+                label="Advisor"
+                value={
+                  advisorId ? (
+                    <button
+                      onClick={() => navigate(`/users/${advisorId}`)}
+                      className="text-celery-200 hover:text-celery-100 hover:underline transition-colors text-left"
+                    >
+                      {advisorName}
+                    </button>
+                  ) : (
+                    advisorName
+                  )
+                }
+              />
+            )}
+            {role !== "advisor" && <Field label="Region" value={region} />}
+            {showSuperregion && <Field label="Superregion" value={superregion} />}
           </div>
         </Card>
       ) : null}
@@ -307,6 +309,7 @@ export const ClientPage = () => {
         onClose={() => setIsEditNotesOpen(false)}
         client={client}
         currentUserId={currentUserId}
+        userRole={role}
       />
       <EditAssignmentModal
         isOpen={isEditAssignmentOpen}

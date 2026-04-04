@@ -43,6 +43,7 @@ export const noteAuthorSchema = z.object({
   _id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
+  role: userRoleSchema,
 });
 export type INoteAuthor = z.infer<typeof noteAuthorSchema>;
 

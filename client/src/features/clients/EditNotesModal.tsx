@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Modal, Button, ConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import type { Client, INoteAuthor } from "@/types";
+import type { Client, INoteAuthor, UserRole } from "@/types";
 import type { INote } from "@/types";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useAddNote, useUpdateNote, useDeleteNote } from "./hooks/useUpdateClient";
@@ -38,9 +38,16 @@ interface EditNotesModalProps {
   onClose: () => void;
   client: Client;
   currentUserId: string;
+  userRole: UserRole;
 }
 
-export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditNotesModalProps) => {
+export const EditNotesModal = ({
+  isOpen,
+  onClose,
+  client,
+  currentUserId,
+  userRole,
+}: EditNotesModalProps) => {
   // null = new note, string = edited noteId
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -57,6 +64,16 @@ export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditN
   const addNote = useAddNote(client._id);
   const updateNote = useUpdateNote(client._id);
   const deleteNote = useDeleteNote(client._id);
+
+  const canDeleteNote = (note: INote): boolean => {
+    const authorId = getCreatedById(note.createdBy);
+    const authorRole =
+      typeof note.createdBy === "object" && note.createdBy !== null ? note.createdBy.role : null;
+    if (userRole === "director") return true;
+    if (authorId === currentUserId) return true;
+    if (userRole === "deputy") return authorRole !== "director";
+    return false;
+  };
 
   const deleteConfirm = useConfirm<string>((noteId) => deleteNote.mutate(noteId));
 
@@ -163,8 +180,8 @@ export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditN
                               {getNoteAuthor(note.createdBy)}
                             </span>
                           </div>
-                          {getCreatedById(note.createdBy) === currentUserId ? (
-                            <div className="flex gap-1">
+                          <div className="flex gap-1">
+                            {getCreatedById(note.createdBy) === currentUserId ? (
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -174,6 +191,8 @@ export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditN
                               >
                                 <Pencil size={13} />
                               </Button>
+                            ) : null}
+                            {canDeleteNote(note) ? (
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -183,8 +202,8 @@ export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditN
                               >
                                 <Trash2 size={13} />
                               </Button>
-                            </div>
-                          ) : null}
+                            ) : null}
+                          </div>
                         </div>
                       </>
                     )}
@@ -253,14 +272,6 @@ export const EditNotesModal = ({ isOpen, onClose, client, currentUserId }: EditN
           isLoading={deleteNote.isPending}
         />
       </Modal>
-      <ConfirmDialog
-        isOpen={deleteConfirm.isOpen}
-        onClose={deleteConfirm.cancel}
-        onConfirm={deleteConfirm.confirm}
-        title="Delete note"
-        description="Are you sure you want to delete this note?"
-        isLoading={deleteNote.isPending}
-      />
       <ConfirmDialog
         isOpen={discard.isOpen}
         onClose={discard.cancel}

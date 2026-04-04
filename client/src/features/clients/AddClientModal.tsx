@@ -1,19 +1,19 @@
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Modal, Input, Button, ConfirmDialog } from "@/components/ui";
-
 import { useFieldArray } from "react-hook-form";
-
+import { Plus, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Modal, Input, Button, ConfirmDialog } from "@/components/ui";
 import type { UserRole } from "@/types";
+import { NipCheckResult } from "@seller/shared/types";
 import { useCreateClient } from "./hooks/useCreateClient";
 import { useSalespersons } from "@/hooks/useSalespersons";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useDiscardConfirm } from "@/hooks/useDiscardConfirm";
 import { clientsApi } from "@/api/clients";
 import { toast } from "sonner";
-import { NipCheckResult } from "@seller/shared/types";
 
 // ── Step type ─────────────────────────────────────────────────────────────────
 type Step = "salesperson" | "nip" | "details";
@@ -130,7 +130,11 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     formState: { errors, isDirty },
   } = form;
 
-  const { remove: removeContact } = useFieldArray({ control, name: "address.contacts" });
+  const {
+    fields: contactFields,
+    append: appendContact,
+    remove: removeContact,
+  } = useFieldArray({ control, name: "address.contacts" });
 
   // ── Reset helpers ─────────────────────────────────────────────────────────
   const resetModal = () => {
@@ -146,6 +150,28 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     onClose();
   });
   const deleteContactConfirm = useConfirm<number>((idx) => removeContact(idx));
+
+  const submitConfirm = useConfirm<FormValues>((values) => {
+    void createClient
+      .mutateAsync({
+        companyName: values.companyName,
+        nip: values.nip,
+        addresses: [
+          {
+            label: values.address.label,
+            street: values.address.street,
+            postalCode: values.address.postalCode,
+            city: values.address.city,
+            contacts: values.address.contacts,
+          },
+        ],
+        salespersonPositionId: values.salespersonPositionId || undefined,
+      })
+      .then(() => {
+        resetModal();
+        onClose();
+      });
+  });
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const nipValue = watch("nip");
@@ -166,24 +192,11 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     }
   };
 
-  const onSubmit = async (values: FormValues) => {
-    await createClient.mutateAsync({
-      companyName: values.companyName,
-      nip: values.nip,
-      addresses: [
-        {
-          label: values.address.label,
-          street: values.address.street,
-          postalCode: values.address.postalCode,
-          city: values.address.city,
-          contacts: values.address.contacts,
-        },
-      ],
-      salespersonPositionId: values.salespersonPositionId || undefined,
-    });
-    resetModal();
-    onClose();
+  const onSubmit = (values: FormValues) => {
+    submitConfirm.ask(values);
   };
+
+  const canDeleteContact = contactFields.length > 1;
 
   const handleRequestUnarchive = async () => {
     if (!archivedClient) return;
@@ -293,7 +306,129 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
           {/* ── Step 3: Details ───────────────────────────────────── */}
           {step === "details" && (
             <>
-              {/* ... existing address + contacts JSX bez zmian ... */}
+              <div className="flex flex-col gap-6 max-h-[60vh] overflow-y-auto pr-1">
+                <section>
+                  <SectionTitle>Address</SectionTitle>
+                  <div className="flex flex-col gap-4 p-4 rounded-lg border border-celery-700">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="col-span-2 flex flex-col gap-1">
+                        <label className="text-xs text-celery-500">Label</label>
+                        <Input {...register("address.label")} placeholder="e.g. HQ, Warehouse" />
+                        <FieldError message={errors.address?.label?.message} />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-celery-500">Street</label>
+                        <Input {...register("address.street")} placeholder="Street" />
+                        <FieldError message={errors.address?.street?.message} />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs text-celery-500">Postal code</label>
+                        <Controller
+                          control={control}
+                          name="address.postalCode"
+                          render={({ field }) => (
+                            <Input
+                              {...field}
+                              placeholder="00-000"
+                              onChange={(e) => {
+                                const raw = e.target.value.replace(/\D/g, "").slice(0, 5);
+                                const formatted =
+                                  raw.length > 2 ? `${raw.slice(0, 2)}-${raw.slice(2)}` : raw;
+                                field.onChange(formatted);
+                              }}
+                            />
+                          )}
+                        />
+                        <FieldError message={errors.address?.postalCode?.message} />
+                      </div>
+                      <div className="col-span-2 flex flex-col gap-1">
+                        <label className="text-xs text-celery-500">City</label>
+                        <Input {...register("address.city")} placeholder="City" />
+                        <FieldError message={errors.address?.city?.message} />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <span className="text-xs text-celery-600 font-medium">Contacts</span>
+                      {contactFields.map((contactField, idx) => (
+                        <div
+                          key={contactField.id}
+                          className="grid grid-cols-2 gap-2 pl-3 border-l-2 border-celery-700"
+                        >
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-celery-500">First name</label>
+                            <Input
+                              {...register(`address.contacts.${idx}.firstName`)}
+                              placeholder="First name"
+                            />
+                            <FieldError
+                              message={errors.address?.contacts?.[idx]?.firstName?.message}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-celery-500">Last name</label>
+                            <Input
+                              {...register(`address.contacts.${idx}.lastName`)}
+                              placeholder="Last name"
+                            />
+                            <FieldError
+                              message={errors.address?.contacts?.[idx]?.lastName?.message}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-celery-500">Phone</label>
+                            <Input
+                              {...register(`address.contacts.${idx}.phone`)}
+                              placeholder="+48 000 000 000"
+                            />
+                            <FieldError message={errors.address?.contacts?.[idx]?.phone?.message} />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-xs text-celery-500">Email</label>
+                            <Input
+                              {...register(`address.contacts.${idx}.email`)}
+                              placeholder="email@example.com"
+                            />
+                            <FieldError message={errors.address?.contacts?.[idx]?.email?.message} />
+                          </div>
+                          <div className="col-span-2 flex justify-end">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className={cn(
+                                "text-xs",
+                                canDeleteContact
+                                  ? "text-red-400 hover:text-red-300"
+                                  : "text-celery-700 cursor-not-allowed",
+                              )}
+                              disabled={!canDeleteContact}
+                              onClick={() => deleteContactConfirm.ask(idx)}
+                            >
+                              <Trash2 size={12} className="mr-1" />
+                              Remove contact
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <FieldError message={errors.address?.contacts?.root?.message} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="self-start text-celery-600 hover:text-celery-400 text-xs"
+                        onClick={() =>
+                          appendContact({ firstName: "", lastName: "", phone: "", email: "" })
+                        }
+                      >
+                        <Plus size={12} className="mr-1" />
+                        Add contact
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
               <div className="flex justify-between pt-2 border-t border-celery-700">
                 <Button type="button" variant="ghost" onClick={() => setStep("nip")}>
                   Back
@@ -367,6 +502,15 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
         title="Discard changes?"
         description="You have unsaved changes. Are you sure you want to discard them?"
         confirmLabel="Discard"
+      />
+      <ConfirmDialog
+        isOpen={submitConfirm.isOpen}
+        onClose={submitConfirm.cancel}
+        onConfirm={submitConfirm.confirm}
+        title="Add client?"
+        description={`Create client "${submitConfirm.payload?.companyName}"?`}
+        confirmLabel="Add client"
+        isLoading={createClient.isPending}
       />
     </>
   );
