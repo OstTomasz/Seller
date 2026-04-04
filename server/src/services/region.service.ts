@@ -108,7 +108,6 @@ export const updateRegionPrefix = async (
 ): Promise<IRegion> => {
   const region = await regionRepository.findRegionById(regionId);
   if (!region) throw new NotFoundError("Region not found");
-  if (region.parentRegion) throw new BadRequestError("Only superregions can have a prefix updated");
   if (requesterRole === "deputy") await verifyDeputyAccess(requesterId, regionId);
 
   const existing = await regionRepository.findRegionByPrefix(prefix);

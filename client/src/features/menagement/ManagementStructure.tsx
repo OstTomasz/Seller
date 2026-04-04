@@ -28,6 +28,7 @@ import { regionsApi } from "@/api/regions";
 import { useQuery } from "@tanstack/react-query";
 import { useUsersWithoutPosition } from "./hooks/useManagementStructure";
 import { usersApi } from "@/api/users";
+import { EditPositionCodeModal } from "./modals/EditPositionCodeModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,7 @@ const PositionRow = ({
   onRemovePosition,
   onMoveUser,
   onEditUser,
+  onEditCode,
 }: {
   position: PositionWithHolder;
   canEdit: boolean;
@@ -120,6 +122,7 @@ const PositionRow = ({
   onRemovePosition: (p: PositionWithHolder) => void;
   onMoveUser: (p: PositionWithHolder) => void;
   onEditUser: (userId: string) => void;
+  onEditCode: (p: PositionWithHolder) => void;
 }) => (
   <div className="flex items-center justify-between rounded-lg pr-2 bg-bg-elevated">
     <button
@@ -166,6 +169,7 @@ const PositionRow = ({
             ) : null}
           </>
         )}
+        <ActionBtn icon={Pencil} onClick={() => onEditCode(position)} title="Edit code" />
       </div>
     ) : null}
   </div>
@@ -186,6 +190,7 @@ const SubRegionSection = ({
   onRemovePosition,
   onMoveUser,
   onEditUser,
+  onEditCode,
 }: {
   node: SubRegionNode;
   collapsed: boolean;
@@ -199,6 +204,7 @@ const SubRegionSection = ({
   onRemovePosition: (p: PositionWithHolder) => void;
   onMoveUser: (p: PositionWithHolder) => void;
   onEditUser: (userId: string) => void;
+  onEditCode: (p: PositionWithHolder) => void;
 }) => (
   <div className="flex flex-col gap-1 ml-4">
     <div
@@ -262,6 +268,7 @@ const SubRegionSection = ({
             onRemovePosition={onRemovePosition}
             onMoveUser={onMoveUser}
             onEditUser={onEditUser}
+            onEditCode={onEditCode}
           />
         ))}
       </div>
@@ -276,6 +283,9 @@ export const ManagementStructure = () => {
   const role = user?.role as UserRole;
   const isDirector = role === "director";
   const [editUser, setEditUser] = useState<User | null>(null);
+  const [editPositionCode, setEditPositionCode] = useState<{ id: string; code: string } | null>(
+    null,
+  );
   const { data: usersWithoutPosition = [] } = useUsersWithoutPosition();
   const { data: positions, isLoading: posLoading, isError: posError } = useAllPositions();
   const {
@@ -536,6 +546,7 @@ export const ManagementStructure = () => {
                           const u = allUsers.find((u: UserForInvite) => u._id === userId);
                           if (u) setEditUser(u as unknown as User);
                         }}
+                        onEditCode={(p) => setEditPositionCode({ id: p._id, code: p.code })}
                       />
                     ))}
                   </div>
@@ -584,6 +595,10 @@ export const ManagementStructure = () => {
         onClose={() => setMoveUserPosition(null)}
       />
       <EditUserModal user={editUser} onClose={() => setEditUser(null)} />
+      <EditPositionCodeModal
+        position={editPositionCode}
+        onClose={() => setEditPositionCode(null)}
+      />
     </>
   );
 };

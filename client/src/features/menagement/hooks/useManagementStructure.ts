@@ -159,3 +159,11 @@ export const useDeleteRegion = () => {
     },
   });
 };
+
+export const useUpdatePositionCode = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, code }: { id: string; code: string }) => positionsApi.updateCode(id, code),
+    onSuccess: () => invalidateAll(qc),
+  });
+};
