@@ -58,7 +58,7 @@ if (env.NODE_ENV !== "test") {
     }),
   );
 }
-app.use(express.json()); //parse JSON bodies
+app.use(express.json({ limit: "2mb" })); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
 
 app.use(authenticate); //authenticate every request

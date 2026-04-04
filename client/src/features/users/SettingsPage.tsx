@@ -10,6 +10,9 @@ import logoPlaceholder from "@/assets/logo.avif";
 import { ChangePasswordForm } from "../auth/ChangePasswordForm";
 import { formatDate } from "@/lib/utils";
 
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+const MAX_SIZE = 1024 * 1024;
+
 const SectionHeader = ({ icon: Icon, title }: { icon: LucideIcon; title: string }) => (
   <div className="flex items-center gap-2 mb-4 w-full justify-center">
     <Icon className="h-4 w-4 text-celery-500" />
@@ -75,12 +78,14 @@ export const SettingsPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 1024 * 1024) {
-      toast.error("File too large. Maximum size is 1MB.");
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Unsupported format. Use JPG, PNG, WebP or AVIF.");
       return;
     }
-
+    if (file.size > MAX_SIZE) {
+      toast.error("File too large. Maximum size is 1.5MB.");
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
@@ -131,7 +136,7 @@ export const SettingsPage = () => {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,.webp,.avif"
             className="hidden"
             onChange={handleFileChange}
           />
