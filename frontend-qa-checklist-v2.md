@@ -86,18 +86,18 @@
 ## 5. CLIENTS — ADD CLIENT MODAL
 
 
-| #    | Feature                                                            | DIR | DEP | ADV | SP  | Comment    |
-| ---- | ------------------------------------------------------------------ | --- | --- | --- | --- | ---------- |
-| 5.1  | Modal opens                                                        | 🔲  | 🔲  | ✅   | ✅   |            |
-| 5.2  | Salesperson select — walidacja wymagana (inline, nie toast)        | 🔲  | 🔲  | 🔲  | N/A | ✅          |
-| 5.3  | NIP — walidacja on blur                                            | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 5.4  | NIP duplicate — sprawdza per handlowiec                            | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 5.5  | NIP w archiwum — unarchive request jeśli należał do tego handlowca | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 5.6  | SP — auto-assigned to own position                                 | N/A | N/A | N/A | ✅   |            |
-| 5.7  | ADV — assign to salesperson in own region                          | N/A | N/A | ✅   | N/A |            |
-| 5.8  | DIR — assign to any salesperson                                    | ✅   | N/A | N/A | N/A |            |
-| 5.9  | Postal code auto-format (XX-XXX)                                   | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
-| 5.10 | Cancel z niezapisanymi zmianami → confirm                          | 🔲  | 🔲  | 🔲  | ✅   |            |
+| #    | Feature                                                            | DIR | DEP | ADV | SP  | Comment |
+| ---- | ------------------------------------------------------------------ | --- | --- | --- | --- | ------- |
+| 5.1  | Modal opens                                                        | 🔲  | 🔲  | ✅   | ✅   |         |
+| 5.2  | Salesperson select — walidacja wymagana (inline, nie toast)        | 🔲  | 🔲  | 🔲  | N/A | ✅       |
+| 5.3  | NIP — walidacja on blur                                            | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 5.4  | NIP duplicate — sprawdza per handlowiec                            | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 5.5  | NIP w archiwum — unarchive request jeśli należał do tego handlowca | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 5.6  | SP — auto-assigned to own position                                 | N/A | N/A | N/A | ✅   |         |
+| 5.7  | ADV — assign to salesperson in own region                          | N/A | N/A | ✅   | N/A |         |
+| 5.8  | DIR — assign to any salesperson                                    | ✅   | N/A | N/A | N/A |         |
+| 5.9  | Postal code auto-format (XX-XXX)                                   | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 5.10 | Cancel z niezapisanymi zmianami → confirm                          | 🔲  | 🔲  | 🔲  | ✅   |         |
 
 
 ---
@@ -105,31 +105,31 @@
 ## 6. CLIENTS — CLIENT DETAIL (/clients/:id)
 
 
-| #    | Feature                                          | DIR | DEP | ADV | SP  | Comment    |
-| ---- | ------------------------------------------------ | --- | --- | --- | --- | ---------- |
-| 6.1  | Breadcrumbs: Clients → Company name              | ✅   | ✅   | ✅   | ✅   |            |
-| 6.2  | Breadcrumb preserves search params               | ✅   | ✅   | ✅   | ✅   |            |
-| 6.3  | Basic info displayed                             | ✅   | ✅   | ✅   | ✅   |            |
-| 6.4  | Edit basic info                                  | ✅   | ✅   | ✅   | ✅   |            |
-| 6.5  | Addresses displayed                              | ✅   | ✅   | ✅   | ✅   |            |
-| 6.6  | Add address — postal code auto-format            | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 6.7  | Add/edit address                                 | ✅   | ✅   | ✅   | ✅   |            |
-| 6.8  | Delete address — confirm dialog                  | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 6.9  | Delete address — brak przycisku gdy 1 adres      | ✅   | ✅   | ✅   | ✅   |            |
-| 6.10 | Add/edit/delete contact                          | ✅   | ✅   | ✅   | ✅   |            |
-| 6.11 | Delete contact — confirm dialog                  | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 6.12 | Assignment section — ADV widzi salesperson       | 🔲  | N/A | 🔲  | N/A | NAPRAWIONE |
-| 6.13 | Assignment section — DEP: sales + adv + region   | ✅   | ✅   | N/A | N/A |            |
-| 6.14 | Assignment section — DIR: wszystko + superregion | ✅   | N/A | N/A | N/A |            |
-| 6.15 | Salesperson link → /users/:id (ADV też widzi)    | 🔲  | 🔲  | 🔲  | N/A | NAPRAWIONE |
-| 6.16 | Advisor link → /users/:id                        | ✅   | ✅   | N/A | N/A |            |
-| 6.17 | Change salesperson assignment                    | ✅   | ✅   | N/A | N/A |            |
-| 6.18 | Notes — add/edit/delete own                      | ✅   | ✅   | ✅   | ✅   |            |
-| 6.19 | Notes — DIR usuwa/edytuje każdą notatkę          | 🔲  | N/A | N/A | N/A | NAPRAWIONE |
-| 6.20 | Notes — DEP usuwa/edytuje notatki ADV/SP         | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
-| 6.21 | Notes — ADV/SP nie mogą edytować cudzych         | N/A | N/A | ✅   | ✅   |            |
-| 6.22 | Sekcja inactivity reason USUNIĘTA                | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 6.23 | Others: created at, last updated                 | ✅   | ✅   | ✅   | ✅   |            |
+| #    | Feature                                          | DIR | DEP | ADV | SP  | Comment |
+| ---- | ------------------------------------------------ | --- | --- | --- | --- | ------- |
+| 6.1  | Breadcrumbs: Clients → Company name              | ✅   | ✅   | ✅   | ✅   |         |
+| 6.2  | Breadcrumb preserves search params               | ✅   | ✅   | ✅   | ✅   |         |
+| 6.3  | Basic info displayed                             | ✅   | ✅   | ✅   | ✅   |         |
+| 6.4  | Edit basic info                                  | ✅   | ✅   | ✅   | ✅   |         |
+| 6.5  | Addresses displayed                              | ✅   | ✅   | ✅   | ✅   |         |
+| 6.6  | Add address — postal code auto-format            | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 6.7  | Add/edit address                                 | ✅   | ✅   | ✅   | ✅   |         |
+| 6.8  | Delete address — confirm dialog                  | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 6.9  | Delete address — brak przycisku gdy 1 adres      | ✅   | ✅   | ✅   | ✅   |         |
+| 6.10 | Add/edit/delete contact                          | ✅   | ✅   | ✅   | ✅   |         |
+| 6.11 | Delete contact — confirm dialog                  | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 6.12 | Assignment section — ADV widzi salesperson       | 🔲  | N/A | 🔲  | N/A | ✅       |
+| 6.13 | Assignment section — DEP: sales + adv + region   | ✅   | ✅   | N/A | N/A |         |
+| 6.14 | Assignment section — DIR: wszystko + superregion | ✅   | N/A | N/A | N/A |         |
+| 6.15 | Salesperson link → /users/:id (ADV też widzi)    | 🔲  | 🔲  | 🔲  | N/A | ✅       |
+| 6.16 | Advisor link → /users/:id                        | ✅   | ✅   | N/A | N/A |         |
+| 6.17 | Change salesperson assignment                    | ✅   | ✅   | N/A | N/A |         |
+| 6.18 | Notes — add/edit/delete own                      | ✅   | ✅   | ✅   | ✅   |         |
+| 6.19 | Notes — DIR usuwa/edytuje każdą notatkę          | 🔲  | N/A | N/A | N/A | ✅       |
+| 6.20 | Notes — DEP usuwa/edytuje notatki ADV/SP         | 🔲  | 🔲  | N/A | N/A | ✅       |
+| 6.21 | Notes — ADV/SP nie mogą edytować cudzych         | N/A | N/A | ✅   | ✅   |         |
+| 6.22 | Sekcja inactivity reason USUNIĘTA                | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 6.23 | Others: created at, last updated                 | ✅   | ✅   | ✅   | ✅   |         |
 
 
 ---
@@ -156,31 +156,31 @@
 ## 8. CALENDAR (/calendar)
 
 
-| #    | Feature                                                    | DIR | DEP | ADV | SP  | Comment    |
-| ---- | ---------------------------------------------------------- | --- | --- | --- | --- | ---------- |
-| 8.1  | Calendar loads                                             | ✅   | ✅   | ✅   | ✅   |            |
-| 8.2  | Month/week/agenda switching                                | ✅   | ✅   | ✅   | ✅   |            |
-| 8.3  | Own/invited/mandatory events — różne kolory                | ✅   | ✅   | ✅   | ✅   |            |
-| 8.4  | Create personal event                                      | ✅   | ✅   | ✅   | ✅   |            |
-| 8.5  | Create client meeting                                      | ✅   | ✅   | ✅   | ✅   |            |
-| 8.6  | Create team meeting — invite participants                  | ✅   | ✅   | ✅   | ✅   |            |
-| 8.7  | InviteUsers — ukrywa userów bez pozycji i zarchiwizowanych | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 8.8  | Create mandatory event (DIR/DEP only)                      | ✅   | ✅   | N/A | N/A |            |
-| 8.9  | ADV/SP nie mogą tworzyć mandatory                          | N/A | N/A | ✅   | ✅   |            |
-| 8.10 | Edit own event                                             | ✅   | ✅   | ✅   | ✅   |            |
-| 8.11 | Cannot edit other user's event                             | ✅   | ✅   | ✅   | ✅   |            |
-| 8.12 | Delete own event                                           | ✅   | ✅   | ✅   | ✅   |            |
-| 8.13 | Drag & drop reschedule                                     | ✅   | ✅   | ✅   | ✅   |            |
-| 8.14 | Conflict detection on create → toast                       | ✅   | ✅   | ✅   | ✅   |            |
-| 8.15 | Conflict detection on edit/drag → toast                    | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 8.16 | Copy event — kopiuje też listę zaproszonych                | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
-| 8.17 | Accept invitation — sprawdza konflikty                     | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 8.18 | Zmiana odpowiedzi na zaproszenie (accept↔reject)           | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
-| 8.19 | Zmiana odpowiedzi → notification dla twórcy                | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
-| 8.20 | Zmiany w evencie → notification do zaproszonych            | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
-| 8.21 | Cannot respond to mandatory event                          | ✅   | ✅   | ✅   | ✅   |            |
-| 8.22 | Day view modal                                             | ✅   | ✅   | ✅   | ✅   |            |
-| 8.23 | Event detail modal                                         | ✅   | ✅   | ✅   | ✅   |            |
+| #    | Feature                                                    | DIR | DEP | ADV | SP  | Comment |
+| ---- | ---------------------------------------------------------- | --- | --- | --- | --- | ------- |
+| 8.1  | Calendar loads                                             | ✅   | ✅   | ✅   | ✅   |         |
+| 8.2  | Month/week/agenda switching                                | ✅   | ✅   | ✅   | ✅   |         |
+| 8.3  | Own/invited/mandatory events — różne kolory                | ✅   | ✅   | ✅   | ✅   |         |
+| 8.4  | Create personal event                                      | ✅   | ✅   | ✅   | ✅   |         |
+| 8.5  | Create client meeting                                      | ✅   | ✅   | ✅   | ✅   |         |
+| 8.6  | Create team meeting — invite participants                  | ✅   | ✅   | ✅   | ✅   |         |
+| 8.7  | InviteUsers — ukrywa userów bez pozycji i zarchiwizowanych | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.8  | Create mandatory event (DIR/DEP only)                      | ✅   | ✅   | N/A | N/A |         |
+| 8.9  | ADV/SP nie mogą tworzyć mandatory                          | N/A | N/A | ✅   | ✅   |         |
+| 8.10 | Edit own event                                             | ✅   | ✅   | ✅   | ✅   |         |
+| 8.11 | Cannot edit other user's event                             | ✅   | ✅   | ✅   | ✅   |         |
+| 8.12 | Delete own event                                           | ✅   | ✅   | ✅   | ✅   |         |
+| 8.13 | Drag & drop reschedule                                     | ✅   | ✅   | ✅   | ✅   |         |
+| 8.14 | Conflict detection on create → toast                       | ✅   | ✅   | ✅   | ✅   |         |
+| 8.15 | Conflict detection on edit/drag → toast                    | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.16 | Copy event — kopiuje też listę zaproszonych                | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.17 | Accept invitation — sprawdza konflikty                     | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.18 | Zmiana odpowiedzi na zaproszenie (accept↔reject)           | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.19 | Zmiana odpowiedzi → notification dla twórcy                | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.20 | Zmiany w evencie → notification do zaproszonych            | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 8.21 | Cannot respond to mandatory event                          | ✅   | ✅   | ✅   | ✅   |         |
+| 8.22 | Day view modal                                             | ✅   | ✅   | ✅   | ✅   |         |
+| 8.23 | Event detail modal                                         | ✅   | ✅   | ✅   | ✅   |         |
 
 
 ---
@@ -188,21 +188,21 @@
 ## 9. NOTIFICATIONS
 
 
-| #    | Feature                                                       | DIR | DEP | ADV | SP  | Comment    |
-| ---- | ------------------------------------------------------------- | --- | --- | --- | --- | ---------- |
-| 9.1  | List shows own notifications                                  | ✅   | ✅   | ✅   | ✅   |            |
-| 9.2  | Unread highlighted                                            | ✅   | ✅   | ✅   | ✅   |            |
-| 9.3  | Mark read/unread                                              | ✅   | ✅   | ✅   | ✅   |            |
-| 9.4  | Delete notification                                           | ✅   | ✅   | ✅   | ✅   |            |
-| 9.5  | Detail modal                                                  | ✅   | ✅   | ✅   | ✅   |            |
-| 9.6  | Link do powiązanego klienta                                   | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 9.7  | Link do powiązanego eventu                                    | ✅   | ✅   | ✅   | ✅   |            |
-| 9.8  | Archive request/approved/rejected notification                | ✅   | ✅   | ✅   | ✅   |            |
-| 9.9  | Event invitation notification                                 | ✅   | ✅   | ✅   | ✅   |            |
-| 9.10 | Event conflict notification przy tworzeniu                    | ✅   | ✅   | ✅   | ✅   |            |
-| 9.11 | Event conflict notification przy akceptacji                   | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 9.12 | Notification o zmianie w evencie                              | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
-| 9.13 | Notification o zmianie odpowiedzi na zaproszenie (dla twórcy) | 🔲  | 🔲  | 🔲  | 🔲  | NAPRAWIONE |
+| #    | Feature                                                       | DIR | DEP | ADV | SP  | Comment |
+| ---- | ------------------------------------------------------------- | --- | --- | --- | --- | ------- |
+| 9.1  | List shows own notifications                                  | ✅   | ✅   | ✅   | ✅   |         |
+| 9.2  | Unread highlighted                                            | ✅   | ✅   | ✅   | ✅   |         |
+| 9.3  | Mark read/unread                                              | ✅   | ✅   | ✅   | ✅   |         |
+| 9.4  | Delete notification                                           | ✅   | ✅   | ✅   | ✅   |         |
+| 9.5  | Detail modal                                                  | ✅   | ✅   | ✅   | ✅   |         |
+| 9.6  | Link do powiązanego klienta                                   | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 9.7  | Link do powiązanego eventu                                    | ✅   | ✅   | ✅   | ✅   |         |
+| 9.8  | Archive request/approved/rejected notification                | ✅   | ✅   | ✅   | ✅   |         |
+| 9.9  | Event invitation notification                                 | ✅   | ✅   | ✅   | ✅   |         |
+| 9.10 | Event conflict notification przy tworzeniu                    | ✅   | ✅   | ✅   | ✅   |         |
+| 9.11 | Event conflict notification przy akceptacji                   | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 9.12 | Notification o zmianie w evencie                              | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 9.13 | Notification o zmianie odpowiedzi na zaproszenie (dla twórcy) | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
 
 
 ---
@@ -275,12 +275,12 @@
 | 13.2  | DIR sees all / DEP sees own                      | ✅   | ✅   | N/A | N/A |            |
 | 13.3  | Search by name / code                            | ✅   | ✅   | N/A | N/A |            |
 | 13.4  | Edit superregion name (DIR only)                 | ✅   | N/A | N/A | N/A |            |
-| 13.5  | Change deputy — confirm jeśli pozycja zajęta     | 🔲  | N/A | N/A | N/A | NAPRAWIONE |
-| 13.6  | Change deputy — lista: tylko aktywni bez pozycji | 🔲  | N/A | N/A | N/A | NAPRAWIONE |
-| 13.7  | Change deputy — rola → deputy, grade usuwany     | 🔲  | N/A | N/A | N/A | NAPRAWIONE |
+| 13.5  | Change deputy — confirm jeśli pozycja zajęta     | 🔲  | N/A | N/A | N/A | ✅          |
+| 13.6  | Change deputy — lista: tylko aktywni bez pozycji | 🔲  | N/A | N/A | N/A | ✅          |
+| 13.7  | Change deputy — rola → deputy, grade usuwany     | 🔲  | N/A | N/A | N/A | ✅          |
 | 13.8  | Remove deputy — confirm                          | ✅   | N/A | N/A | N/A |            |
 | 13.9  | Edit region name                                 | ✅   | ✅   | N/A | N/A |            |
-| 13.10 | Edit region prefix                               | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
+| 13.10 | Edit region prefix                               | 🔲  | 🔲  | N/A | N/A | ✅          |
 | 13.11 | Move region (DIR only)                           | ✅   | N/A | N/A | N/A |            |
 | 13.12 | Add position                                     | ✅   | ✅   | N/A | N/A |            |
 | 13.13 | Remove vacant position                           | ✅   | ✅   | N/A | N/A |            |
@@ -294,7 +294,7 @@
 | 13.21 | Move user — auto-refresh                         | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
 | 13.22 | DEP nie może przenieść poza własny superregion   | N/A | ✅   | N/A | N/A |            |
 | 13.23 | Click user → EditUserModal                       | ✅   | ✅   | N/A | N/A |            |
-| 13.24 | EditUserModal — przycisk archive                 | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
+| 13.24 | EditUserModal — przycisk archive                 | 🔲  | 🔲  | N/A | N/A | ✅          |
 
 
 ---
@@ -313,7 +313,7 @@
 | 14.7  | EditUserModal — grade dla ADV/SP                      | ✅   | ✅   | N/A | N/A |            |
 | 14.8  | EditUserModal — reset password (temp + flaga)         | 🔲  | 🔲  | N/A | N/A | ✅          |
 | 14.9  | EditUserModal — notes (add/delete z confirmem)        | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
-| 14.10 | EditUserModal — archive button                        | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
+| 14.10 | EditUserModal — archive button                        | 🔲  | 🔲  | N/A | N/A | ✅          |
 | 14.11 | Create user — required fields z walidacją tel         | 🔲  | 🔲  | N/A | N/A | ✅          |
 | 14.12 | Create user — DEP widzi tylko własne vacant positions | 🔲  | 🔲  | N/A | N/A | ✅          |
 | 14.13 | Create user — confirm przy submit i cancel            | 🔲  | 🔲  | N/A | N/A | NAPRAWIONE |
@@ -359,13 +359,13 @@
 ## 17. ARCHIVE — EMPLOYEES (/archive)
 
 
-| #    | Feature                                 | DIR | DEP | ADV | SP  | Comment                                                 |
-| ---- | --------------------------------------- | --- | --- | --- | --- | ------------------------------------------------------- |
-| 17.1 | Breadcrumbs: Archive → User name        | 🔲  | N/A | N/A | N/A | NAPRAWIONE                                              |
-| 17.2 | Search / sort / pagination              | ✅   | N/A | N/A | N/A |                                                         |
-| 17.3 | Last position / reason / date displayed | ✅   | N/A | N/A | N/A |                                                         |
-| 17.4 | Click → /users/:id                      | ✅   | N/A | N/A | N/A |                                                         |
-| 17.5 | Unarchive user (DO ZROBIENIA)           | 💬  | N/A | N/A | N/A | chyba działa, ale nie wyświetla pracowników bez pozycji |
+| #    | Feature                                 | DIR | DEP | ADV | SP  | Comment    |
+| ---- | --------------------------------------- | --- | --- | --- | --- | ---------- |
+| 17.1 | Breadcrumbs: Archive → User name        | 🔲  | N/A | N/A | N/A | NAPRAWIONE |
+| 17.2 | Search / sort / pagination              | ✅   | N/A | N/A | N/A |            |
+| 17.3 | Last position / reason / date displayed | ✅   | N/A | N/A | N/A |            |
+| 17.4 | Click → /users/:id                      | ✅   | N/A | N/A | N/A |            |
+| 17.5 | Unarchive user (DO ZROBIENIA)           | 💬  | N/A | N/A | N/A | ✅          |
 
 
 ---
@@ -373,20 +373,20 @@
 ## 18. EDGE CASES
 
 
-| #     | Feature                                     | DIR | DEP | ADV | SP  | Comment    |
-| ----- | ------------------------------------------- | --- | --- | --- | --- | ---------- |
-| 18.1  | Vacant position everywhere                  | ✅   | ✅   | ✅   | ✅   |            |
-| 18.2  | Archived user NOT in structure / management | ✅   | ✅   | ✅   | ✅   |            |
-| 18.3  | Position history updated on assign/remove   | ✅   | ✅   | N/A | N/A |            |
-| 18.4  | Grade usuwany przy awansie na deputy        | 🔲  | N/A | N/A | N/A | NAPRAWIONE |
-| 18.5  | Role updated przy zmianie pozycji           | ✅   | ✅   | N/A | N/A |            |
-| 18.6  | Toast on success / error                    | ✅   | ✅   | ✅   | ✅   |            |
-| 18.7  | Loader during fetch                         | 🔲  | 🔲  | 🔲  | 🔲  | ✅          |
-| 18.8  | FetchError on API failure                   | ✅   | ✅   | ✅   | ✅   |            |
-| 18.9  | Modal: brak close on outside click          | ✅   | ✅   | ✅   | ✅   |            |
-| 18.10 | Modal: Escape closes                        | ✅   | ✅   | ✅   | ✅   |            |
-| 18.11 | Dates en-GB format                          | ✅   | ✅   | ✅   | ✅   |            |
-| 18.12 | Mobile 375px responsive                     | ✅   | ✅   | ✅   | ✅   |            |
-| 18.13 | Last login updates po logowaniu             | ✅   | ✅   | ✅   | ✅   |            |
+| #     | Feature                                     | DIR | DEP | ADV | SP  | Comment |
+| ----- | ------------------------------------------- | --- | --- | --- | --- | ------- |
+| 18.1  | Vacant position everywhere                  | ✅   | ✅   | ✅   | ✅   |         |
+| 18.2  | Archived user NOT in structure / management | ✅   | ✅   | ✅   | ✅   |         |
+| 18.3  | Position history updated on assign/remove   | ✅   | ✅   | N/A | N/A |         |
+| 18.4  | Grade usuwany przy awansie na deputy        | 🔲  | N/A | N/A | N/A | ✅       |
+| 18.5  | Role updated przy zmianie pozycji           | ✅   | ✅   | N/A | N/A |         |
+| 18.6  | Toast on success / error                    | ✅   | ✅   | ✅   | ✅   |         |
+| 18.7  | Loader during fetch                         | 🔲  | 🔲  | 🔲  | 🔲  | ✅       |
+| 18.8  | FetchError on API failure                   | ✅   | ✅   | ✅   | ✅   |         |
+| 18.9  | Modal: brak close on outside click          | ✅   | ✅   | ✅   | ✅   |         |
+| 18.10 | Modal: Escape closes                        | ✅   | ✅   | ✅   | ✅   |         |
+| 18.11 | Dates en-GB format                          | ✅   | ✅   | ✅   | ✅   |         |
+| 18.12 | Mobile 375px responsive                     | ✅   | ✅   | ✅   | ✅   |         |
+| 18.13 | Last login updates po logowaniu             | ✅   | ✅   | ✅   | ✅   |         |
 
 

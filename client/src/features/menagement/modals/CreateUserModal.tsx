@@ -44,6 +44,33 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) 
     onClose();
   });
 
+  const submitConfirm = useConfirm<FormData>((data) => {
+    mutate(
+      {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        temporaryPassword: data.temporaryPassword,
+        phone: data.phone,
+        role: "salesperson",
+        grade: gradeRequired && data.grade ? (Number(data.grade) as 1 | 2 | 3 | 4) : null,
+        positionId: data.positionId,
+      },
+      {
+        onSuccess: () => {
+          toast.success("User created");
+          reset();
+          onClose();
+        },
+        onError: (e: unknown) => {
+          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
+            ?.message;
+          toast.error(msg ?? "Failed to create user");
+        },
+      },
+    );
+  });
+
   const {
     register,
     handleSubmit,
@@ -66,30 +93,7 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) 
   const gradeRequired = !!selectedPositionId && !isDeputyPosition;
 
   const onSubmit = (data: FormData) => {
-    mutate(
-      {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        temporaryPassword: data.temporaryPassword,
-        phone: data.phone,
-        role: "salesperson", // overridden by backend based on position
-        grade: gradeRequired && data.grade ? (Number(data.grade) as 1 | 2 | 3 | 4) : null,
-        positionId: data.positionId,
-      },
-      {
-        onSuccess: () => {
-          toast.success("User created");
-          reset();
-          onClose();
-        },
-        onError: (e: unknown) => {
-          const msg = (e as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message;
-          toast.error(msg ?? "Failed to create user");
-        },
-      },
-    );
+    submitConfirm.ask(data);
   };
 
   return (
@@ -139,6 +143,15 @@ export const CreateUserModal = ({ isOpen, onClose, availablePositions }: Props) 
         description="User will not be created. Are you sure?"
         onConfirm={confirmCancel}
         onClose={cancelCancel}
+      />
+      <ConfirmDialog
+        isOpen={submitConfirm.isOpen}
+        onClose={submitConfirm.cancel}
+        onConfirm={submitConfirm.confirm}
+        title="Create user?"
+        description="Are you sure you want to create this user?"
+        confirmLabel="Create"
+        isLoading={isPending}
       />
     </Modal>
   );
