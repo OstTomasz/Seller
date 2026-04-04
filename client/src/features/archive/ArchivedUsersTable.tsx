@@ -84,7 +84,7 @@ export const ArchivedUsersTable = ({ users, onUnarchive }: Props) => {
       onSort: () => handleSort("lastName"),
       render: (u: ArchivedUser) => (
         <button
-          onClick={() => navigate(`/users/${u._id}`)}
+          onClick={() => navigate(`/users/${u._id}`, { state: { from: "archive" } })}
           className="text-celery-200 hover:text-celery-100 font-medium text-left"
         >
           {u.firstName} {u.lastName}

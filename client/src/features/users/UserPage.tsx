@@ -1,5 +1,5 @@
 // client/src/features/users/UserPage.tsx
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Breadcrumbs, Card, Loader, FetchError } from "@/components/ui";
 import {
@@ -50,6 +50,8 @@ export const UserPage = () => {
   const { id } = useParams<{ id: string }>();
   const { user: currentUser } = useAuthStore();
   const { data, isLoading, isError } = useUserDetails(id!);
+  const location = useLocation();
+  const fromArchive = (location.state as { from?: string } | null)?.from === "archive";
 
   const canSeeNotes = currentUser?.role === "director" || currentUser?.role === "deputy";
 
@@ -76,7 +78,13 @@ export const UserPage = () => {
 
   return (
     <div className="flex flex-col max-w-3xl mx-auto gap-6">
-      <Breadcrumbs items={[{ label: "Company", to: "/company" }, { label: fullName }]} />
+      <Breadcrumbs
+        items={
+          fromArchive
+            ? [{ label: "Archive", to: "/archive" }, { label: fullName }]
+            : [{ label: "Company", to: "/company" }, { label: fullName }]
+        }
+      />
 
       {/* Header */}
       <div className="flex items-center gap-6">
