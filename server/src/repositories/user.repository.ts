@@ -41,6 +41,19 @@ export const findUserByEmail = async (email: string) => User.findOne({ email });
 export const findActiveUserByEmail = async (email: string) =>
   User.findOne({ email, isActive: true });
 
+/** Returns all active users with full position+region populate for management structure */
+export const findAllUsersForManagement = async () =>
+  User.find({ isActive: true })
+    .populate({
+      path: "position",
+      populate: {
+        path: "region",
+        populate: { path: "parentRegion" },
+      },
+    })
+    .select("-password")
+    .sort({ lastName: 1, firstName: 1 });
+
 /**
  * Returns all salesperson users with populated position and region.
  */

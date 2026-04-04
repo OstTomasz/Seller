@@ -293,7 +293,8 @@ export const getSalespersons = async (
   return [];
 };
 
-export const getUsersForStructure = async () => userRepository.findAllUsersForInvite();
+// PO:
+export const getUsersForStructure = async () => userRepository.findAllUsersForManagement();
 
 export const removeUserFromPosition = async (
   userId: string,
