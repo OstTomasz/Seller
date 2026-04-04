@@ -333,7 +333,7 @@ export const EditUserModal = ({ user, onClose }: Props) => {
             ) : null}
 
             {/* Archive — tylko director */}
-            {isDirector ? (
+            {isDirector && user?.role !== "director" ? (
               <div className="flex flex-col gap-3 pt-4 border-t border-celery-700">
                 <h3 className="text-xs font-semibold text-celery-500 uppercase tracking-wider">
                   Archive User
