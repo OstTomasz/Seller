@@ -123,6 +123,7 @@ export const EditUserModal = ({ user, onClose }: Props) => {
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const resetConfirm = useConfirm<string>((password) => resetPassword(password));
+  const deleteNoteConfirm = useConfirm<string>((noteId) => handleDeleteNote(noteId));
 
   const handleResetPassword = () => {
     if (!tempPassword.trim()) return;
@@ -270,7 +271,7 @@ export const EditUserModal = ({ user, onClose }: Props) => {
                       {canDelete ? (
                         <button
                           type="button"
-                          onClick={() => handleDeleteNote(note._id)}
+                          onClick={() => deleteNoteConfirm.ask(note._id)}
                           className="text-celery-600 hover:text-red-400 transition-colors shrink-0"
                         >
                           <Trash2 className="size-3.5" />
@@ -388,6 +389,14 @@ export const EditUserModal = ({ user, onClose }: Props) => {
         description={`Set temporary password for ${user?.firstName} ${user?.lastName}?`}
         confirmLabel="Reset"
         isLoading={isResetting}
+      />
+      <ConfirmDialog
+        isOpen={deleteNoteConfirm.isOpen}
+        onClose={deleteNoteConfirm.cancel}
+        onConfirm={deleteNoteConfirm.confirm}
+        title="Delete note?"
+        description="Are you sure you want to delete this note?"
+        isLoading={removeNote.isPending}
       />
     </>
   );
