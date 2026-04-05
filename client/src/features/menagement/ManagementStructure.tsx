@@ -1,22 +1,9 @@
 import { useState, useMemo } from "react";
-import {
-  Search,
-  ChevronDown,
-  ChevronRight,
-  Crown,
-  Pencil,
-  ArrowRightLeft,
-  Plus,
-  Trash2,
-  UserPlus,
-} from "lucide-react";
-import { Input, Loader, FetchError, ConfirmDialog } from "@/components/ui";
+import { Search, ChevronDown, ChevronRight, Crown, Pencil, Plus } from "lucide-react";
+import { Input, Loader, FetchError } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 import { useAllPositions } from "./hooks/useManagementStructure";
-import { EditRegionModal } from "./modals/EditRegionModal";
-import { EditDeputyModal } from "./modals/EditDeputyModal";
-import { MoveRegionModal } from "./modals/MoveRegionModal";
 import { AddPositionModal } from "./modals/AddPositionModal";
 import { RemovePositionModal } from "./modals/RemovePositionModal";
 import { EditPositionModal } from "./modals/EditPositionModal";
@@ -24,7 +11,7 @@ import { EditUserModal } from "./modals/EditUserModal";
 import type { PositionWithHolder, UserRole, Region, UserForInvite, User } from "@/types";
 import { regionsApi } from "@/api/regions";
 import { useQuery } from "@tanstack/react-query";
-import { useUsersWithoutPosition, useDeleteRegion } from "./hooks/useManagementStructure";
+import { useUsersWithoutPosition } from "./hooks/useManagementStructure";
 import { usersApi } from "@/api/users";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -144,9 +131,7 @@ const SubRegionSection = ({
   collapsed,
   onToggle,
   canEdit,
-  canMove,
-  onEditRegion,
-  onMoveRegion,
+
   onAddPosition,
   onEditUser,
   onEditPosition,
@@ -155,17 +140,15 @@ const SubRegionSection = ({
   collapsed: boolean;
   onToggle: () => void;
   canEdit: boolean;
-  canMove: boolean;
-  onEditRegion: (r: { id: string; name: string; prefix: string }) => void;
-  onMoveRegion: (r: { id: string; name: string }) => void;
+
   onAddPosition: (r: { id: string; name: string; prefix: string }) => void;
   onEditUser: (userId: string) => void;
   onEditPosition: (p: PositionWithHolder) => void;
 }) => (
   <div className="flex flex-col gap-1 ml-4">
     <div
-      className="flex items-center gap-2 px-2 py-1 w-full rounded ml-4
-                text-xs font-semibold text-celery-500 uppercase tracking-wider"
+      className="flex items-center gap-2 px-2 py-1 w-full rounded
+          text-xs font-semibold text-celery-500 uppercase tracking-wider"
     >
       <button
         type="button"
@@ -180,37 +163,17 @@ const SubRegionSection = ({
         {node.region.name} ({node.region.prefix})
       </button>
       {canEdit ? (
-        <span className="flex gap-0.5">
-          <ActionBtn
-            icon={Pencil}
-            onClick={() =>
-              onEditRegion({
-                id: node.region._id,
-                name: node.region.name,
-                prefix: node.region.prefix,
-              })
-            }
-            title="Edit region"
-          />
-          {canMove ? (
-            <ActionBtn
-              icon={ArrowRightLeft}
-              onClick={() => onMoveRegion({ id: node.region._id, name: node.region.name })}
-              title="Move region"
-            />
-          ) : null}
-          <ActionBtn
-            icon={Plus}
-            onClick={() =>
-              onAddPosition({
-                id: node.region._id,
-                name: node.region.name,
-                prefix: node.region.prefix,
-              })
-            }
-            title="Add position"
-          />
-        </span>
+        <ActionBtn
+          icon={Plus}
+          onClick={() =>
+            onAddPosition({
+              id: node.region._id,
+              name: node.region.name,
+              prefix: node.region.prefix,
+            })
+          }
+          title="Add position"
+        />
       ) : null}
     </div>
     {!collapsed ? (
@@ -239,10 +202,6 @@ export const ManagementStructure = () => {
 
   const { data: usersWithoutPosition = [] } = useUsersWithoutPosition();
   const { data: positions, isLoading: posLoading, isError: posError } = useAllPositions();
-  const { mutate: deleteRegion } = useDeleteRegion();
-  const [deleteSuperregion, setDeleteSuperregion] = useState<{ id: string; name: string } | null>(
-    null,
-  );
 
   const {
     data: regions,
@@ -263,15 +222,6 @@ export const ManagementStructure = () => {
   const [collapsedSubs, setCollapsedSubs] = useState<Set<string>>(new Set());
 
   // Modal state
-  const [editRegion, setEditRegion] = useState<{ id: string; name: string; prefix: string } | null>(
-    null,
-  );
-  const [editDeputy, setEditDeputy] = useState<{
-    id: string;
-    name: string;
-    hasHolder: boolean;
-  } | null>(null);
-  const [moveRegion, setMoveRegion] = useState<{ id: string; name: string } | null>(null);
   const [addPosition, setAddPosition] = useState<{
     id: string;
     name: string;
@@ -344,8 +294,6 @@ export const ManagementStructure = () => {
   if (posLoading || regLoading) return <Loader label="structure" />;
   if (posError || regError || !visibleHierarchy) return <FetchError label="structure" />;
 
-  const superregions = regions?.filter((r) => r.parentRegion === null) ?? [];
-
   return (
     <>
       <div className="flex flex-col gap-4 w-full max-w-3xl mx-auto">
@@ -401,40 +349,6 @@ export const ManagementStructure = () => {
                     )}
                     {sr.region.name} ({sr.region.prefix})
                   </button>
-                  {isDirector ? (
-                    <span className="flex gap-0.5">
-                      <ActionBtn
-                        icon={Pencil}
-                        onClick={() =>
-                          setEditRegion({
-                            id: sr.region._id,
-                            name: sr.region.name,
-                            prefix: sr.region.prefix,
-                          })
-                        }
-                        title="Edit superregion name"
-                      />
-                      <ActionBtn
-                        icon={UserPlus}
-                        onClick={() =>
-                          setEditDeputy({
-                            id: sr.region._id,
-                            name: sr.region.name,
-                            hasHolder: !!sr.deputyPosition?.currentHolder,
-                          })
-                        }
-                        title="Change deputy"
-                      />
-                      <ActionBtn
-                        icon={Trash2}
-                        onClick={() =>
-                          setDeleteSuperregion({ id: sr.region._id, name: sr.region.name })
-                        }
-                        title="Delete superregion"
-                        variant="danger"
-                      />
-                    </span>
-                  ) : null}
                 </div>
 
                 {!isSrCollapsed ? (
@@ -480,9 +394,6 @@ export const ManagementStructure = () => {
                         collapsed={collapsedSubs.has(sub.region._id)}
                         onToggle={() => toggle(sub.region._id, setCollapsedSubs)}
                         canEdit
-                        canMove={isDirector}
-                        onEditRegion={setEditRegion}
-                        onMoveRegion={setMoveRegion}
                         onAddPosition={setAddPosition}
                         onEditUser={(userId) => {
                           const u = allUsers.find((u: UserForInvite) => u._id === userId);
@@ -500,17 +411,7 @@ export const ManagementStructure = () => {
       </div>
 
       {/* Modals */}
-      <EditRegionModal region={editRegion} onClose={() => setEditRegion(null)} />
-      <EditDeputyModal
-        superregion={editDeputy}
-        allUsers={allUsers as UserForInvite[]}
-        onClose={() => setEditDeputy(null)}
-      />
-      <MoveRegionModal
-        region={moveRegion}
-        superregions={superregions}
-        onClose={() => setMoveRegion(null)}
-      />
+
       <AddPositionModal region={addPosition} onClose={() => setAddPosition(null)} />
       <RemovePositionModal position={removePosition} onClose={() => setRemovePosition(null)} />
 
@@ -519,18 +420,6 @@ export const ManagementStructure = () => {
         position={editPosition}
         availableUsers={usersWithoutPosition}
         onClose={() => setEditPosition(null)}
-      />
-      <ConfirmDialog
-        isOpen={!!deleteSuperregion}
-        onClose={() => setDeleteSuperregion(null)}
-        onConfirm={() => {
-          if (!deleteSuperregion) return;
-          deleteRegion(deleteSuperregion.id);
-          setDeleteSuperregion(null);
-        }}
-        title="Delete superregion?"
-        description={`Delete "${deleteSuperregion?.name}"? This action cannot be undone.`}
-        confirmLabel="Delete"
       />
     </>
   );

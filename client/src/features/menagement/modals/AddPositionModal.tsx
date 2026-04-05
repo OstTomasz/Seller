@@ -12,7 +12,7 @@ export const AddPositionModal = ({ region, onClose }: Props) => {
   const [code, setCode] = useState("");
   const { mutate, isPending } = useCreatePosition();
 
-  const suggestedCode = region ? `SP-${region.prefix}-` : "";
+  const suggestedCode = region ? `${region.prefix}-2` : "";
 
   const handleSubmit = () => {
     if (!region || !code.trim()) return;
@@ -43,7 +43,7 @@ export const AddPositionModal = ({ region, onClose }: Props) => {
           label="Position code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder={suggestedCode + "1"}
+          placeholder={suggestedCode}
         />
         <div className="flex justify-end gap-3 pt-2 border-t border-celery-700">
           <Button variant="ghost" onClick={onClose}>

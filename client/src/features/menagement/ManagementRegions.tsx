@@ -1,32 +1,24 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Loader, FetchError, Button } from "@/components/ui";
 import { useQuery } from "@tanstack/react-query";
 import { regionsApi } from "@/api/regions";
 import { useAuthStore } from "@/store/authStore";
-import { useDeleteRegion, useAllPositions } from "./hooks/useManagementStructure";
-import { useConfirm } from "@/hooks/useConfirm";
-import { CreateRegionModal } from "./modals/CreateRegionModal";
 import type { Region, PositionWithHolder } from "@/types";
-
-import { ConfirmDialog } from "@/components/ui";
+import { useAllPositions } from "./hooks/useManagementStructure";
+import { EditRegionModal } from "./modals/EditRegionModal";
+import { CreateRegionModal } from "./modals/CreateRegionModal";
 
 export const ManagementRegions = () => {
   const { user } = useAuthStore();
   const isDirector = user?.role === "director";
-  const [createRegionOpen, setCreateRegionOpen] = useState(false);
+  const [editRegion, setEditRegion] = useState<{
+    id: string;
+    name: string;
+    prefix: string;
+    isSuperregion: boolean;
+  } | null>(null);
   const [createSuperregionOpen, setCreateSuperregionOpen] = useState(false);
-  const { mutate: deleteRegion, isPending: isDeleting } = useDeleteRegion();
-
-  const {
-    isOpen,
-    payload: regionToDelete,
-    ask,
-    confirm,
-    cancel,
-  } = useConfirm<Region>((region) => {
-    deleteRegion(region._id);
-  });
 
   const {
     data: regions,
@@ -66,10 +58,6 @@ export const ManagementRegions = () => {
               New superregion
             </Button>
           ) : null}
-          <Button onClick={() => setCreateRegionOpen(true)}>
-            <Plus className="size-4 mr-2" />
-            New region
-          </Button>
         </div>
 
         {visibleSuperregions.map((sr: Region) => {
@@ -80,42 +68,45 @@ export const ManagementRegions = () => {
                 <h3 className="text-xs font-semibold text-celery-500 uppercase tracking-wider">
                   {sr.name} ({sr.prefix})
                 </h3>
-                {isDirector && children.length === 0 ? (
+                {isDirector ? (
                   <button
                     type="button"
-                    disabled={isDeleting}
-                    onClick={() => ask(sr)}
-                    className="text-celery-600 hover:text-red-400 transition-colors"
+                    onClick={() =>
+                      setEditRegion({
+                        id: sr._id,
+                        name: sr.name,
+                        prefix: sr.prefix,
+                        isSuperregion: true,
+                      })
+                    }
+                    className="text-celery-600 hover:text-celery-300 transition-colors p-1"
                   >
-                    <Trash2 className="size-3.5" />
+                    <Pencil className="size-3.5" />
                   </button>
                 ) : null}
               </div>
               <div className="flex flex-col gap-1 ml-4">
                 {children.map((sub: Region) => {
-                  const hasHolders = positions?.some(
-                    (p: PositionWithHolder) =>
-                      p.region?._id === sub._id && p.currentHolder !== null,
-                  );
                   return (
-                    <div
-                      key={sub._id}
-                      className="flex items-center justify-between rounded-lg px-3 py-2 bg-bg-elevated"
-                    >
+                    <div className="flex items-center justify-between rounded-lg px-3 py-2 bg-bg-elevated">
                       <span className="text-sm text-celery-200">
                         {sub.name}
                         <span className="ml-2 text-xs text-celery-500">{sub.prefix}</span>
                       </span>
-                      {isDirector && !hasHolders ? (
-                        <button
-                          type="button"
-                          disabled={isDeleting}
-                          onClick={() => ask(sub)}
-                          className="text-celery-600 hover:text-red-400 transition-colors"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditRegion({
+                            id: sub._id,
+                            name: sub.name,
+                            prefix: sub.prefix,
+                            isSuperregion: false,
+                          })
+                        }
+                        className="text-celery-600 hover:text-celery-300 transition-colors p-1"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
                     </div>
                   );
                 })}
@@ -127,25 +118,24 @@ export const ManagementRegions = () => {
           );
         })}
       </div>
-
-      <CreateRegionModal
-        isOpen={createRegionOpen}
-        onClose={() => setCreateRegionOpen(false)}
+      <EditRegionModal
+        region={editRegion}
         superregions={superregions}
-        forceParentId={!isDirector ? mySuperregionId : undefined}
+        canDelete={
+          editRegion?.isSuperregion
+            ? subregions.filter((sub) => sub.parentRegion === editRegion.id).length === 0
+            : !positions?.some(
+                (p: PositionWithHolder) =>
+                  p.region?._id === editRegion?.id && !(p.type === "advisor" && !p.currentHolder),
+              )
+        }
+        onClose={() => setEditRegion(null)}
       />
       <CreateRegionModal
         isOpen={createSuperregionOpen}
         onClose={() => setCreateSuperregionOpen(false)}
         superregions={superregions}
         isSuperregion
-      />
-      <ConfirmDialog
-        isOpen={isOpen}
-        title="Delete region"
-        description={`Delete "${regionToDelete?.name ?? ""}"? This cannot be undone.`}
-        onConfirm={confirm}
-        onClose={cancel}
       />
     </>
   );
