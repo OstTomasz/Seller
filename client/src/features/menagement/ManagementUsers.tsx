@@ -114,18 +114,16 @@ export const ManagementUsers = () => {
             return (
               <div
                 key={u._id}
-                className="flex items-center justify-between rounded-lg px-3 py-2.5 bg-bg-elevated"
+                className="flex items-center justify-between rounded-lg p-1 pr-4 bg-bg-elevated"
               >
-                <div className="flex flex-col gap-0.5">
-                  <button
-                    onClick={() => setEditUser(u)}
-                    className="text-sm text-celery-200 hover:text-celery-100 text-left transition-colors"
-                  >
-                    {u.firstName} {u.lastName}
-                    <span className="ml-2 text-xs text-celery-500">#{u.numericId}</span>
-                  </button>
-                  <span className="text-xs text-celery-600">{u.email}</span>
-                </div>
+                <button
+                  onClick={() => setEditUser(u)}
+                  className="text-sm text-celery-200 hover:text-celery-100 text-left transition-colors flex-1"
+                >
+                  {u.firstName} {u.lastName}
+                  <span className="ml-2 text-xs text-celery-500">#{u.numericId}</span>
+                </button>
+
                 {pos?.code ? (
                   <span className="text-xs text-celery-500">{pos.code}</span>
                 ) : (
