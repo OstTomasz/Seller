@@ -8,7 +8,6 @@ import {
   ArrowRightLeft,
   Plus,
   Trash2,
-  UserX,
   UserPlus,
 } from "lucide-react";
 import { Input, Loader, FetchError, ConfirmDialog } from "@/components/ui";
@@ -20,15 +19,13 @@ import { EditDeputyModal } from "./modals/EditDeputyModal";
 import { MoveRegionModal } from "./modals/MoveRegionModal";
 import { AddPositionModal } from "./modals/AddPositionModal";
 import { RemovePositionModal } from "./modals/RemovePositionModal";
-import { AssignUserModal } from "./modals/AssignUserModal";
-import { MoveUserModal } from "./modals/MoveUserModal";
+import { EditPositionModal } from "./modals/EditPositionModal";
 import { EditUserModal } from "./modals/EditUserModal";
 import type { PositionWithHolder, UserRole, Region, UserForInvite, User } from "@/types";
 import { regionsApi } from "@/api/regions";
 import { useQuery } from "@tanstack/react-query";
 import { useUsersWithoutPosition, useDeleteRegion } from "./hooks/useManagementStructure";
 import { usersApi } from "@/api/users";
-import { EditPositionCodeModal } from "./modals/EditPositionCodeModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -110,19 +107,13 @@ const ActionBtn = ({
 const PositionRow = ({
   position,
   canEdit,
-  onAssign,
-  onRemovePosition,
-  onMoveUser,
+  onEditPosition,
   onEditUser,
-  onEditCode,
 }: {
   position: PositionWithHolder;
   canEdit: boolean;
-  onAssign: (p: PositionWithHolder) => void;
-  onRemovePosition: (p: PositionWithHolder) => void;
-  onMoveUser: (p: PositionWithHolder) => void;
+  onEditPosition: (p: PositionWithHolder) => void;
   onEditUser: (userId: string) => void;
-  onEditCode: (p: PositionWithHolder) => void;
 }) => (
   <div className="flex items-center justify-between rounded-lg pr-2 bg-bg-elevated">
     <button
@@ -141,36 +132,7 @@ const PositionRow = ({
       <span className="ml-2 text-xs text-celery-500">{position.code}</span>
     </button>
     {canEdit ? (
-      <div className="flex items-center gap-0.5">
-        {position.currentHolder ? (
-          <>
-            <ActionBtn
-              icon={ArrowRightLeft}
-              onClick={() => onMoveUser(position)}
-              title="Move user"
-            />
-            <ActionBtn
-              icon={UserX}
-              onClick={() => onAssign(position)}
-              title="Remove from position"
-              variant="danger"
-            />
-          </>
-        ) : (
-          <>
-            <ActionBtn icon={UserPlus} onClick={() => onAssign(position)} title="Assign user" />
-            {position.type === "salesperson" ? (
-              <ActionBtn
-                icon={Trash2}
-                onClick={() => onRemovePosition(position)}
-                title="Delete position"
-                variant="danger"
-              />
-            ) : null}
-          </>
-        )}
-        <ActionBtn icon={Pencil} onClick={() => onEditCode(position)} title="Edit code" />
-      </div>
+      <ActionBtn icon={Pencil} onClick={() => onEditPosition(position)} title="Manage position" />
     ) : null}
   </div>
 );
@@ -186,11 +148,8 @@ const SubRegionSection = ({
   onEditRegion,
   onMoveRegion,
   onAddPosition,
-  onAssign,
-  onRemovePosition,
-  onMoveUser,
   onEditUser,
-  onEditCode,
+  onEditPosition,
 }: {
   node: SubRegionNode;
   collapsed: boolean;
@@ -200,11 +159,8 @@ const SubRegionSection = ({
   onEditRegion: (r: { id: string; name: string; prefix: string }) => void;
   onMoveRegion: (r: { id: string; name: string }) => void;
   onAddPosition: (r: { id: string; name: string; prefix: string }) => void;
-  onAssign: (p: PositionWithHolder) => void;
-  onRemovePosition: (p: PositionWithHolder) => void;
-  onMoveUser: (p: PositionWithHolder) => void;
   onEditUser: (userId: string) => void;
-  onEditCode: (p: PositionWithHolder) => void;
+  onEditPosition: (p: PositionWithHolder) => void;
 }) => (
   <div className="flex flex-col gap-1 ml-4">
     <div
@@ -264,11 +220,8 @@ const SubRegionSection = ({
             key={p._id}
             position={p}
             canEdit={canEdit}
-            onAssign={onAssign}
-            onRemovePosition={onRemovePosition}
-            onMoveUser={onMoveUser}
+            onEditPosition={onEditPosition}
             onEditUser={onEditUser}
-            onEditCode={onEditCode}
           />
         ))}
       </div>
@@ -283,9 +236,7 @@ export const ManagementStructure = () => {
   const role = user?.role as UserRole;
   const isDirector = role === "director";
   const [editUser, setEditUser] = useState<User | null>(null);
-  const [editPositionCode, setEditPositionCode] = useState<{ id: string; code: string } | null>(
-    null,
-  );
+
   const { data: usersWithoutPosition = [] } = useUsersWithoutPosition();
   const { data: positions, isLoading: posLoading, isError: posError } = useAllPositions();
   const { mutate: deleteRegion } = useDeleteRegion();
@@ -327,8 +278,7 @@ export const ManagementStructure = () => {
     prefix: string;
   } | null>(null);
   const [removePosition, setRemovePosition] = useState<{ id: string; code: string } | null>(null);
-  const [assignPosition, setAssignPosition] = useState<PositionWithHolder | null>(null);
-  const [moveUserPosition, setMoveUserPosition] = useState<PositionWithHolder | null>(null);
+  const [editPosition, setEditPosition] = useState<PositionWithHolder | null>(null);
 
   const toggle = (key: string, setter: React.Dispatch<React.SetStateAction<Set<string>>>) =>
     setter((prev) => {
@@ -390,11 +340,6 @@ export const ManagementStructure = () => {
 
     return result;
   }, [hierarchy, isDirector, positions, user?._id, search]);
-
-  const allVacantPositions = useMemo(
-    () => (positions ?? []).filter((p) => !p.currentHolder && p.type === "salesperson"),
-    [positions],
-  );
 
   if (posLoading || regLoading) return <Loader label="structure" />;
   if (posError || regError || !visibleHierarchy) return <FetchError label="structure" />;
@@ -517,25 +462,12 @@ export const ManagementStructure = () => {
                             {sr.deputyPosition.code}
                           </span>
                         </button>
-                        {isDirector && deputyHolder ? (
-                          <div className="flex items-center gap-0.5">
-                            <ActionBtn
-                              icon={Pencil}
-                              onClick={() => {
-                                const u = allUsers.find(
-                                  (u: UserForInvite) => u._id === deputyHolder._id,
-                                );
-                                if (u) setEditUser(u as unknown as User);
-                              }}
-                              title="Edit deputy"
-                            />
-                            <ActionBtn
-                              icon={UserX}
-                              onClick={() => setAssignPosition(sr.deputyPosition)}
-                              title="Remove deputy"
-                              variant="danger"
-                            />
-                          </div>
+                        {isDirector && sr.deputyPosition ? (
+                          <ActionBtn
+                            icon={Pencil}
+                            onClick={() => setEditPosition(sr.deputyPosition)}
+                            title="Manage deputy position"
+                          />
                         ) : null}
                       </div>
                     ) : null}
@@ -552,14 +484,11 @@ export const ManagementStructure = () => {
                         onEditRegion={setEditRegion}
                         onMoveRegion={setMoveRegion}
                         onAddPosition={setAddPosition}
-                        onAssign={setAssignPosition}
-                        onRemovePosition={(p) => setRemovePosition({ id: p._id, code: p.code })}
-                        onMoveUser={setMoveUserPosition}
                         onEditUser={(userId) => {
                           const u = allUsers.find((u: UserForInvite) => u._id === userId);
                           if (u) setEditUser(u as unknown as User);
                         }}
-                        onEditCode={(p) => setEditPositionCode({ id: p._id, code: p.code })}
+                        onEditPosition={setEditPosition}
                       />
                     ))}
                   </div>
@@ -584,33 +513,12 @@ export const ManagementStructure = () => {
       />
       <AddPositionModal region={addPosition} onClose={() => setAddPosition(null)} />
       <RemovePositionModal position={removePosition} onClose={() => setRemovePosition(null)} />
-      <AssignUserModal
-        position={assignPosition}
-        availableUsers={usersWithoutPosition}
-        onClose={() => setAssignPosition(null)}
-      />
-      <MoveUserModal
-        user={
-          moveUserPosition?.currentHolder
-            ? {
-                _id: moveUserPosition.currentHolder._id,
-                firstName: moveUserPosition.currentHolder.firstName,
-                lastName: moveUserPosition.currentHolder.lastName,
-                numericId: moveUserPosition.currentHolder.numericId,
-              }
-            : null
-        }
-        availablePositions={allVacantPositions.map((p) => ({
-          _id: p._id,
-          code: p.code,
-          regionId: p.region?._id ?? "",
-        }))}
-        onClose={() => setMoveUserPosition(null)}
-      />
+
       <EditUserModal user={editUser} onClose={() => setEditUser(null)} />
-      <EditPositionCodeModal
-        position={editPositionCode}
-        onClose={() => setEditPositionCode(null)}
+      <EditPositionModal
+        position={editPosition}
+        availableUsers={usersWithoutPosition}
+        onClose={() => setEditPosition(null)}
       />
       <ConfirmDialog
         isOpen={!!deleteSuperregion}
