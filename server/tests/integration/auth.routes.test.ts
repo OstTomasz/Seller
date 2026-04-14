@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { clearDB, createTestContext, TestContext } from "../helpers";
+import { createTestContext, TestContext } from "../helpers";
 
 let ctx: TestContext;
 
 describe("POST /api/auth/login", () => {
   beforeEach(async () => {
-    await clearDB();
-    await createTestContext();
+    ctx = await createTestContext();
   });
 
   it("should return token for valid credentials", async () => {
@@ -48,7 +47,6 @@ describe("POST /api/auth/login", () => {
 
 describe("GET /api/auth/me", () => {
   beforeEach(async () => {
-    await clearDB();
     ctx = await createTestContext();
   });
 
@@ -77,6 +75,10 @@ describe("GET /api/auth/me", () => {
 // ─── POST /api/auth/verify-password ──────────────────────────────────────────
 
 describe("POST /api/auth/verify-password", () => {
+  beforeEach(async () => {
+    ctx = await createTestContext();
+  });
+
   it("should return 200 for correct password", async () => {
     const res = await request(app)
       .post("/api/auth/verify-password")

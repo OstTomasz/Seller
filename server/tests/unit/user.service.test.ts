@@ -4,12 +4,11 @@ import User from "../../src/models/User";
 import Region from "../../src/models/Region";
 import Position from "../../src/models/Position";
 import * as userService from "../../src/services/user.service";
-import { clearDB, createTestDB, TestDB } from "../helpers";
+import { createTestDB, TestDB } from "../helpers";
 
 let db: TestDB;
 
 beforeEach(async () => {
-  await clearDB();
   db = await createTestDB();
 });
 

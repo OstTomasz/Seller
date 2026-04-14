@@ -13,6 +13,8 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/dist/**", "**/cypress/**"],
 
     fileParallelism: false,
+    maxWorkers: 1,
+    minWorkers: 1,
     sequence: {
       concurrent: false,
     },

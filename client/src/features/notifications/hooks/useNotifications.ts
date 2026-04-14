@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { INotification } from "@/types";
 import { notificationsApi } from "@/api/notifications";
+import { queryKeys } from "@/lib/queryKeys";
 
-export const NOTIFICATIONS_KEY = ["notifications"] as const;
+export const NOTIFICATIONS_KEY = queryKeys.notifications.all();
 
 export const useNotifications = () => {
   const queryClient = useQueryClient();

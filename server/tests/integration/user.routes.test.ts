@@ -4,14 +4,13 @@ import mongoose from "mongoose";
 import app from "../../src/app";
 import User from "../../src/models/User";
 import Region from "../../src/models/Region";
-import { clearDB, createTestContext, loginAs, TestContext } from "../helpers";
+import { createTestContext, loginAs, TestContext } from "../helpers";
 import Position from "../../src/models/Position";
 
 let ctx: TestContext;
 // ─── setup ────────────────────────────────────────────────────────────────────
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 
@@ -216,6 +215,29 @@ describe("POST /api/users", () => {
 
     expect(res.status).toBe(400);
   });
+
+  it("should return 400 when email has invalid format", async () => {
+    const vacantPosition = await Position.create({
+      code: "PO-100",
+      region: ctx.regionId,
+      type: "salesperson",
+      currentHolder: null,
+    });
+
+    const res = await request(app)
+      .post("/api/users")
+      .set("Authorization", `Bearer ${ctx.directorToken}`)
+      .send({
+        firstName: "New",
+        lastName: "Salesperson",
+        email: "invalid-email",
+        temporaryPassword: "temp1234",
+        phone: "+48 600 000 001",
+        positionId: vacantPosition._id.toString(),
+      });
+
+    expect(res.status).toBe(400);
+  });
 });
 
 // ─── PATCH /api/users/:id ─────────────────────────────────────────────────────
@@ -323,6 +345,15 @@ describe("PATCH /api/users/:id/role", () => {
       .patch(`/api/users/${ctx.advisorId}/role`)
       .set("Authorization", `Bearer ${ctx.directorToken}`)
       .send({ role: "salesperson" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 when role value is invalid", async () => {
+    const res = await request(app)
+      .patch(`/api/users/${ctx.advisorId}/role`)
+      .set("Authorization", `Bearer ${ctx.directorToken}`)
+      .send({ role: "manager", grade: 2 });
 
     expect(res.status).toBe(400);
   });

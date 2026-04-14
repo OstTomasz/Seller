@@ -4,12 +4,11 @@ import app from "../../src/app";
 import User from "../../src/models/User";
 import Region from "../../src/models/Region";
 import mongoose from "mongoose";
-import { clearDB, createTestContext, TestContext } from "../helpers";
+import { createTestContext, TestContext } from "../helpers";
 
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 

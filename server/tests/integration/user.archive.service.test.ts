@@ -1,6 +1,6 @@
 // server/tests/unit/user.archive.service.test.ts
 import { describe, it, expect, beforeEach } from "vitest";
-import { clearDB, createTestDB, TestDB } from "../helpers";
+import { createTestDB, TestDB } from "../helpers";
 import * as userService from "../../src/services/user.service";
 import User from "../../src/models/User";
 import Position from "../../src/models/Position";
@@ -9,7 +9,6 @@ import PositionHistory from "../../src/models/PositionHistory";
 let ctx: TestDB;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestDB();
 });
 

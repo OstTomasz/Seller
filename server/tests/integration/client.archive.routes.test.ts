@@ -2,13 +2,12 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 import app from "../../src/app";
-import { clearDB, createTestClient, createTestContext, TestContext } from "../helpers";
+import { createTestClient, createTestContext, TestContext } from "../helpers";
 import Notification from "../../src/models/Notification";
 
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 

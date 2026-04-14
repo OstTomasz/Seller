@@ -66,9 +66,6 @@ const getCreatorId = (createdBy: unknown): string => {
 export const getEvents = async (userId: string): Promise<IEvent[]> =>
   eventRepository.findEventsByUserId(userId);
 
-export const getAllUserInvitations = async (userId: string): Promise<IInvitation[]> =>
-  invitationRepository.findAllInvitationsByUserId(userId);
-
 export const getEventById = async (eventId: string, userId: string): Promise<IEvent> => {
   const event = await eventRepository.findEventById(eventId);
   if (!event) throw new NotFoundError("Event not found");
@@ -191,26 +188,20 @@ export const createEvent = async (
           eventId,
         );
         if (inviteeConflicts.length > 0) {
-          if (conflicts.length > 0) {
-            await notificationRepository.createNotification({
-              userId: creatorId,
-              type: "event_conflict" as NotificationType,
-              eventId: event._id.toString(),
-              message: `Your new event "${event.title}" conflicts with: ${conflicts[0].title}`,
-              metadata: {
-                eventTitle: event.title,
-                conflictingEventId: conflicts[0]._id.toString(),
-                conflictingEventTitle: conflicts[0].title,
-              },
-            });
-          }
+          await notificationRepository.createNotification({
+            userId: inviteeId,
+            type: "event_conflict" as NotificationType,
+            eventId: event._id.toString(),
+            message: `Your new event "${event.title}" conflicts with: ${inviteeConflicts[0].title}`,
+            metadata: {
+              eventTitle: event.title,
+              conflictingEventId: inviteeConflicts[0]._id.toString(),
+              conflictingEventTitle: inviteeConflicts[0].title,
+            },
+          });
         }
       }
     }
-  }
-
-  if (data.clientId && data.type === "client_meeting") {
-    await addMeetingNoteToClient(data.clientId, event, resolvedInviteeIds, creatorId);
   }
 
   return { event, conflicts };
@@ -382,8 +373,7 @@ export const respondToInvitation = async (
 
   const invitation = await invitationRepository.findInvitationByEventAndUser(eventId, userId);
   if (!invitation) throw new NotFoundError("Invitation not found");
-  if (invitation.status === status)
-    throw new BadRequestError("Already responded with the same status");
+  if (invitation.status !== "pending") throw new BadRequestError("Invitation has been already responded");
 
   const updated = await invitationRepository.updateInvitationStatus(eventId, userId, status);
   if (!updated) throw new NotFoundError("Invitation not found");
@@ -479,4 +469,6 @@ const addMeetingNoteToClient = async (
 };
 
 export const getAllInvitations = async (userId: string): Promise<IInvitation[]> =>
-  invitationRepository.findAllInvitationsByUserId(userId);
+  (await invitationRepository.findAllInvitationsByUserId(userId)).filter(
+    (invitation) => invitation.status === "pending",
+  );

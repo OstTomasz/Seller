@@ -41,11 +41,6 @@ export const findAllPositionsPopulated = async () =>
     .populate("currentHolder", "firstName lastName numericId role grade")
     .sort({ code: 1 });
 
-export const findPositionsByType = async (type: string) =>
-  Position.find({ type })
-    .populate("region")
-    .populate("currentHolder", "firstName lastName numericId");
-
 export const deletePositionById = async (positionId: string) =>
   Position.findByIdAndDelete(positionId);
 

@@ -1,13 +1,8 @@
 import { describe, it, expect } from "vitest";
 import mongoose from "mongoose";
 import User from "../../src/models/User";
-import { clearDB } from "../helpers";
 
 describe("User Model", () => {
-  beforeEach(async () => {
-    await clearDB();
-  });
-
   it("should hash password before saving", async () => {
     const user = await User.create({
       firstName: "Jan",

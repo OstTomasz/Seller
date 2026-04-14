@@ -7,14 +7,6 @@ export const createInvitations = async (
   await Invitation.insertMany(data);
 };
 
-export const findPendingInvitationsByUserId = async (userId: string): Promise<IInvitation[]> =>
-  Invitation.find({ inviteeId: userId, status: "pending" })
-    .populate({
-      path: "eventId",
-      populate: { path: "createdBy", select: "firstName lastName" },
-    })
-    .sort({ createdAt: -1 });
-
 export const findAllInvitationsByUserId = async (userId: string): Promise<IInvitation[]> =>
   Invitation.find({ inviteeId: userId });
 
@@ -33,9 +25,6 @@ export const updateInvitationStatus = async (
 export const deleteInvitationsByEventId = async (eventId: string): Promise<void> => {
   await Invitation.deleteMany({ eventId });
 };
-
-export const findAcceptedInviteesByEventId = async (eventId: string): Promise<IInvitation[]> =>
-  Invitation.find({ eventId, status: "accepted" }).populate("inviteeId", "firstName lastName");
 
 /**
  * Returns all invitations for an event with invitee details.

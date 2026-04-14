@@ -5,13 +5,8 @@ import Position from "../../src/models/Position";
 import User from "../../src/models/User";
 import * as regionService from "../../src/services/region.service";
 import { ForbiddenError, NotFoundError } from "../../src/utils/errors";
-import { clearDB } from "../helpers";
 
 describe("Region Service", () => {
-  beforeEach(async () => {
-    await clearDB();
-  });
-
   // ─── createRegion ───────────────────────────────────────────────────────────
 
   describe("createRegion", () => {

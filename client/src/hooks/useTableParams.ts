@@ -22,7 +22,8 @@ export const useTableParams = <T extends string>({
   const setParam = (key: string, value: string) =>
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
-      value ? next.set(key, value) : next.delete(key);
+      if (value) next.set(key, value);
+      else next.delete(key);
       next.set("page", "1");
       return next;
     });

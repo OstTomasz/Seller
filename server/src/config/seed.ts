@@ -9,7 +9,11 @@ import Client from "../models/Client";
 import Counter from "../models/Counter";
 import Event from "../models/Event";
 import Invitation from "../models/Invitation";
-import { IUser, UserGrade, UserRole } from "../types";
+import Notification from "../models/Notification";
+import { CompanyFile } from "../models/CompanyFile";
+import { CompanyNote } from "../models/CompanyNote";
+import UserProfile from "../models/UserProfile";
+import { IUser, InvitationStatus, UserGrade, UserRole } from "../types";
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 
@@ -72,6 +76,10 @@ const seed = async () => {
   await Counter.deleteMany({});
   await Event.deleteMany({});
   await Invitation.deleteMany({});
+  await Notification.deleteMany({});
+  await CompanyFile.deleteMany({});
+  await CompanyNote.deleteMany({});
+  await UserProfile.deleteMany({});
   console.log("Database cleared");
 
   // ── REGIONS ──────────────────────────────────────────────────────────────
@@ -371,6 +379,39 @@ const seed = async () => {
   );
 
   console.log("Users created");
+
+  // ── USER PROFILES ──────────────────────────────────────────────────────────
+
+  const usersForProfiles = [
+    director,
+    deputy1,
+    deputy2,
+    advPOM,
+    advWAR,
+    advMAL,
+    advSLA,
+    sp1POM,
+    sp2POM,
+    sp1WAR,
+    sp2WAR,
+    sp1MAL,
+    sp2MAL,
+    sp1SLA,
+    sp2SLA,
+  ];
+
+  await UserProfile.insertMany(
+    usersForProfiles.map((user, idx) => ({
+      userId: user._id,
+      description: `${user.firstName} ${user.lastName} profile`,
+      workplace: idx % 2 === 0 ? "Warsaw HQ" : "Regional Office",
+      avatarIndex: idx % 5,
+      avatar: null,
+      lastLoginAt: daysAgo(Math.max(1, idx + 1)),
+    })),
+  );
+
+  console.log("User profiles created");
 
   // ── LINK POSITIONS ────────────────────────────────────────────────────────
 
@@ -700,6 +741,7 @@ const seed = async () => {
       location?: string;
       description?: string;
       mandatory?: boolean;
+      invitationStatuses?: Record<string, InvitationStatus>;
     } = {},
   ) => {
     const event = await Event.create({
@@ -717,7 +759,13 @@ const seed = async () => {
 
     if (inviteeIds.length) {
       await Invitation.insertMany(
-        inviteeIds.map((inviteeId) => ({ eventId: event._id, inviteeId, status: "accepted" })),
+        inviteeIds.map((inviteeId) => ({
+          eventId: event._id,
+          inviteeId,
+          status:
+            options.invitationStatuses?.[inviteeId.toString()] ??
+            (options.mandatory ? "accepted" : "pending"),
+        })),
       );
     }
 
@@ -780,6 +828,7 @@ const seed = async () => {
       clientId: c2sp1POM._id,
       location: "Sopot conference room",
       description: "Annual strategy alignment",
+      invitationStatuses: { [sp1POM._id.toString()]: "accepted" },
     },
   );
   await addMeetingNote(
@@ -824,7 +873,11 @@ const seed = async () => {
     "client_meeting",
     advPOM._id,
     [sp1POM._id, sp2POM._id],
-    { clientId: c3sp1POM._id, location: "Gdynia office" },
+    {
+      clientId: c3sp1POM._id,
+      location: "Gdynia office",
+      invitationStatuses: { [sp1POM._id.toString()]: "accepted", [sp2POM._id.toString()]: "rejected" },
+    },
   );
   await addMeetingNote(
     c3sp1POM._id,
@@ -977,7 +1030,11 @@ const seed = async () => {
     "client_meeting",
     advSLA._id,
     [sp1SLA._id, sp2SLA._id],
-    { clientId: c1sp2SLA._id, location: "Zabrze office" },
+    {
+      clientId: c1sp2SLA._id,
+      location: "Zabrze office",
+      invitationStatuses: { [sp1SLA._id.toString()]: "accepted", [sp2SLA._id.toString()]: "pending" },
+    },
   );
   await addMeetingNote(
     c1sp2SLA._id,
@@ -990,6 +1047,95 @@ const seed = async () => {
   );
 
   console.log("Events and invitations created");
+
+  // ── COMPANY DOCUMENTS ──────────────────────────────────────────────────────
+
+  const strategyFile = await CompanyFile.create({
+    name: "Q2-strategy.pdf",
+    mimeType: "application/pdf",
+    size: 2048,
+    data: Buffer.from("Seed company strategy file").toString("base64"),
+    createdBy: director._id,
+  });
+
+  const processNote = await CompanyNote.create({
+    title: "KPI Review Process",
+    content: "Review KPI dashboard every Monday and update regional action points.",
+    createdBy: director._id,
+  });
+
+  console.log("Company documents created");
+
+  // ── NOTIFICATIONS ───────────────────────────────────────────────────────────
+
+  await Notification.insertMany([
+    {
+      userId: deputy1._id,
+      type: "archive_request",
+      clientId: c3sp2POM._id,
+      message: `Archive request for client ${c3sp2POM.companyName}: No response for 90 days`,
+      metadata: { reason: "No response for 90 days", companyName: c3sp2POM.companyName },
+      read: false,
+    },
+    {
+      userId: sp1WAR._id,
+      type: "archive_rejected",
+      clientId: c2sp1WAR._id,
+      message: `Archive request rejected for client ${c2sp1WAR.companyName}: Keep client warm for next quarter`,
+      metadata: {
+        rejectionReason: "Keep client warm for next quarter",
+        companyName: c2sp1WAR.companyName,
+      },
+      read: false,
+    },
+    {
+      userId: sp2MAL._id,
+      type: "archive_approved",
+      clientId: c1sp2MAL._id,
+      message: `Client ${c1sp2MAL.companyName} has been archived: Contract terminated`,
+      metadata: { reason: "Contract terminated", companyName: c1sp2MAL.companyName },
+      read: true,
+    },
+    {
+      userId: director._id,
+      type: "unarchive_request",
+      clientId: c1sp1POM._id,
+      message: `Unarchive request for client ${c1sp1POM.companyName}`,
+      metadata: { companyName: c1sp1POM.companyName },
+      read: false,
+    },
+    {
+      userId: sp1POM._id,
+      type: "unarchive_rejected",
+      clientId: c1sp1POM._id,
+      message: `Unarchive request rejected for client ${c1sp1POM.companyName}: Missing reactivation reason`,
+      metadata: {
+        rejectionReason: "Missing reactivation reason",
+        companyName: c1sp1POM.companyName,
+      },
+      read: false,
+    },
+    {
+      userId: advPOM._id,
+      type: "company_file_added",
+      clientId: null,
+      eventId: null,
+      message: `New file in Company documents: ${strategyFile.name}`,
+      metadata: {},
+      read: false,
+    },
+    {
+      userId: deputy2._id,
+      type: "company_note_added",
+      clientId: null,
+      eventId: null,
+      message: `New note in Company documents: ${processNote.title}`,
+      metadata: {},
+      read: true,
+    },
+  ]);
+
+  console.log("Notifications created");
 
   // ── SUMMARY ───────────────────────────────────────────────────────────────
 

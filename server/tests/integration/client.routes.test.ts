@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 import app from "../../src/app";
 import Position from "../../src/models/Position";
 import {
-  clearDB,
   createTestClient,
   createTestContext,
   sampleAddress,
@@ -14,7 +13,6 @@ import {
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 

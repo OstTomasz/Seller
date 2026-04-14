@@ -388,5 +388,3 @@
 | 18.11 | Dates en-GB format                          | ✅   | ✅   | ✅   | ✅   |         |
 | 18.12 | Mobile 375px responsive                     | ✅   | ✅   | ✅   | ✅   |         |
 | 18.13 | Last login updates po logowaniu             | ✅   | ✅   | ✅   | ✅   |         |
-
-

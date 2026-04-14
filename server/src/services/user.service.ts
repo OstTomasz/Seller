@@ -5,6 +5,7 @@ import * as positionRepository from "../repositories/position.repository";
 import * as regionRepository from "../repositories/region.repository";
 import * as positionHistoryRepository from "../repositories/positionHistory.repository";
 import { getPositionIdsInSuperregion } from "../utils/rbac";
+import { assertDirector } from "../domain/rbac/access-policy";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -432,7 +433,7 @@ export const unarchiveUser = async (
   requesterId: string,
   requesterRole: UserRole,
 ): Promise<IUser> => {
-  if (requesterRole !== "director") throw new ForbiddenError();
+  assertDirector(requesterRole);
   const user = await userRepository.findUserById(userId);
   if (!user) throw new NotFoundError("User not found");
   if (user.isActive) throw new BadRequestError("User is not archived");

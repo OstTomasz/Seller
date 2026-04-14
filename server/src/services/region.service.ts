@@ -183,12 +183,6 @@ export const getRegionById = async (regionId: string): Promise<IRegion> => {
   return region;
 };
 
-export const getRegionByPrefix = async (prefix: string): Promise<IRegion> => {
-  const region = await regionRepository.findRegionByPrefix(prefix);
-  if (!region) throw new NotFoundError("Region not found");
-  return region;
-};
-
 export const moveRegionToSuperregion = async (
   regionId: string,
   newParentId: string,

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clientsApi } from "@/api/clients";
+import { queryKeys } from "@/lib/queryKeys";
 import { NOTIFICATIONS_KEY } from "./useNotifications";
 
 export const useNotificationActions = (onSuccess: () => void) => {
@@ -7,7 +8,7 @@ export const useNotificationActions = (onSuccess: () => void) => {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: NOTIFICATIONS_KEY });
-    queryClient.invalidateQueries({ queryKey: ["clients"] });
+    queryClient.invalidateQueries({ queryKey: queryKeys.clients.all() });
   };
 
   const approveArchive = useMutation({

@@ -11,7 +11,11 @@ const pageVariants: Variants = {
     },
   },
   exit: {
-    opacity: 1,
+    opacity: 0,
+    transition: {
+      duration: 0.12,
+      ease: "easeInOut",
+    },
   },
 };
 
@@ -20,7 +24,7 @@ export const PageTransition = () => {
   const currentOutlet = useOutlet();
 
   return (
-    <AnimatePresence mode="sync" initial={false}>
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
         variants={pageVariants}

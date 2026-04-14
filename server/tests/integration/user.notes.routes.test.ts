@@ -3,12 +3,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
 import User from "../../src/models/User";
-import { clearDB, createTestContext, TestContext } from "../helpers";
+import { createTestContext, TestContext } from "../helpers";
 
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 

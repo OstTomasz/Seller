@@ -12,10 +12,27 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
   options: SelectOption[];
   placeholder?: string;
+  placeholderDisabled?: boolean;
+  surface?: "default" | "elevated";
+  hideErrorSpace?: boolean;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, options, placeholder, className, id, ...props }, ref) => {
+  (
+    {
+      label,
+      error,
+      options,
+      placeholder,
+      className,
+      id,
+      placeholderDisabled = true,
+      surface = "default",
+      hideErrorSpace = false,
+      ...props
+    },
+    ref,
+  ) => {
     const selectId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
     const errorId = `${selectId}-error`;
     return (
@@ -37,6 +54,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             aria-describedby={error ? errorId : undefined}
             className={cn(
               "w-full bg-celery-700 text-celery-100 border rounded-lg",
+              surface === "elevated" && "bg-bg-elevated",
               "text-sm outline-none appearance-none",
               error
                 ? "border-error focus:border-error"
@@ -45,7 +63,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             )}
           >
             {placeholder ? (
-              <option value="" disabled>
+              <option value="" disabled={placeholderDisabled}>
                 {placeholder}
               </option>
             ) : null}
@@ -65,13 +83,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className="absolute right-3 top-1/2 -translate-y-1/2 text-celery-500 pointer-events-none"
           />
         </div>
-        <span
-          id={errorId}
-          role="alert"
-          className="text-xs text-error min-h-4 mt-1"
-        >
-          {error ? error : null}
-        </span>
+        {hideErrorSpace ? null : (
+          <span id={errorId} role="alert" className="text-xs text-error min-h-4 mt-1">
+            {error ? error : null}
+          </span>
+        )}
       </div>
     );
   },

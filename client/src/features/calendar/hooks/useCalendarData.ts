@@ -28,17 +28,19 @@ interface UseCalendarDataReturn {
 export const useCalendarData = (): UseCalendarDataReturn => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const getInitialView = (): CalendarView => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) return "agenda";
+    return "month";
+  };
 
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<CalendarView>("month");
+  const [currentView, setCurrentView] = useState<CalendarView>(getInitialView);
 
   useEffect(() => {
     const getView = (): CalendarView => {
       if (window.innerWidth < 768) return "agenda";
       return "month";
     };
-
-    setCurrentView(getView());
 
     const handleResize = () => setCurrentView(getView());
     window.addEventListener("resize", handleResize);

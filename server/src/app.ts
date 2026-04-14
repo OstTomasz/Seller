@@ -33,11 +33,21 @@ import "./models/CompanyNote";
 import { authenticate } from "./middleware/auth.middleware";
 import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";
 
-const allowedOrigins = ["http://localhost:5173"];
+const isAllowedOrigin = (origin: string): boolean => {
+  try {
+    const parsed = new URL(origin);
+    return (
+      (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") &&
+      /^https?:$/.test(parsed.protocol)
+    );
+  } catch {
+    return false;
+  }
+};
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || isAllowedOrigin(origin)) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -63,6 +73,9 @@ if (env.NODE_ENV !== "test") {
 }
 app.use(express.json({ limit: "2mb" })); //parse JSON bodies
 app.use("/api/auth", authRoutes); // authentication routes
+app.get("/api/health", (_req: Request, res: Response) => {
+  res.json({ status: "ok" });
+}); //health check
 
 app.use(authenticate); //authenticate every request
 app.use(requirePasswordChange); //only users with resetted password can dive into service
@@ -70,14 +83,10 @@ app.use(requirePasswordChange); //only users with resetted password can dive int
 app.use("/api/regions", regionRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/clients", clientRoutes);
-app.use("/api/notifications", authenticate, notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/positions", positionRoutes);
 app.use("/api/company-documents", companyDocumentRoutes);
-
-app.get("/api/health", (req: Request, res: Response) => {
-  res.json({ status: "ok" });
-}); //health check
 
 app.use(errorHandler); //global error handler
 

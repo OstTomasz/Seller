@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
 import {
-  clearDB,
   createTestClient,
   createTestContext,
   createTestNotification,
@@ -13,7 +12,6 @@ import Notification from "../../src/models/Notification";
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 

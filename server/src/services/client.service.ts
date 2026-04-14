@@ -707,18 +707,6 @@ export const rejectUnarchive = async (
   );
 };
 
-export const checkNipInArchive = async (
-  nip: string,
-): Promise<{ archived: boolean; clientId: string | null; companyName: string | null }> => {
-  const client = await clientRepository.findArchivedClientByNip(nip);
-  if (!client) return { archived: false, clientId: null, companyName: null };
-  return {
-    archived: true,
-    clientId: client._id.toString(),
-    companyName: client.companyName,
-  };
-};
-
 export const getArchivedClients = async (requesterRole: UserRole): Promise<IClient[]> => {
   if (requesterRole !== "director") throw new ForbiddenError();
   return clientRepository.findArchivedClients();

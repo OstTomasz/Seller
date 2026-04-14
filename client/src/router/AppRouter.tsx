@@ -1,20 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { ForcePasswordChange } from "@/features/auth/ForcePasswordChange";
+import { LoginPage, ForcePasswordChange } from "@/features/auth";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
 import { PageTransition } from "./PageTransition";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ClientsPage } from "@/features/clients/ClientsPage";
-import { ClientPage } from "@/features/clients/ClientPage";
-import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { ClientsPage, ClientPage } from "@/features/clients";
+import { DashboardPage } from "@/features/dashboard";
 import type { UserRole } from "@/types";
-import { ArchivePage } from "@/features/archive/ArchivePage";
-import { CompanyPage } from "@/features/users/CompanyPage";
-import { UserPage } from "@/features/users/UserPage";
-import { SettingsPage } from "@/features/users/SettingsPage";
-import { ManagementPage } from "@/features/menagement/ManagementPage";
-import { CompanyDocumentsPage } from "@/features/company-documents/CompanyDocumentsPage";
+import { ArchivePage } from "@/features/archive";
+import { CompanyPage, UserPage, SettingsPage } from "@/features/users";
+import { ManagementPage } from "@/features/management";
+import { CompanyDocumentsPage } from "@/features/company-documents";
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuthStore();

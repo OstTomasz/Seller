@@ -1,12 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import Region from "../../src/models/Region";
-import { clearDB } from "../helpers";
 
 describe("Region Model", () => {
-  beforeEach(async () => {
-    await clearDB();
-  });
-
   it("should create a region without deputy", async () => {
     const region = await Region.create({ name: "Północ", prefix: "PN" });
 

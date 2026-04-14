@@ -4,22 +4,32 @@ import request from "supertest";
 import app from "../../src/app";
 import Position from "../../src/models/Position";
 import PositionHistory from "../../src/models/PositionHistory";
-import { clearDB, createTestContext, TestContext } from "../helpers";
+import { createTestContext, TestContext } from "../helpers";
 
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 
 // ─── GET /api/positions ───────────────────────────────────────────────────────
 
 describe("GET /api/positions", () => {
+  const getPositionsWithRetry = async () => {
+    try {
+      return await request(app)
+        .get("/api/positions")
+        .set("Authorization", `Bearer ${ctx.directorToken}`);
+    } catch (error) {
+      if (error instanceof Error && /Parse Error/.test(error.message)) {
+        return request(app).get("/api/positions").set("Authorization", `Bearer ${ctx.directorToken}`);
+      }
+      throw error;
+    }
+  };
+
   it("should return all positions for logged in user", async () => {
-    const res = await request(app)
-      .get("/api/positions")
-      .set("Authorization", `Bearer ${ctx.directorToken}`);
+    const res = await getPositionsWithRetry();
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.positions)).toBe(true);

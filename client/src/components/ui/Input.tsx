@@ -1,34 +1,29 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
+import { FieldContainer } from "./FieldContainer";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  surface?: "default" | "elevated";
+  hideErrorSpace?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, id, ...props }, ref) => {
+  ({ label, error, className, id, surface = "default", hideErrorSpace = false, ...props }, ref) => {
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
-    const errorId = `${inputId}-error`;
 
     return (
-      <div className="flex flex-col">
-        {label ? (
-          <label
-            htmlFor={inputId}
-            className="text-sm text-celery-300 mb-1.5 block"
-          >
-            {label}
-          </label>
-        ) : null}
+      <FieldContainer id={inputId} label={label} error={error} hideErrorSpace={hideErrorSpace}>
         <input
           {...props}
           ref={ref}
           id={inputId}
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           className={cn(
             "w-full bg-celery-700 text-celery-100 border rounded-lg",
+            surface === "elevated" && "bg-bg-elevated",
             "text-sm outline-none",
             "placeholder:text-celery-500",
             error
@@ -37,14 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className,
           )}
         />
-        <span
-          id={errorId}
-          role="alert"
-          className="text-xs text-error min-h-4 mt-1"
-        >
-          {error ? error : null}
-        </span>
-      </div>
+      </FieldContainer>
     );
   },
 );

@@ -21,16 +21,10 @@ export const createTestClient = async (ctx: ClientTestBase, overrides: any = {})
     assignedTo: ctx.salespersonPositionId,
     assignedAdvisor: ctx.advisorPositionId,
     status: "active",
-    addresses: [sampleAddress],
+    addresses: [createSampleAddress()],
     notes: [],
     ...overrides,
   });
-export const clearDB = async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    await collections[key].deleteMany({});
-  }
-};
 
 export const loginAs = async (email: string, password = "password123"): Promise<string> => {
   const res = await request(app).post("/api/auth/login").send({ email, password });
@@ -196,14 +190,16 @@ export const createTestContext = async (): Promise<TestContext> => {
   return { ...db, directorToken, deputyToken, advisorToken, salespersonToken };
 };
 
-export const sampleAddress = {
+const createSampleAddress = () => ({
   _id: new Types.ObjectId(),
   label: "Headquarters",
   street: "Main St 1",
   city: "Gdansk",
   postalCode: "80-001",
   contacts: [],
-};
+});
+
+export const sampleAddress = createSampleAddress();
 
 export const newAddress = {
   label: "Warehouse",

@@ -13,22 +13,24 @@ export const SessionWarningModal = ({ isOpen, onExtend, onLogout }: SessionWarni
   const [secondsLeft, setSecondsLeft] = useState(SESSION_CONFIG.WARNING_SECONDS);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen) return;
+
+    const startedAt = Date.now();
+    const deadline = startedAt + SESSION_CONFIG.WARNING_SECONDS * 1000;
+    const timer = setTimeout(() => {
       setSecondsLeft(SESSION_CONFIG.WARNING_SECONDS);
-      return;
-    }
+    }, 0);
 
     const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) clearInterval(interval);
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, [isOpen]);
 
   const minutes = Math.floor(secondsLeft / 60);

@@ -5,12 +5,11 @@ import Position from "../../src/models/Position";
 import Region from "../../src/models/Region";
 import * as clientService from "../../src/services/client.service";
 import { ForbiddenError, NotFoundError } from "../../src/utils/errors";
-import { clearDB, createTestClient, createTestDB, sampleAddress, TestDB } from "../helpers";
+import { createTestClient, createTestDB, sampleAddress, TestDB } from "../helpers";
 
 let db: TestDB;
 
 beforeEach(async () => {
-  await clearDB();
   db = await createTestDB();
 });
 

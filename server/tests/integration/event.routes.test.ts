@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import app from "../../src/app";
-import { clearDB, createTestContext, createTestEvent, TestContext } from "../helpers";
+import { createTestContext, createTestEvent, TestContext } from "../helpers";
 import EventModel from "../../src/models/Event";
 import Invitation from "../../src/models/Invitation";
 import Notification from "../../src/models/Notification";
@@ -9,7 +9,6 @@ import Notification from "../../src/models/Notification";
 let ctx: TestContext;
 
 beforeEach(async () => {
-  await clearDB();
   ctx = await createTestContext();
 });
 
