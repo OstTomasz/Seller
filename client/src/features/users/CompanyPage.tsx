@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CompanyStructure } from "./CompanyStructure";
+import { CompanyDocumentsPage } from "@/features/company-documents/CompanyDocumentsPage";
 
 type CompanyTab = "structure" | "documents";
 
@@ -26,13 +27,7 @@ export const CompanyPage = () => {
         ))}
       </div>
 
-      {activeTab === "structure" ? (
-        <CompanyStructure />
-      ) : (
-        <div className="flex items-center justify-center h-48 text-celery-600 text-sm">
-          Documents — coming soon
-        </div>
-      )}
+      {activeTab === "structure" ? <CompanyStructure /> : <CompanyDocumentsPage />}
     </div>
   );
 };

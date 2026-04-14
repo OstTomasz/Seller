@@ -14,6 +14,7 @@ import { CompanyPage } from "@/features/users/CompanyPage";
 import { UserPage } from "@/features/users/UserPage";
 import { SettingsPage } from "@/features/users/SettingsPage";
 import { ManagementPage } from "@/features/menagement/ManagementPage";
+import { CompanyDocumentsPage } from "@/features/company-documents/CompanyDocumentsPage";
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { token } = useAuthStore();
@@ -77,6 +78,7 @@ export const AppRouter = () => {
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/clients/:id" element={<ClientPage />} />
           <Route path="/company" element={<CompanyPage />} />
+          <Route path="/documents" element={<CompanyDocumentsPage />} />
           <Route path="/users/:id" element={<UserPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route

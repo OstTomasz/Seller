@@ -16,6 +16,7 @@ import clientRoutes from "./routes/client.routes";
 import notificationRoutes from "./routes/notification.routes";
 import eventRoutes from "./routes/event.routes";
 import positionRoutes from "./routes/position.routes";
+import companyDocumentRoutes from "./routes/companyDocument.routes";
 
 import "./models/Region";
 import "./models/User";
@@ -26,6 +27,8 @@ import "./models/Event";
 import "./models/Invitation";
 import "./models/UserProfile";
 import "./models/PositionHistory";
+import "./models/CompanyFile";
+import "./models/CompanyNote";
 
 import { authenticate } from "./middleware/auth.middleware";
 import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";
@@ -70,6 +73,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/notifications", authenticate, notificationRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/positions", positionRoutes);
+app.use("/api/company-documents", companyDocumentRoutes);
 
 app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "ok" });

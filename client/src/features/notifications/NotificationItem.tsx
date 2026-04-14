@@ -27,6 +27,8 @@ const TYPE_CONFIG: Record<NotificationType, { label: string; variant: BadgeVaria
   event_response: { label: "Event response", variant: "gold" },
   event_updated: { label: "Event updated", variant: "warning" },
   event_cancelled: { label: "Event cancelled", variant: "error" },
+  company_file_added: { label: "New file", variant: "active" },
+  company_note_added: { label: "New note", variant: "active" },
 };
 
 interface NotificationItemProps {

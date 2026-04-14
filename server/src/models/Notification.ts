@@ -20,6 +20,8 @@ const notificationSchema = new Schema<INotification>(
         "event_response",
         "event_updated",
         "event_cancelled",
+        "company_file_added",
+        "company_note_added",
       ],
       required: true,
     },

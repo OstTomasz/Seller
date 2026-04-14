@@ -139,6 +139,8 @@ export const notificationTypeSchema = z.enum([
   "event_response",
   "event_updated",
   "event_cancelled",
+  "company_file_added",
+  "company_note_added",
 ]);
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
 
@@ -346,6 +348,30 @@ export const userNoteSchema = z.object({
   updatedAt: z.string(),
 });
 export type IUserNote = z.infer<typeof userNoteSchema>;
+
+export const companyFileSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  mimeType: z.string(),
+  size: z.number(),
+  createdBy: z.union([z.string(), noteAuthorSchema]),
+  createdAt: z.string(),
+});
+export type ICompanyFile = z.infer<typeof companyFileSchema>;
+
+export const companyFileWithDataSchema = companyFileSchema.extend({
+  data: z.string(),
+});
+export type ICompanyFileWithData = z.infer<typeof companyFileWithDataSchema>;
+
+export const companyNoteSchema = z.object({
+  _id: z.string(),
+  title: z.string(),
+  content: z.string(),
+  createdBy: z.union([z.string(), noteAuthorSchema]),
+  createdAt: z.string(),
+});
+export type ICompanyNote = z.infer<typeof companyNoteSchema>;
 
 export type NipCheckResult =
   | { status: "free" }

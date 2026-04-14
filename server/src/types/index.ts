@@ -157,3 +157,22 @@ export interface IInvitation extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// dodaj:
+export interface ICompanyFile {
+  _id: Types.ObjectId;
+  name: string;
+  mimeType: string;
+  size: number;
+  data: string;
+  createdBy: Types.ObjectId;
+  createdAt: Date;
+}
+
+export interface ICompanyNote {
+  _id: Types.ObjectId;
+  content: string;
+  createdBy: Types.ObjectId;
+  createdAt: Date;
+  title: string;
+}
