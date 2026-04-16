@@ -3,10 +3,6 @@ on:
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
-    inputs:
-      reason:
-        description: "Reason?"
-        default: "Manual reset"
 
 jobs:
   reset:
@@ -20,11 +16,16 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: latest
+
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Run Database Seed
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-        run: npm run seed
+        run: pnpm run seed
