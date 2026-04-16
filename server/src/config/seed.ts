@@ -251,7 +251,7 @@ const seed = async () => {
       role,
       grade,
       position: positionId,
-      mustChangePassword: true,
+      mustChangePassword: false,
       isActive: true,
       createdBy,
     });
@@ -876,7 +876,10 @@ const seed = async () => {
     {
       clientId: c3sp1POM._id,
       location: "Gdynia office",
-      invitationStatuses: { [sp1POM._id.toString()]: "accepted", [sp2POM._id.toString()]: "rejected" },
+      invitationStatuses: {
+        [sp1POM._id.toString()]: "accepted",
+        [sp2POM._id.toString()]: "rejected",
+      },
     },
   );
   await addMeetingNote(
@@ -1033,7 +1036,10 @@ const seed = async () => {
     {
       clientId: c1sp2SLA._id,
       location: "Zabrze office",
-      invitationStatuses: { [sp1SLA._id.toString()]: "accepted", [sp2SLA._id.toString()]: "pending" },
+      invitationStatuses: {
+        [sp1SLA._id.toString()]: "accepted",
+        [sp2SLA._id.toString()]: "pending",
+      },
     },
   );
   await addMeetingNote(

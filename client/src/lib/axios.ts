@@ -9,9 +9,8 @@ export const api = axios.create({
   },
 });
 
-// REQUEST interceptor — attach token to every request
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token; // read from store without hook
+  const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -19,14 +18,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// RESPONSE interceptor — handle global errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
     const data = error.response?.data;
 
-    // only redirect on 401 if NOT on login page
     if (status === 401 && window.location.pathname !== "/login") {
       useAuthStore.getState().logout();
       window.location.href = "/login";

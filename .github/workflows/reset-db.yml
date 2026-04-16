@@ -1,0 +1,23 @@
+name: Reset Database
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why?"
+        required: false
+        default: "Manula reset"
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm run seed
+        env:
+          MONGODB_URI: ${mongodb+srv://Osttomasz:2934304@sellerdb.rb8z7uf.mongodb.net/?appName=SellerDb}
