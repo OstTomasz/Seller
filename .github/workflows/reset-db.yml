@@ -28,4 +28,4 @@ jobs:
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-        run: pnpm run seed
+        run: pnpm --filter server run seed
