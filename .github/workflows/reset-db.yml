@@ -7,7 +7,7 @@ on:
       reason:
         description: "Why?"
         required: false
-        default: "Manula reset"
+        default: "Manual reset"
 
 jobs:
   reset:
@@ -20,4 +20,4 @@ jobs:
       - run: npm install
       - run: npm run seed
         env:
-          MONGODB_URI: ${mongodb+srv://Osttomasz:2934304@sellerdb.rb8z7uf.mongodb.net/?appName=SellerDb}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
