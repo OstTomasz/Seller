@@ -85,8 +85,10 @@ export const ChangePasswordForm = ({ onSuccess }: ChangePasswordFormProps) => {
         {...register("confirmPassword")}
       />
       <div className="flex justify-end">
-        <Button type="submit" isLoading={isPending}>
-          Change password
+        <Button type="submit" disabled isLoading={isPending} className="flex flex-col">
+          <p>Change password</p>
+          {/* demo version */}
+          <p className="text-red-600">Disabled due demo version</p>
         </Button>
       </div>
     </form>

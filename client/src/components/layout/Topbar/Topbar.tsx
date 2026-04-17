@@ -72,7 +72,7 @@ export const Topbar = ({ onMenuOpen }: TopbarProps) => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate("/?expand=notifications")}
+            onClick={() => navigate({ pathname: "/", search: "?expand=notifications" })}
             aria-label="Notifications"
             className="p-2 text-celery-500 hover:text-celery-300"
           >
