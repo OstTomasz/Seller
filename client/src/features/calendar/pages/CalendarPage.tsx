@@ -1,6 +1,6 @@
 // client/src/features/calendar/CalendarPage.tsx
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppCalendar } from "../components/AppCalendar";
 import { EventDetailModal } from "../components/EventDetailModal";
 import { CreateEventModal } from "../components/CreateEventModal";
@@ -21,10 +21,6 @@ interface CalendarPageProps {
 
 export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-
-  useEffect(() => {
-    setIsExpanded(defaultExpanded);
-  }, [defaultExpanded]);
 
   const { events } = useCalendarData();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);

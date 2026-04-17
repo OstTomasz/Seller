@@ -19,8 +19,8 @@ interface SupportModalProps {
 }
 
 const REPORT_TYPES = [
-  { value: "bug",   label: "Bug" },
-  { value: "idea",  label: "Idea" },
+  { value: "bug", label: "Bug" },
+  { value: "idea", label: "Idea" },
   { value: "other", label: "Other" },
 ] as const;
 
@@ -52,7 +52,6 @@ export const SupportModal = ({ isOpen, onClose }: SupportModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Report an issue or idea">
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-
         {/* Report type */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm text-celery-300">Report type</label>
@@ -93,11 +92,8 @@ export const SupportModal = ({ isOpen, onClose }: SupportModalProps) => {
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit">
-            Submit report
-          </Button>
+          <Button type="submit">Submit report</Button>
         </div>
-
       </form>
     </Modal>
   );

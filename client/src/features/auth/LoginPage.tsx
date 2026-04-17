@@ -14,7 +14,7 @@ import { Footer } from "@/components/layout/Footer/Footer";
 
 const loginSchema = z.object({
   email: z
-    .email("Invalid email address")
+    .string().email("Invalid email address")
     .endsWith("@seller.com", "Email domain must be @seller.com"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });

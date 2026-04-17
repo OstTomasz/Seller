@@ -21,7 +21,7 @@ import {
 const schema = z.object({
   firstName: z.string().min(1, "Required"),
   lastName: z.string().min(1, "Required"),
-  email: z.email("Invalid email").endsWith("@seller.com", "Must be @seller.com"),
+  email: z.string().email("Invalid email").endsWith("@seller.com", "Must be @seller.com"),
   phone: z
     .string()
     .regex(/^\+?[\d\s\-()]{7,15}$/, "Invalid phone number")
