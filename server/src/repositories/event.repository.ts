@@ -1,11 +1,11 @@
 import Event from "../models/Event";
+import Invitation from "../models/Invitation";
 import { IEvent } from "../types";
 
 const populate = (q: ReturnType<typeof Event.find>) =>
   q.populate("createdBy", "firstName lastName").populate("clientId", "companyName numericId");
 
 export const findEventsByUserId = async (userId: string): Promise<IEvent[]> => {
-  const Invitation = (await import("../models/Invitation.js")).default;
   const accepted = await Invitation.find({
     inviteeId: userId,
     status: { $in: ["accepted", "pending"] },
@@ -31,7 +31,6 @@ export const findEventsByUserIdAndDateRange = async (
   start: Date,
   end: Date,
 ): Promise<IEvent[]> => {
-  const Invitation = (await import("../models/Invitation.js")).default;
   const accepted = await Invitation.find({ inviteeId: userId, status: "accepted" }).select(
     "eventId",
   );
