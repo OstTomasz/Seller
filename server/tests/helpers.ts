@@ -6,7 +6,7 @@ import Region from "../src/models/Region";
 import Position from "../src/models/Position";
 import Client from "../src/models/Client";
 import Notification from "../src/models/Notification";
-import { INotification } from "src/types";
+import { INotification } from "../src/types";
 import EventModel from "../src/models/Event";
 
 interface ClientTestBase {

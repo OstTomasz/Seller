@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { ICompanyNote } from "src/types";
+import { ICompanyNote } from "../types";
 
 const companyNoteSchema = new Schema<ICompanyNote>(
   {
