@@ -284,7 +284,7 @@ export const addNote = async (
 
   await verifyClientAccess(client, requesterId, requesterRole);
 
-  const newNote = { content, createdBy: new mongoose.Types.ObjectId(requesterId) };
+  const newNote = { content, createdBy: mongoose.Types.ObjectId.createFromHexString(requesterId) };
   client.notes.push(newNote as unknown as (typeof client.notes)[number]);
   await client.save();
 
