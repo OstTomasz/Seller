@@ -13,7 +13,7 @@ import { toast } from "sonner";
 interface Props {
   region: { id: string; name: string; prefix: string; isSuperregion: boolean } | null;
   superregions: Region[];
-  canDelete: boolean; // brak subregionów (superregion) lub brak pozycji (region)
+  canDelete: boolean;
   onClose: () => void;
 }
 

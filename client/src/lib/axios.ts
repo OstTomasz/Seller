@@ -2,13 +2,6 @@ import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 import { notifyActivity } from "./sessionActivity";
 
-// export const api = axios.create({
-//   baseURL: "http://localhost:5001/api",
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-// });
-
 export const api = axios.create({
   baseURL: "/api",
   headers: {

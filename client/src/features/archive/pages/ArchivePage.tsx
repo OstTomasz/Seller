@@ -1,4 +1,3 @@
-// client/src/features/archive/ArchivePage.tsx
 import { useState } from "react";
 import { Client } from "@/types";
 import { useArchivedClients } from "../hooks/useArchivedClients";

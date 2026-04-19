@@ -59,7 +59,6 @@ export const NotificationList = ({ defaultExpanded = false }: NotificationListPr
           )}
         </button>
 
-        {/* Rozwijana zawartość */}
         {isExpanded && (
           <div className="border-t border-celery-800">
             {isLoading ? (
@@ -78,7 +77,7 @@ export const NotificationList = ({ defaultExpanded = false }: NotificationListPr
                   key={notification._id}
                   notification={notification}
                   onMarkAsRead={(id) => markAsRead.mutate(id)}
-                  onMarkAsUnread={(id) => markAsUnread.mutate(id)} // ← dodaj
+                  onMarkAsUnread={(id) => markAsUnread.mutate(id)}
                   onRemove={(id) => remove.mutate(id)}
                   onDetails={handleDetails}
                   isLoading={markAsRead.isPending || remove.isPending || markAsUnread.isPending}

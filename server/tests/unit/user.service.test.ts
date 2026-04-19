@@ -118,11 +118,11 @@ describe("createUser", () => {
   it("deputy should NOT create a user in another superregion region", async () => {
     const otherSuperregion = await Region.create({
       name: "South Poland",
-      prefix: "SP", // ← dodaj prefix
+      prefix: "SP",
     });
     const outsideRegion = await Region.create({
       name: "Lesser Poland",
-      prefix: "LP", // ← dodaj prefix
+      prefix: "LP",
       parentRegion: otherSuperregion._id,
     });
     const outsidePosition = await Position.create({

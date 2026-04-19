@@ -88,7 +88,7 @@ export const EditAddressesModal = ({ isOpen, onClose, client }: EditAddressesMod
     deleteContact.isPending;
 
   const discard = useDiscardConfirm(isDirty, () => {
-    reset(); // przywróć wartości formularza
+    reset();
     onClose();
   });
 

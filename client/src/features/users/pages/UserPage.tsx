@@ -1,4 +1,3 @@
-// client/src/features/users/UserPage.tsx
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Loader, FetchError } from "@/components/ui";
@@ -53,7 +52,12 @@ export const UserPage = () => {
   return (
     <div className="flex flex-col max-w-3xl mx-auto gap-6">
       <UserBreadcrumbs fromArchive={fromArchive} fullName={fullName} />
-      <UserHeader fullName={fullName} avatarSrc={avatarSrc} numericId={user.numericId} positionCode={positionCode} />
+      <UserHeader
+        fullName={fullName}
+        avatarSrc={avatarSrc}
+        numericId={user.numericId}
+        positionCode={positionCode}
+      />
       <ContactCard phone={user.phone} email={user.email} />
       <PositionCard
         role={user.role}
@@ -62,7 +66,11 @@ export const UserPage = () => {
         regionName={regionName}
         superregionName={superregionName}
       />
-      <EmploymentCard createdAt={user.createdAt} workplace={profile?.workplace} lastLoginAt={profile?.lastLoginAt} />
+      <EmploymentCard
+        createdAt={user.createdAt}
+        workplace={profile?.workplace}
+        lastLoginAt={profile?.lastLoginAt}
+      />
       <AboutCard description={profile?.description} />
       {canSeeNotes ? <NotesCard notes={notes} /> : null}
       {canSeeNotes && positionId ? <PositionHistoryCard history={historyData ?? []} /> : null}

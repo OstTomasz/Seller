@@ -1,8 +1,4 @@
-import {
-  AlertTriangle,
-  Trash2,
-  Copy,
-} from "lucide-react";
+import { AlertTriangle, Trash2, Copy } from "lucide-react";
 import { Modal, Button, ConfirmDialog } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/types";
@@ -75,7 +71,6 @@ export const EventDetailModal = ({ event, onClose, onEdit, onCopy }: EventDetail
 
           {/* ── Actions ──────────────────────────────────────────────── */}
           <div className="flex items-center justify-between pt-2 border-t border-celery-700">
-            {/* Delete — tylko autor, tylko po lewej */}
             <div>
               {canEdit && !isPast ? (
                 <Button

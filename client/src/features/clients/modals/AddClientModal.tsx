@@ -1,8 +1,7 @@
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { useMemo, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useFieldArray } from "react-hook-form";
 import { Modal, ConfirmDialog } from "@/components/ui";
 import type { UserRole } from "@/types";
 import { NipCheckResult } from "@seller/shared/types";
@@ -80,7 +79,6 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
     register,
     handleSubmit,
     reset,
-    watch,
     control,
     formState: { errors, isDirty },
   } = form;
@@ -129,7 +127,7 @@ export const AddClientModal = ({ isOpen, onClose, userRole }: AddClientModalProp
   });
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const nipValue = watch("nip");
+  const nipValue = useWatch({ control, name: "nip" });
 
   const checkNipAndAdvance = async () => {
     if (!/^\d{10}$/.test(nipValue)) return;

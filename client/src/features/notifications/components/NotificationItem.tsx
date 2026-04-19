@@ -86,7 +86,6 @@ export const NotificationItem = ({
         !notification.read && "bg-celery-900/30",
       )}
     >
-      {/* lewa strona — klikalny obszar otwierający modal */}
       <button
         onClick={() => onDetails(notification)}
         className="flex flex-col gap-1 min-w-0 flex-1 text-left"
@@ -118,7 +117,6 @@ export const NotificationItem = ({
         </button>
       ) : null}
 
-      {/* przyciski akcji — existing code bez zmian */}
       <div className="flex items-center gap-1 shrink-0 mt-0.5">
         {!notification.read && (
           <button

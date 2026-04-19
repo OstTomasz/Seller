@@ -1,4 +1,3 @@
-// client/src/features/calendar/DayViewModal.tsx
 import dayjs from "dayjs";
 import { Plus, Clock, CalendarDays } from "lucide-react";
 import { Modal, Button } from "@/components/ui";

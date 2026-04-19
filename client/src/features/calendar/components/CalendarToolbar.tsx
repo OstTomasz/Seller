@@ -1,4 +1,3 @@
-// client/src/features/calendar/CalendarToolbar.tsx
 import type { ToolbarProps } from "react-big-calendar";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,7 +68,6 @@ export const CalendarToolbar = ({
 
   return (
     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      {/* 1. Today — Zostaje na początku (order-1) */}
       <button
         onClick={() => onNavigate("TODAY")}
         className="order-1 flex items-center gap-1.5 rounded-md border border-celery-700
@@ -80,7 +78,6 @@ export const CalendarToolbar = ({
         Today
       </button>
 
-      {/* 2. View switcher (Agenda) — Na mobile order-2, na desktop wraca na koniec (md:order-3) */}
       <div className="order-2 md:order-3 flex overflow-hidden rounded-md border border-celery-700">
         {(availableViews as string[]).map((v) => (
           <button
@@ -110,8 +107,6 @@ export const CalendarToolbar = ({
         </button>
 
         <div className="flex gap-1 pt-5">
-          {" "}
-          {/* Usunąłem pt-5, żeby wyrównać w pionie */}
           <Select
             options={MONTHS}
             value={date.getMonth().toString()}

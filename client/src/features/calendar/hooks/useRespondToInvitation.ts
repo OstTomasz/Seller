@@ -15,7 +15,7 @@ export const useRespondToInvitation = (onSuccess?: () => void) => {
       respondToInvitation(eventId, status),
     onSuccess: (_data, { eventId, status }) => {
       queryClient.invalidateQueries({ queryKey: [CALENDAR_QUERY_KEY] });
-      queryClient.invalidateQueries({ queryKey: ["event-invitations", eventId] }); // ✅
+      queryClient.invalidateQueries({ queryKey: ["event-invitations", eventId] });
       toast.success(status === "accepted" ? "Invitation accepted." : "Invitation declined.");
       onSuccess?.();
     },

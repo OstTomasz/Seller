@@ -1,4 +1,3 @@
-// client/src/features/calendar/CalendarEventTile.tsx
 import type { EventProps } from "react-big-calendar";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";

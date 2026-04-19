@@ -1,4 +1,3 @@
-// server/tests/unit/user.archive.service.test.ts
 import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDB, TestDB } from "../helpers";
 import * as userService from "../../src/services/user.service";

@@ -1,4 +1,3 @@
-// client/src/features/calendar/InviteUsersModal.tsx
 import { useEffect } from "react";
 import { Search } from "lucide-react";
 import { Modal, Button, Input, ConfirmDialog } from "@/components/ui";

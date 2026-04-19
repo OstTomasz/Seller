@@ -1,4 +1,3 @@
-// src/features/auth/LoginPage.tsx
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,46 +10,44 @@ import { authApi } from "@/api/auth";
 import { ApiError } from "@/types";
 import { Button, Card, Input } from "@/components/ui";
 import { Footer } from "@/components/layout/Footer/Footer";
+import logo from "@/assets/logo.avif";
 
 const loginSchema = z.object({
   email: z
-    .string().email("Invalid email address")
+    .string()
+    .email("Invalid email address")
     .endsWith("@seller.com", "Email domain must be @seller.com"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-type TestUser = { email: string; password: string; note: string };
+type TestUser = { email: string; password: string };
 type TestLabel = { label: string };
 
 const TEST_USERS: (TestUser | TestLabel)[] = [
-  { email: "director@seller.com", password: "password123", note: "" },
+  { email: "director@seller.com", password: "password123" },
   { label: "--- Poland North ---" },
-  { email: "deputy1@seller.com", password: "password123", note: "" },
-  { email: "adv.pom@seller.com", password: "password123", note: "POM advisor" },
-  { email: "sp1.pom@seller.com", password: "password123", note: "3 active + 1 archived" },
-  { email: "sp2.pom@seller.com", password: "password123", note: "3 active + 1 archived" },
-  { email: "adv.war@seller.com", password: "password123", note: "WAR advisor" },
-  { email: "sp1.war@seller.com", password: "password123", note: "3 active + 1 archived" },
-  { email: "sp2.war@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "deputy1@seller.com", password: "password123" },
+  { email: "adv.pom@seller.com", password: "password123" },
+  { email: "sp1.pom@seller.com", password: "password123" },
+  { email: "sp2.pom@seller.com", password: "password123" },
+  { email: "adv.war@seller.com", password: "password123" },
+  { email: "sp1.war@seller.com", password: "password123" },
+  { email: "sp2.war@seller.com", password: "password123" },
   { label: "--- Poland South ---" },
-  { email: "deputy2@seller.com", password: "password123", note: "" },
-  { email: "adv.mal@seller.com", password: "password123", note: "MAL advisor" },
-  { email: "sp1.mal@seller.com", password: "password123", note: "3 active + 1 archived" },
-  { email: "sp2.mal@seller.com", password: "password123", note: "3 active + 1 archived" },
-  { email: "adv.sla@seller.com", password: "password123", note: "SLA advisor" },
-  { email: "sp1.sla@seller.com", password: "password123", note: "3 active + 1 archived" },
-  { email: "sp2.sla@seller.com", password: "password123", note: "3 active + 1 archived" },
+  { email: "deputy2@seller.com", password: "password123" },
+  { email: "adv.mal@seller.com", password: "password123" },
+  { email: "sp1.mal@seller.com", password: "password123" },
+  { email: "sp2.mal@seller.com", password: "password123" },
+  { email: "adv.sla@seller.com", password: "password123" },
+  { email: "sp1.sla@seller.com", password: "password123" },
+  { email: "sp2.sla@seller.com", password: "password123" },
 ];
 
 const LoginHeader = () => (
   <div className="flex flex-col items-center mb-8 gap-3">
-    <img
-      src="/src/assets/logo.avif"
-      alt="Seller CRM logo"
-      className="object-contain w-fluid-logo"
-    />
+    <img src={logo} alt="Seller CRM logo" className="object-contain w-fluid-logo" />
     <h1 className="font-bold text-celery-300 tracking-wide text-fluid-hero">Seller CRM</h1>
     <p className="text-sm text-celery-500">Sign in to your account</p>
   </div>
@@ -142,7 +139,6 @@ export const LoginPage = () => {
                     <span className="text-celery-300">{row.email}</span>
                     <span className="text-celery-700">/</span>
                     <span className="text-celery-500">{row.password}</span>
-                    {row.note ? <span className="text-celery-700 text-xs">{row.note}</span> : null}
                   </button>
                 ),
               )}

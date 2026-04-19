@@ -294,7 +294,6 @@ export const getSalespersons = async (
   return [];
 };
 
-// PO:
 export const getUsersForStructure = async () => userRepository.findAllUsersForManagement();
 
 export const removeUserFromPosition = async (

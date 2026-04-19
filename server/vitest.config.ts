@@ -14,7 +14,6 @@ export default defineConfig({
 
     fileParallelism: false,
     maxWorkers: 1,
-    minWorkers: 1,
     sequence: {
       concurrent: false,
     },

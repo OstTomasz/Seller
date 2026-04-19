@@ -88,9 +88,7 @@ describe("User Model", () => {
       position: null,
     });
 
-    await expect(user.save()).rejects.toThrow(
-      "Position is required for advisor and salesperson", // ← zaktualizowany komunikat
-    );
+    await expect(user.save()).rejects.toThrow("Position is required for advisor and salesperson");
   });
 
   it("should require grade for salesperson", async () => {

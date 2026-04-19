@@ -1,4 +1,3 @@
-// client/src/features/archive/hooks/useArchivedUsers.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { usersApi } from "@/api/users";

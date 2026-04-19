@@ -158,7 +158,6 @@ export interface IInvitation extends Document {
   updatedAt: Date;
 }
 
-// dodaj:
 export interface ICompanyFile {
   _id: Types.ObjectId;
   name: string;

@@ -1,4 +1,3 @@
-// client/src/components/ui/Modal.tsx — przywróć do oryginalnej wersji:
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";

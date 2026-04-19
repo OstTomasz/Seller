@@ -1,4 +1,3 @@
-// client/src/features/calendar/CalendarPage.tsx
 import dayjs from "dayjs";
 import { useState } from "react";
 import { AppCalendar } from "../components/AppCalendar";
@@ -64,7 +63,6 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
   return (
     <>
       <div className="flex flex-col gap-4 max-w-6xl mx-auto w-full rounded-lg border border-celery-600 bg-bg-surface overflow-hidden transition-all duration-300">
-        {/* Header - Identyczny styl jak w powiadomieniach */}
         <button
           onClick={() => setIsExpanded((prev) => !prev)}
           aria-expanded={isExpanded}
@@ -84,7 +82,6 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
           )}
         </button>
 
-        {/* Zawartość kalendarza */}
         {isExpanded && (
           <div className="border-t border-celery-800 p-4 animate-in fade-in zoom-in-95 duration-200">
             <AppCalendar
@@ -96,7 +93,6 @@ export const CalendarPage = ({ defaultExpanded = true }: CalendarPageProps) => {
         )}
       </div>
 
-      {/* Modale zostają poza kontenerem zwijania */}
       <DayViewModal
         date={selectedDay}
         events={dayEvents}

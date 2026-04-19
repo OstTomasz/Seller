@@ -33,18 +33,6 @@ import "./models/CompanyNote";
 import { authenticate } from "./middleware/auth.middleware";
 import { requirePasswordChange } from "./middleware/mustChangePassword.middleware";
 
-// const isAllowedOrigin = (origin: string): boolean => {
-//   try {
-//     const parsed = new URL(origin);
-//     return (
-//       (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") &&
-//       /^https?:$/.test(parsed.protocol)
-//     );
-//   } catch {
-//     return false;
-//   }
-// };
-
 const isAllowedOrigin = (origin: string): boolean => {
   try {
     const parsed = new URL(origin);
@@ -70,16 +58,6 @@ const app = express();
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(morgan("dev"));
-// if (env.NODE_ENV !== "test") {
-//   app.use(
-//     "/api",
-//     rateLimit({
-//       windowMs: 15 * 60 * 1000,
-//       max: env.NODE_ENV === "development" ? 1000 : 100,
-//       message: { message: "Too many requests, please try again later" },
-//     }),
-//   );
-// }
 if (env.NODE_ENV === "development") {
   app.use(
     "/api",

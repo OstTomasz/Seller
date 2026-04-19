@@ -1,5 +1,3 @@
-// client/src/features/notifications/utils/resolveClientId.ts
-
 import { INotification } from "@/types";
 
 /**

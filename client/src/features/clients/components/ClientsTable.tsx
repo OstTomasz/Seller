@@ -1,4 +1,3 @@
-// client/src/features/clients/ClientsTable.tsx
 import { useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";

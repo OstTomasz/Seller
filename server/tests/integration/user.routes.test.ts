@@ -139,7 +139,7 @@ describe("POST /api/users", () => {
   it("deputy should NOT create a user in another superregion region", async () => {
     const otherSuperregion = await Region.create({
       name: "South Poland",
-      prefix: "SP", // ← dodaj prefix
+      prefix: "SP",
     });
     const otherRegion = await Region.create({
       name: "Lesser Poland",
@@ -265,7 +265,7 @@ describe("PATCH /api/users/:id", () => {
   it("deputy should NOT update user in another superregion region", async () => {
     const otherSuperregion = await Region.create({
       name: "South Poland",
-      prefix: "SP", // ← dodaj prefix
+      prefix: "SP",
     });
     const otherRegion = await Region.create({
       name: "Lesser Poland",

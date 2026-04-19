@@ -1,4 +1,3 @@
-// client/src/features/management/ManagementUsers.tsx
 import { useState, useMemo, useEffect } from "react";
 import { Search, Plus } from "lucide-react";
 import { Input, FetchError, Button, Pagination, ListPageSkeleton } from "@/components/ui";

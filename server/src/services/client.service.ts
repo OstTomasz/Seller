@@ -569,7 +569,7 @@ export const approveArchive = async (
   if (!updated) throw new NotFoundError("Client not found");
 
   // cleanup archive_request notifications + notify about archival
-  await notificationService.deleteArchiveRequestNotifications(clientId); // ← nowe
+  await notificationService.deleteArchiveRequestNotifications(clientId);
   await notificationService.notifyClientArchived(
     clientId,
     client.companyName,

@@ -1,5 +1,3 @@
-// client/src/features/calendar/hooks/useEventInvitations.ts
-
 import { useQuery } from "@tanstack/react-query";
 import { IInvitationWithInvitee } from "@/types";
 import { api } from "@/lib/axios";
