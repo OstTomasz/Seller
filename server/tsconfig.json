@@ -1,3 +1,27 @@
+// {
+//   "compilerOptions": {
+//     "target": "ES2020",
+//     "module": "commonjs",
+//     "lib": ["ES2020"],
+//     "outDir": "./dist",
+//     "baseUrl": ".",
+//     "strict": true,
+//     "esModuleInterop": true,
+//     "skipLibCheck": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "resolveJsonModule": true,
+
+//     "types": ["node", "express"],
+
+//     "paths": {
+//       "src/*": ["src/*"],
+//       "@seller/shared/*": ["../shared/*"]
+//     }
+//   },
+//   "include": ["src/**/*", "src/types/**/*.d.ts"],
+//   "exclude": ["node_modules", "dist"]
+// }
+
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -10,14 +34,12 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-
-    "types": ["node", "express"],
-
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "paths": {
       "src/*": ["src/*"],
       "@seller/shared/*": ["../shared/*"]
     }
   },
-  "include": ["src/**/*", "src/types/**/*.d.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
