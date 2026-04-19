@@ -4,15 +4,15 @@ import jwt from "jsonwebtoken";
 import { TokenPayload, UserRole } from "../types";
 import { userRoleSchema } from "@seller/shared/types";
 
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: string;
-      userRole?: UserRole;
-      mustChangePassword?: boolean;
-    }
-  }
-}
+// declare global {
+//   namespace Express {
+//     interface Request {
+//       userId?: string;
+//       userRole?: UserRole;
+//       mustChangePassword?: boolean;
+//     }
+//   }
+// }
 
 export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
