@@ -1,0 +1,929 @@
+<style>
+  :root {
+    /* colors */
+    --bg-app: #0e1110;
+    --bg-surface: #141917;
+    --bg-surface-2: #1a211e;
+    --bg-hover: #1f2924;
+
+    --text-main: #e8ece9;
+    --text-muted: #a2ada6;
+
+    --border-soft: #24302a;
+    --border-strong: #2e3d35;
+
+    --accent: #3ddc84;
+    --accent-soft: rgba(61, 220, 132, 0.12);
+
+    --danger: #ef6a6a;
+    --danger-soft: rgba(239, 106, 106, 0.12);
+
+    --info: #61afef;
+    --info-soft: rgba(97, 175, 239, 0.12);
+
+    --warn: #e5c07b;
+    --warn-soft: rgba(229, 192, 123, 0.14);
+
+    /* layout */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: radial-gradient(1200px 600px at 20% -10%, #16201b, var(--bg-app));
+    color: var(--text-main);
+    font-family:
+      Inter,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 32px;
+  }
+
+  /* ---------- tabs ---------- */
+
+  .sr-only {
+    display: flex;
+    justify-content: center;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    width: fit-content;
+    margin-bottom: 28px;
+    margin-inline: auto;
+  }
+
+  .tab {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .tab:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+  }
+
+  .tab.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* ---------- panels ---------- */
+
+  .panel {
+    display: none;
+  }
+
+  .panel.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---------- layout ---------- */
+
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: fit-content;
+  }
+
+  @media (max-width: 720px) {
+    .cols {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ---------- sections ---------- */
+
+  .section {
+    background: linear-gradient(180deg, var(--bg-surface), var(--bg-surface-2));
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+  }
+
+  .section + .section {
+    margin-top: 18px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  /* ---------- rules ---------- */
+
+  .rule {
+  display: grid;
+  grid-template-columns: 50px 1fr; 
+  align-items: center;
+  gap: 12px;
+  padding: 8px 6px;
+  border-radius: var(--radius-sm);
+}
+
+  .rule + .rule {
+    margin-top: 4px;
+  }
+
+  .rule:hover {
+    background: var(--bg-hover);
+  }
+
+  /* ---------- pills ---------- */
+
+  .pill {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    height: fit-content;
+  }
+
+  .p-allow {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .p-deny {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  .p-scope {
+    background: var(--info-soft);
+    color: var(--info);
+  }
+
+  .p-own {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+
+  /* ---------- notes ---------- */
+
+  .note {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ---------- print / pdf ---------- */
+
+  @media print {
+    body {
+      background: white;
+      color: black;
+      padding: 0;
+    }
+
+    .tabs {
+      display: none;
+    }
+
+    .section {
+      break-inside: avoid;
+      border: 1px solid #ccc;
+      background: white;
+    }
+
+    .pill {
+      border: 1px solid #999;
+    }
+  }
+</style>
+
+<body>
+
+  <h2 class="sr-only">RBAC – Full Functional Documentation</h2>
+  
+  <div class="tabs">
+    <button class="tab active" data-tab="director">Director</button>
+    <button class="tab" data-tab="deputy">Deputy</button>
+    <button class="tab" data-tab="advisor">Advisor</button>
+    <button class="tab" data-tab="salesperson">Salesperson</button>
+  </div>
+  
+  <!-- ================= DIRECTOR ================= -->
+  
+  <div id="director" class="panel active">
+  <div class="cols">
+  
+  <div>
+    <div class="section">
+      <div class="section-title">Clients</div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can view all clients (active and archived)</span>
+      </div>
+
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can filter clients by superregion, region, and assigned salesperson</span>
+        </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create a client — requires <code>salespersonPositionId</code></span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can edit all clients' data, assigned salesperson</span>
+      </div>
+
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can edit and delete any client note (regardless of author)</span>
+      </div>
+
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can add, edit, and remove addresses and contacts for any client</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can approve / reject / directly archive clients</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can manage archive – accept or reject unarchive requests
+          <span class="note">only role with unarchive + unarchive-reject</span>
+          </span>
+      </div>
+  
+    </div>
+  
+    <div class="section">
+      <div class="section-title">Calendar</div>
+  
+      <div class="rule"><span class="pill p-own">own</span>
+        <span>Can view only own events
+          <span class="note">GET /events filtered by createdBy + invitations</span>
+        </span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create all event types (personal, client_meeting, team)</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create mandatory events — auto-invites all subordinates
+          <span class="note">getSubordinateUserIdsForDirector()</span>
+        </span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create mandatory events for a specific group of users</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-own">own</span>
+        <span>Can edit and delete only own events
+          <span class="note">createdBy === userId</span>
+        </span>
+      </div>
+  
+      <div class="rule"><span class="pill p-deny">none</span>
+        <span>Cannot respond to mandatory invitations
+          <span class="note">ForbiddenError</span>
+        </span>
+      </div>
+    </div>
+  
+    <div class="section">
+      <div class="section-title">Notifications</div>
+  
+      <div class="rule"><span class="pill p-own">own</span>
+        <span>Can view, mark, and delete own notifications</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Receives archive_request and unarchive_request from all clients</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Receives notifications about event invitations, changes and responses to own event invitations</span>
+      </div>
+    </div>
+  </div>
+  
+  <div>
+    <div class="section">
+      <div class="section-title">Users</div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can view all users (active and archived)</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create users on any position in any region</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can change role and grade
+          <span class="note">only role with PATCH /:id/role</span>
+        </span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can archive and restore any user</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can toggle active status, reset password, remove position</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can add, edit, and delete any user note</span>
+      </div>
+    </div>
+  
+    <div class="section">
+      <div class="section-title">Structure (Manage)</div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create superregions and subregions
+          <span class="note">auto-creates deputy/advisor positions</span>
+        </span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can edit any region and superregion name and prefix</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can change superregion deputy
+          <span class="note">PATCH /regions/:id/deputy</span>
+        </span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can move subregions between superregions</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can delete regions (without children) and salesperson positions (without active clients)</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Can create and update salesperson position codes</span>
+      </div>
+    </div>
+  
+    <div class="section">
+      <div class="section-title">Company Documents</div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Only role allowed to upload and delete files</span>
+      </div>
+  
+      <div class="rule"><span class="pill p-allow">full</span>
+        <span>Only role allowed to create and delete company notes</span>
+      </div>
+  
+    </div>
+  
+    <div class="section">
+      <div class="section-title">Own Data</div>
+  
+      <div class="rule"><span class="pill p-own">own</span>
+        <span>Can change own password and profile</span>
+      </div>
+    </div>
+  </div>
+  
+  </div>
+  </div>
+
+  <!-- ================= DEPUTY ================= -->
+
+<div id="deputy" class="panel">
+<div class="cols">
+
+<div>
+  <div class="section">
+    <div class="section-title">Clients — scope: own superregion</div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can view clients assigned to positions within own superregion
+        <span class="note">getPositionIdsInSuperregion(deputyId)</span>
+      </span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can create a client — validates that salesperson position belongs to the superregion</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can edit client data and change assigned salesperson
+        <span class="note">scope check on both positions</span>
+      </span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can request a client archive within own superregion</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can submit unarchive request for own superregion archived client</span>
+    </div>
+
+
+    <div class="rule"><span class="pill p-deny">none</span>
+      <span>Cannot restore archived clients (director only)</span>
+    </div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Can edit and delete any client note within scope (own, advisor and salesperson)</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Calendar</div>
+
+    <div class="rule"><span class="pill p-own">own</span>
+      <span>Can view only own events (createdBy + invitations)</span>
+    </div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Can create all event types</span>
+    </div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Can create mandatory events — auto-invites subordinates from superregion
+        <span class="note">getSubordinateUserIdsForDeputy(deputyId)</span>
+      </span>
+    </div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Can create mandatory events for a specific group of users within scope</span>
+    </div>
+
+    <div class="rule"><span class="pill p-own">own</span>
+      <span>Can edit and delete only own events</span>
+    </div>
+
+    <div class="rule"><span class="pill p-deny">none</span>
+      <span>Cannot respond to mandatory invitations</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Notifications</div>
+
+    <div class="rule"><span class="pill p-own">own</span>
+      <span>Can view, mark, and delete own notifications</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Receives notifications archive_request from salespersons in own superregion</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Receives notifications archive_approved, archive_rejected, client_unarchived</span>
+    </div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Receives notifications about event invitations, changes and responses to own event invitations</span>
+    </div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Receives company_file_added and company_note_added</span>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="section">
+    <div class="section-title">Users — scope: own superregion</div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Can view all active users</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can create users only on positions within own superregion
+        <span class="note">cannot create director or deputy roles</span>
+      </span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can edit users data and add notes</span>
+    </div>
+
+
+    <div class="rule"><span class="pill p-own">own</span>
+      <span>Can edit and delete only own user notes
+        <span class="note">note.createdBy === requesterId</span>
+      </span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Structure (Manage) — scope: own superregion</div>
+
+
+    <div class="rule"><span class="pill p-deny">none</span>
+      <span>Cannot create superregions and regions</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can edit subregion names within own superregion
+        <span class="note">cannot edit superregion name</span>
+      </span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can edit region prefixes and names</span>
+    </div>
+
+    <div class="rule"><span class="pill p-deny">none</span>
+      <span>Cannot change deputy</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can delete subregions without children</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can create new positions and remove within no clients assigned</span>
+    </div>
+
+    <div class="rule"><span class="pill p-scope">scope</span>
+      <span>Can create and update salesperson position codes</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Company Documents</div>
+
+    <div class="rule"><span class="pill p-allow">full</span>
+      <span>Read access to all company files and notes</span>
+    </div>
+
+    <div class="rule"><span class="pill p-deny">none</span>
+      <span>Cannot upload, create, or delete files or notes (director only)</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Own Data</div>
+
+    <div class="rule"><span class="pill p-own">own</span>
+      <span>Can change own password and profile</span>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+  
+  <!-- ================= ADVISOR ================= -->
+  
+  <div id="advisor" class="panel">
+    <div class="cols">
+  
+      <div>
+        <div class="section">
+          <div class="section-title">Clients — scope: own region</div>
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Can view clients assigned to positions in own region
+              <span class="note">findClientsForAdvisor(advisorPositionId)</span>
+            </span>
+          </div>
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Can create clients — requires salesperson position from own region</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Can edit client data within scope</span>
+          </div>
+  
+  
+          <div class="rule"><span class="pill p-deny">none</span>
+            <span>Cannot submit archive requests (salesperson / deputy only)</span>
+          </div>
+
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Can submit unarchive request for own region archived client</span>
+          </div>
+
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Can add client notes within scope</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-own">own</span>
+            <span>Can edit and delete only own client notes</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Can add, edit, and remove client addresses and contacts</span>
+          </div>
+        </div>
+  
+        <div class="section">
+          <div class="section-title">Calendar</div>
+  
+          <div class="rule"><span class="pill p-own">own</span>
+            <span>Can view only own events (createdBy + invitations)</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Can create any type of event</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-deny">none</span>
+            <span>Cannot create mandatory events
+              <span class="note">mandatory && role !== director/deputy → ForbiddenError</span>
+            </span>
+          </div>
+  
+          <div class="rule"><span class="pill p-own">own</span>
+            <span>Can edit and delete only own events</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Can accept and reject invitations (non-mandatory only)</span>
+          </div>
+        </div>
+      </div>
+  
+      <div>
+        <div class="section">
+          <div class="section-title">Notifications</div>
+  
+          <div class="rule"><span class="pill p-own">own</span>
+            <span>Can view, mark, and delete own notifications</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Receives archive_request and unarchive_request from own region clients</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Receives notifications about event invitations, changes and responses to event invitations</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-scope">scope</span>
+            <span>Receives archive_approved, archive_rejected, client_unarchived</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Receives company_file_added and company_note_added</span>
+          </div>
+        </div>
+  
+        <div class="section">
+          <div class="section-title">Users</div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Can view all users (GET /users without scope filter)</span>
+          </div>
+  
+  
+          <div class="rule"><span class="pill p-deny">none</span>
+            <span>Cannot create, edit, archive users or add user notes</span>
+          </div>
+        </div>
+  
+        <div class="section">
+          <div class="section-title">Structure</div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Read-only access to regions and positions (GET only)</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-deny">none</span>
+            <span>Cannot create, edit, or delete regions or positions</span>
+          </div>
+        </div>
+  
+        <div class="section">
+          <div class="section-title">Company Documents</div>
+  
+          <div class="rule"><span class="pill p-allow">full</span>
+            <span>Read access to all company files and notes</span>
+          </div>
+  
+          <div class="rule"><span class="pill p-deny">none</span>
+            <span>Cannot upload, create, or delete (director only)</span>
+          </div>
+        </div>
+  
+        <div class="section">
+          <div class="section-title">Own Data</div>
+  
+          <div class="rule"><span class="pill p-own">own</span>
+            <span>Can change own password and profile</span>
+          </div>
+        </div>
+      </div>
+  
+    </div>
+  </div>
+  
+  <!-- ================= SALESPERSON ================= -->
+  
+  <div id="salesperson" class="panel">
+    <div class="cols">
+    
+    <div>
+      <div class="section">
+        <div class="section-title">Clients — scope: own position</div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can view only clients assigned to own position</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can create clients — automatically assigned to own position
+            <span class="note">salespersonPositionId is ignored</span>
+          </span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can edit own clients</span>
+        </div>
+    
+    
+        <div class="rule"><span class="pill p-deny">none</span>
+          <span>Cannot change assigned salesperson</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can submit archive request for own client
+            <span class="note">notifies advisor, deputy, and director</span>
+          </span>
+        </div>
+
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can submit unarchive request for own archived client</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can add client notes</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can edit and delete only own client notes</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can add, edit, and remove addresses and contacts for own clients</span>
+        </div>
+      </div>
+    
+      <div class="section">
+        <div class="section-title">Calendar</div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can view only own events (createdBy + invitations)</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Can create any type of events</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-deny">none</span>
+          <span>Cannot create mandatory events</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can edit and delete only own events</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Can accept and reject invitations (non-mandatory only)</span>
+        </div>
+      </div>
+    </div>
+    
+    <div>
+      <div class="section">
+        <div class="section-title">Notifications</div>
+
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can view, mark, and delete own notifications</span>
+        </div>
+
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Receives archive_request and unarchive_request from own clients</span>
+        </div>
+
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Receives notifications about event invitations, changes and responses to event invitations</span>
+        </div>
+
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Receives archive_approved, archive_rejected, client_unarchived</span>
+        </div>
+
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Receives company_file_added and company_note_added</span>
+        </div>
+      </div>
+    
+      <div class="section">
+        <div class="section-title">Users</div>
+    
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Can view all users (GET /users without scope filter)</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-deny">none</span>
+          <span>No access to GET /users/salespersons</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-deny">none</span>
+          <span>Cannot create, edit, or manage users</span>
+        </div>
+      </div>
+    
+      <div class="section">
+        <div class="section-title">Structure</div>
+    
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Read-only access to regions and positions</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-deny">none</span>
+          <span>Cannot create, edit, or delete anything in structure</span>
+        </div>
+      </div>
+    
+      <div class="section">
+        <div class="section-title">Company Documents</div>
+    
+        <div class="rule"><span class="pill p-allow">full</span>
+          <span>Read access to all company files and notes</span>
+        </div>
+    
+        <div class="rule"><span class="pill p-deny">none</span>
+          <span>Cannot upload, create, or delete (director only)</span>
+        </div>
+      </div>
+    
+      <div class="section">
+        <div class="section-title">Own Data</div>
+    
+        <div class="rule"><span class="pill p-own">own</span>
+          <span>Can change own password and profile</span>
+        </div>
+      </div>
+    </div>
+    
+    </div>
+    </div>
+  
+  <!-- ================= JS ================= -->
+  
+  <script>
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById(t.dataset.tab).classList.add('active');
+    });
+  });
+  </script>
+  
+  </body>
+  </html>
