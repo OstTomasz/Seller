@@ -56,6 +56,8 @@ The application implements a robust **RBAC** system to ensure enterprise-grade d
 - **Secure Middleware:** Role verification is enforced on the server-side for every sensitive API request.
 - **Conditional UI:** The interface dynamically adapts, hiding or disabling features that the current user is not authorized to use.
 
+[Click here to see functional documentation of RBAC](https://osttomasz.github.io/Seller/)
+
 ---
 
 ### 🚀 Key Features
@@ -81,3 +83,16 @@ To provide a clean environment for reviewers, a **GitHub Action** is configured 
 - **`/server` & `/api`**: Backend services and serverless entry points.
 - **`/shared`**: Shared TypeScript types and Zod schemas.
 - **`/.github/workflows`**: CI/CD pipelines including the `reset-db` workflow.
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+## 📧 Contact
+
+- **Email**: ost.tomasz@gmail.com
+- **LinkedIn**: [Tomasz Ostaszewski](https://www.linkedin.com/in/tomasz-ostaszewski-7166071aa/)
+
+---
+
+**Note**: This is a portfolio project showcasing modern web development practices. Feel free to use it as inspiration for your own projects!
